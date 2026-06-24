@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI চ্যাট সিস্টেম</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #6c63ff;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --user-bubble: #1e3a5f;
+    --ai-bubble: #1e2435;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  header h1 { font-size: 17px; font-weight: 600; }
+  header span { font-size: 12px; color: var(--muted); margin-left: 2px; }
+  .header-right { margin-left: auto; display: flex; gap: 8px; }
+  .btn-sm {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-sm:hover { background: var(--border); }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 300px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 14px 16px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .system-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 12px 12px;
+  }
+  #systemMsg {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px;
+    resize: none;
+    font-family: var(--font);
+    min-height: 160px;
+    max-height: 320px;
+    transition: border-color .2s;
+  }
+  #systemMsg:focus { outline: none; border-color: var(--accent); }
+  #systemMsg::placeholder { color: var(--muted); }
+
+  .sys-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .btn-apply {
+    flex: 1;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-apply:hover { opacity: .85; }
+  .btn-clear-sys {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-clear-sys:hover { background: var(--border); color: var(--text); }
+
+  .presets-label {
+    padding: 10px 16px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .presets {
+    padding: 0 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .preset-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, background .15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .preset-btn:hover { border-color: var(--accent); background: rgba(108,99,255,.12); }
+
+  .model-select-wrap {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .model-select-wrap label { font-size: 11px; color: var(--muted); font-weight: 600; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .07em; }
+  #modelSelect {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #modelSelect:focus { outline: none; border-color: var(--accent); }
+
+  .temp-wrap {
+    padding: 0 16px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .temp-wrap label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; }
+  #tempRange { flex: 1; accent-color: var(--accent); }
+  #tempVal { font-size: 12px; color: var(--accent2); font-weight: 700; min-width: 28px; text-align: right; }
+
+  /* ── Chat area ── */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sys-badge {
+    display: none;
+    margin: 10px 16px 0;
+    background: rgba(108,99,255,.15);
+    border: 1px solid rgba(108,99,255,.35);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--accent2);
+    line-height: 1.5;
+  }
+  .sys-badge.visible { display: block; }
+  .sys-badge strong { display: block; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 3px; color: var(--accent); }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-behavior: smooth;
+  }
+  #messages::-webkit-scrollbar { width: 5px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .msg {
+    display: flex;
+    gap: 10px;
+    max-width: 800px;
+  }
+  .msg.user { flex-direction: row-reverse; align-self: flex-end; }
+  .msg.ai { align-self: flex-start; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .msg.user .avatar { background: var(--user-bubble); }
+  .msg.ai .avatar { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+
+  .bubble {
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    max-width: 640px;
+    word-break: break-word;
+  }
+  .msg.user .bubble { background: var(--user-bubble); border-bottom-right-radius: 4px; }
+  .msg.ai .bubble { background: var(--ai-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+
+  .thinking {
+    display: flex; gap: 5px; align-items: center;
+    padding: 12px 14px;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    gap: 10px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 40px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+  .empty-state small { font-size: 12px; opacity: .7; }
+
+  /* ── Input bar ── */
+  .input-bar {
+    padding: 12px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  #userInput {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: var(--font);
+    resize: none;
+    max-height: 140px;
+    line-height: 1.5;
+    transition: border-color .2s;
+  }
+  #userInput:focus { outline: none; border-color: var(--accent); }
+  #userInput::placeholder { color: var(--muted); }
+
+  .btn-send {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: opacity .15s;
+  }
+  .btn-send:hover { opacity: .85; }
+  .btn-send:disabled { opacity: .4; cursor: not-allowed; }
+
+  .status-bar {
+    padding: 5px 16px 8px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+  }
+  .status-bar .tokens { color: var(--accent2); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity .25s;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { border-color: var(--danger); color: var(--danger); }
+  #toast.ok  { border-color: var(--success); color: var(--success); }
+
+  /* mobile */
+  @media(max-width: 640px) {
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤖</div>
+  <div>
+    <h1>AI চ্যাট সিস্টেম <span>by Claude</span></h1>
+  </div>
+  <div class="header-right">
+    <button class="btn-sm" onclick="clearChat()">🗑 চ্যাট মুছুন</button>
+    <button class="btn-sm" onclick="exportChat()">💾 এক্সপোর্ট</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">⚙ সিস্টেম মেসেজ</div>
+    <div class="system-area">
+      <textarea id="systemMsg" rows="8" placeholder="এখানে সিস্টেম মেসেজ লিখুন…&#10;&#10;উদাহরণ:&#10;তুমি একজন বাংলা ভাষার সহকারী। সহজ ও বন্ধুত্বপূর্ণভাবে উত্তর দাও।"></textarea>
+      <div class="sys-actions">
+        <button class="btn-apply" onclick="applySystem()">✓ প্রয়োগ করুন</button>
+        <button class="btn-clear-sys" onclick="clearSystem()">✕</button>
+      </div>
+    </div>
+
+    <div class="presets-label">📋 প্রিসেট</div>
+    <div class="presets" id="presets"></div>
+
+    <div class="model-select-wrap">
+      <label>মডেল</label>
+      <select id="modelSelect">
+        <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+      </select>
+    </div>
+    <div class="temp-wrap">
+      <label>তাপমাত্রা</label>
+      <input type="range" id="tempRange" min="0" max="1" step="0.05" value="0.7" oninput="document.getElementById('tempVal').textContent=this.value">
+      <span id="tempVal">0.7</span>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="sys-badge" id="sysBadge">
+      <strong>🛡 সক্রিয় সিস্টেম মেসেজ</strong>
+      <span id="sysBadgeText"></span>
+    </div>
+
+    <div id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">💬</div>
+        <p>কথোপকথন শুরু করুন</p>
+        <small>বাম পাশে সিস্টেম মেসেজ সেট করে AI-এর ব্যক্তিত্ব কাস্টমাইজ করুন</small>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span id="statusText">প্রস্তুত</span>
+      <span class="tokens" id="tokenCount"></span>
+    </div>
+
+    <div class="input-bar">
+      <textarea id="userInput" rows="1" placeholder="এখানে বার্তা লিখুন… (Enter = পাঠান, Shift+Enter = নতুন লাইন)"></textarea>
+      <button class="btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API_KEY = "AQ.Ab8RN6Kp1T99CCjQyupbJXJ2dnHbVPmqTisckXVLC-e1-Oyw0g";
+let history = [];
+let activeSystem = "";
+let totalTokens = 0;
+
+// ── Presets ──
+const PRESETS = [
+  { label: "🇧🇩 বাংলা সহকারী", sys: "তুমি একজন বাংলাদেশের বাংলা ভাষার বন্ধুত্বপূর্ণ সহকারী। সহজ ও পরিষ্কার বাংলায় উত্তর দাও।" },
+  { label: "👨‍💻 কোড বিশেষজ্ঞ",  sys: "You are an expert software engineer. Give concise, well-commented code with explanations. Prefer modern best practices." },
+  { label: "✍️ লেখক সহকারী", sys: "তুমি একজন দক্ষ লেখক। সৃজনশীল ও প্রাঞ্জল বাংলায় লিখতে সাহায্য করো।" },
+  { label: "📊 ব্যবসায়িক পরামর্শদাতা", sys: "You are a business consultant specializing in Bangladeshi e-commerce and retail. Give practical, actionable advice." },
+  { label: "🎓 শিক্ষা সহায়তা", sys: "তুমি একজন ধৈর্যশীল শিক্ষক। প্রতিটি বিষয় ধাপে ধাপে সহজভাবে বোঝাও।" },
+  { label: "🔄 কাস্টম (খালি)", sys: "" },
+];
+
+function renderPresets() {
+  const c = document.getElementById("presets");
+  PRESETS.forEach(p => {
+    const b = document.createElement("button");
+    b.className = "preset-btn";
+    b.textContent = p.label;
+    b.title = p.sys || "সিস্টেম মেসেজ মুছুন";
+    b.onclick = () => {
+      document.getElementById("systemMsg").value = p.sys;
+      applySystem();
+    };
+    c.appendChild(b);
+  });
+}
+
+// ── System ──
+function applySystem() {
+  const v = document.getElementById("systemMsg").value.trim();
+  activeSystem = v;
+  history = []; // reset on system change
+  const badge = document.getElementById("sysBadge");
+  if (v) {
+    document.getElementById("sysBadgeText").textContent = v.length > 120 ? v.slice(0, 120) + "…" : v;
+    badge.classList.add("visible");
+    toast("সিস্টেম মেসেজ প্রয়োগ হয়েছে ✓", "ok");
+  } else {
+    badge.classList.remove("visible");
+    toast("সিস্টেম মেসেজ সরানো হয়েছে", "ok");
+  }
+}
+
+function clearSystem() {
+  document.getElementById("systemMsg").value = "";
+  applySystem();
+}
+
+// ── Chat ──
+function addMessage(role, text) {
+  const empty = document.getElementById("emptyState");
+  if (empty) empty.remove();
+
+  const wrap = document.createElement("div");
+  wrap.className = `msg ${role === "user" ? "user" : "ai"}`;
+
+  const av = document.createElement("div");
+  av.className = "avatar";
+  av.textContent = role === "user" ? "👤" : "🤖";
+
+  const bub = document.createElement("div");
+  bub.className = "bubble";
+  bub.innerHTML = formatText(text);
+
+  wrap.appendChild(av);
+  wrap.appendChild(bub);
+  document.getElementById("messages").appendChild(wrap);
+  scrollDown();
+  return bub;
+}
+
+function addThinking() {
+  const wrap = document.createElement("div");
+  wrap.className = "msg ai";
+  wrap.id = "thinking";
+  wrap.innerHTML = `<div class="avatar">🤖</div><div class="bubble thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  document.getElementById("messages").appendChild(wrap);
+  scrollDown();
+}
+
+function removeThinking() {
+  const t = document.getElementById("thinking");
+  if (t) t.remove();
+}
+
+function scrollDown() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
+}
+
+function formatText(t) {
+  // minimal markdown: code blocks, bold, newlines
+  return t
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:#0f1117;border:1px solid #2e3350;border-radius:8px;padding:10px;overflow-x:auto;font-size:12px;margin:6px 0"><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g, '<code style="background:#0f1117;padding:2px 5px;border-radius:4px;font-size:13px">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  const inp = document.getElementById("userInput");
+  const text = inp.value.trim();
+  if (!text) return;
+
+  inp.value = "";
+  inp.style.height = "auto";
+  document.getElementById("sendBtn").disabled = true;
+  document.getElementById("statusText").textContent = "প্রেরণ করা হচ্ছে…";
+
+  addMessage("user", text);
+  history.push({ role: "user", content: text });
+  addThinking();
+
+  try {
+    const body = {
+      model: document.getElementById("modelSelect").value,
+      max_tokens: 1000,
+      temperature: parseFloat(document.getElementById("tempRange").value),
+      messages: history
+    };
+    if (activeSystem) body.system = activeSystem;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    removeThinking();
+
+    if (!res.ok) {
+      const msg = data?.error?.message || "অজানা ত্রুটি";
+      addMessage("ai", `❌ ত্রুটি: ${msg}`);
+      toast(msg, "err");
+      history.pop();
+    } else {
+      const reply = data.content.map(b => b.text || "").join("");
+      addMessage("ai", reply);
+      history.push({ role: "assistant", content: reply });
+      totalTokens += (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
+      document.getElementById("tokenCount").textContent = `টোকেন: ${totalTokens}`;
+      document.getElementById("statusText").textContent = "প্রস্তুত";
+    }
+  } catch (e) {
+    removeThinking();
+    addMessage("ai", `❌ নেটওয়ার্ক সমস্যা: ${e.message}`);
+    toast(e.message, "err");
+    history.pop();
+  }
+
+  document.getElementById("sendBtn").disabled = false;
+}
+
+function clearChat() {
+  history = [];
+  totalTokens = 0;
+  document.getElementById("tokenCount").textContent = "";
+  document.getElementById("statusText").textContent = "প্রস্তুত";
+  document.getElementById("messages").innerHTML = `<div class="empty-state" id="emptyState"><div class="empty-icon">💬</div><p>কথোপকথন শুরু করুন</p><small>বাম পাশে সিস্টেম মেসেজ সেট করে AI-এর ব্যক্তিত্ব কাস্টমাইজ করুন</small></div>`;
+  toast("চ্যাট মুছে ফেলা হয়েছে", "ok");
+}
+
+function exportChat() {
+  if (!history.length) { toast("কোনো বার্তা নেই", "err"); return; }
+  let out = activeSystem ? `[সিস্টেম মেসেজ]\n${activeSystem}\n\n` : "";
+  history.forEach(h => { out += `[${h.role === "user" ? "আপনি" : "AI"}]\n${h.content}\n\n`; });
+  const a = document.createElement("a");
+  a.href = "data:text/plain;charset=utf-8," + encodeURIComponent(out);
+  a.download = `chat-${Date.now()}.txt`;
+  a.click();
+  toast("ফাইল সেভ হয়েছে ✓", "ok");
+}
+
+// ── Auto-resize textarea ──
+document.getElementById("userInput").addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 140) + "px";
+});
+document.getElementById("userInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ── Toast ──
+function toast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.className = "", 2800);
+}
+
+// ── Init ──
+renderPresets();
+</script>
+</body>
+</html>
