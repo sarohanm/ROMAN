@@ -268,29 +268,36 @@
         </p>
       </div>
       <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
-        <p class="hint">দেশ যোগ/মুছুন, প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন, এবং "ভিসা ব্যবস্থাপনা" টাইপ বেছে নিয়ে সেই দেশের ভিসার ধরনও এখান থেকেই যোগ করুন। নিচে যেকোনো দেশের নামে ক্লিক করলে সেই দেশের ফিল্ড ও ভিসার ধরনগুলো দেখা যাবে।</p>
-
-        <div id="countryList" style="margin:12px 0;"></div>
-
-        <div class="formGrid" style="margin-top:12px;">
-          <div class="flex" style="gap:6px;">
-            <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)" style="flex:1;">
-            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsCountryPanel()">
+          <h3 style="margin:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
+          <span id="chev-settingsCountryPanel">▾</span>
+        </div>
+        <div id="settingsCountryPanel" style="display:none;">
+          <div id="countryListPanel">
+            <div id="countryList" style="margin:12px 0;"></div>
           </div>
-          <select id="cfType" onchange="toggleCfOptions()">
-            <option value="text">টেক্সট</option>
-            <option value="number">নাম্বার</option>
-            <option value="date">ডেট</option>
-            <option value="dropdown">ড্রপডাউন</option>
-            <option value="description">ডিসক্রিপশন</option>
-            <option value="visa">ভিসা ব্যবস্থাপনা</option>
-          </select>
-          <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
-          <select id="cfCountry" onchange="handleCfCountryChange(this)">
-            <option value="">সকল দেশের জন্য প্রযোজ্য</option>
-            <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
-          </select>
+
+          <div class="formGrid" style="margin-top:12px;">
+            <select id="cfType" onchange="toggleCfOptions()">
+              <option value="text">টেক্সট</option>
+              <option value="number">নাম্বার</option>
+              <option value="date">ডেট</option>
+              <option value="dropdown">ড্রপডাউন</option>
+              <option value="description">ডিসক্রিপশন</option>
+              <option value="visa">ভিসা ব্যবস্থাপনা</option>
+            </select>
+            <select id="cfCountry" onchange="handleCfCountryChange(this)">
+              <option value="">সকল দেশের জন্য প্রযোজ্য</option>
+              <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
+            </select>
+            <div class="flex" id="cfLabelRow" style="gap:6px;">
+              <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)" style="flex:1;">
+              <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+            </div>
+            <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
+            <textarea id="cfVisaText" rows="4" style="display:none;width:100%;" placeholder="প্রতি লাইনে একটা ভিসার ধরন লিখুন (Enter চেপে নতুন লাইন)"></textarea>
+            <button type="button" class="btn small" id="cfVisaAddBtn" style="display:none;" onclick="addCustomField()">ভিসা যোগ করুন</button>
+          </div>
         </div>
       </div>
     </div>
@@ -719,6 +726,24 @@ function renderCountrySelects(){
   renderCountryList();
 }
 
+function toggleSettingsCountryPanel(){
+  const el = document.getElementById('settingsCountryPanel');
+  const chev = document.getElementById('chev-settingsCountryPanel');
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+}
+
+function toggleCountryListPanel(){
+  const el = document.getElementById('countryListPanel');
+  const chev = document.getElementById('chev-countryListPanel');
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+}
+
 function renderCountryList(){
   const container = document.getElementById('countryList');
   if(!container) return;
@@ -866,16 +891,12 @@ function closeAddUserModal(){
 }
 function toggleCfOptions(){
   const type = document.getElementById('cfType').value;
-  const optionsInput = document.getElementById('cfOptions');
-  const labelInput = document.getElementById('cfLabel');
-  optionsInput.style.display = (type === 'dropdown' || type === 'visa') ? '' : 'none';
-  if(type === 'visa'){
-    optionsInput.placeholder = 'ভিসার ধরন, কমা দিয়ে আলাদা (যেমন: ফ্রি ভিসা, কোম্পানি ভিসা)';
-    labelInput.placeholder = 'ফিল্ডের নাম (ভিসার জন্য প্রয়োজন নেই)';
-  } else {
-    optionsInput.placeholder = 'অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)';
-    labelInput.placeholder = 'ফিল্ডের নাম (যেমন: স্পন্সর আইডি)';
-  }
+  const isDropdown = type === 'dropdown';
+  const isVisa = type === 'visa';
+  document.getElementById('cfOptions').style.display = isDropdown ? '' : 'none';
+  document.getElementById('cfVisaText').style.display = isVisa ? '' : 'none';
+  document.getElementById('cfVisaAddBtn').style.display = isVisa ? '' : 'none';
+  document.getElementById('cfLabelRow').style.display = isVisa ? 'none' : '';
 }
 
 function addCustomField(){
@@ -885,16 +906,15 @@ function addCustomField(){
 
   if(type === 'visa'){
     if(!country){ alert('ভিসার ধরন যোগ করতে একটা নির্দিষ্ট দেশ নির্বাচন করুন (সকল দেশের জন্য প্রযোজ্য দিয়ে হবে না)।'); return; }
-    const visaNames = document.getElementById('cfOptions').value.split(',').map(s => s.trim()).filter(Boolean);
-    if(!visaNames.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (একাধিক হলে কমা দিয়ে আলাদা করুন)।'); return; }
+    const visaNames = document.getElementById('cfVisaText').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if(!visaNames.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (প্রতি লাইনে একটা করে)।'); return; }
     const updates = {};
     visaNames.forEach(name => {
       const key = db.ref('visa_types').push().key;
       updates[key] = { country, name, created_at: Date.now() };
     });
     db.ref('visa_types').update(updates).then(() => {
-      document.getElementById('cfLabel').value = '';
-      document.getElementById('cfOptions').value = '';
+      document.getElementById('cfVisaText').value = '';
       document.getElementById('cfType').value = 'text';
       document.getElementById('cfCountry').value = '';
       toggleCfOptions();
