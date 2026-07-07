@@ -263,15 +263,10 @@
         </p>
       </div>
       <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">দেশ ব্যবস্থাপনা</h3>
-        <p class="hint">এখানে যোগ করা দেশগুলো দেখুন এবং প্রয়োজনে মুছে ফেলুন।</p>
-        <div id="countryList" style="margin:12px 0;"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">কাস্টম ফিল্ড তৈরি করুন</h3>
-        <p class="hint">প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)।</p>
+        <h3 style="margin-top:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
+        <p class="hint">দেশ যোগ/মুছুন এবং প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)। নিচে যেকোনো দেশের নামে ক্লিক করলে সেই দেশের ফিল্ডগুলো দেখা যাবে।</p>
 
-        <div id="customFieldList" style="margin:12px 0;"></div>
+        <div id="countryList" style="margin:12px 0;"></div>
 
         <div class="formGrid" style="margin-top:12px;">
           <div class="flex" style="gap:6px;">
@@ -721,15 +716,47 @@ function renderCountryList(){
   const container = document.getElementById('countryList');
   if(!container) return;
   const entries = Object.entries(countries).sort((a,b) => a[1].localeCompare(b[1], 'bn'));
-  if(!entries.length){
-    container.innerHTML = '<p class="hint">এখনো কোনো দেশ যোগ করা হয়নি।</p>';
-    return;
-  }
-  container.innerHTML = entries.map(([id, name]) => `
-    <div class="fieldRow">
-      <div>🌍 ${name}</div>
-      <button class="del" onclick="deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>
-    </div>`).join('');
+
+  const allFields = Object.entries(customFields).filter(([fid, f]) => !f.country);
+  let html = renderCountryAccordionRow('__all__', 'সকল দেশ', allFields, false);
+
+  html += entries.map(([id, name]) => {
+    const fields = Object.entries(customFields).filter(([fid, f]) => f.country === name);
+    return renderCountryAccordionRow(id, name, fields, true);
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+function renderCountryAccordionRow(id, name, fields, deletable){
+  const label = deletable ? ('🌍 ' + name) : name;
+  const delBtn = deletable
+    ? `<button class="del" onclick="event.stopPropagation(); deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>`
+    : '';
+  const fieldsHtml = fields.length
+    ? fields.map(([fid, f]) => `
+        <div class="fieldRow" style="margin-left:14px;background:#f8f9fb;">
+          <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
+          <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
+        </div>`).join('')
+    : '<p class="hint" style="margin-left:14px;">এই দেশের জন্য কোনো কাস্টম ফিল্ড নেই।</p>';
+  return `
+    <div class="countryAccordion">
+      <div class="fieldRow" style="cursor:pointer;" onclick="toggleCountryFields('${id}')">
+        <div>${label}</div>
+        <div style="display:flex;align-items:center;gap:10px;">${delBtn}<span id="chev-${id}">▾</span></div>
+      </div>
+      <div id="fields-${id}" style="display:none;margin:6px 0 10px;">${fieldsHtml}</div>
+    </div>`;
+}
+
+function toggleCountryFields(id){
+  const el = document.getElementById('fields-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.textContent = isOpen ? '▾' : '▴';
 }
 
 function deleteCountry(id, name){
@@ -770,7 +797,7 @@ let customFields = {};
 function loadCustomFields(){
   db.ref('custom_fields').on('value', snap => {
     customFields = snap.val() || {};
-    renderFieldBuilderList();
+    renderCountryList();
     renderCustomFieldInputs();
   });
 }
@@ -813,35 +840,6 @@ function deleteCustomField(fid){
 }
 
 const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন', description:'ডিসক্রিপশন' };
-
-function renderFieldBuilderList(){
-  const container = document.getElementById('customFieldList');
-  const entries = Object.entries(customFields);
-  if(!entries.length){
-    container.innerHTML = '<p class="hint">এখনো কোনো কাস্টম ফিল্ড তৈরি হয়নি।</p>';
-    return;
-  }
-  const groups = {};
-  entries.forEach(([fid, f]) => {
-    const key = f.country || '__all__';
-    if(!groups[key]) groups[key] = [];
-    groups[key].push([fid, f]);
-  });
-  const groupKeys = Object.keys(groups).sort((a, b) => {
-    if(a === '__all__') return -1;
-    if(b === '__all__') return 1;
-    return a.localeCompare(b, 'bn');
-  });
-  container.innerHTML = groupKeys.map(key => {
-    const label = key === '__all__' ? 'সকল দেশ' : ('🌍 ' + key);
-    const rows = groups[key].map(([fid, f]) => `
-      <div class="fieldRow">
-        <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
-        <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
-      </div>`).join('');
-    return `<p class="hint" style="margin:10px 0 4px;font-weight:700;color:#1c2733;">${label}</p>${rows}`;
-  }).join('');
-}
 
 function renderCustomFieldInputs(){
   const wrap = document.getElementById('customFieldsWrap');
