@@ -212,7 +212,7 @@
       <div class="topbar"><h1>ভিসার তথ্য</h1></div>
       <div class="card">
         <h3 style="margin-top:0;font-size:14px;">দেশ অনুযায়ী ভিসার ধরন</h3>
-        <p class="hint">এই এজেন্সির কাছে কোন কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে দেখা যাবে। নতুন ভিসার ধরন যোগ/মুছার জন্য সেটিংসে যান।</p>
+        <p class="hint">এই এজেন্সির কাছে কোন কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে দেখা যাবে। নতুন ভিসার ধরন যোগ করতে সেটিংসে গিয়ে "কাস্টম ফিল্ড তৈরি করুন" থেকে "ভিসা ব্যবস্থাপনা" টাইপ বেছে নিন।</p>
         <div id="visaInfoList" style="margin-top:12px;"></div>
       </div>
     </div>
@@ -252,21 +252,6 @@
         </table>
       </div>
       <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">ভিসার ধরন ব্যবস্থাপনা</h3>
-        <p class="hint">কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে যোগ করুন। এটা "ভিসার তথ্য" ট্যাবে দেখা যাবে।</p>
-        <div class="formGrid">
-          <select id="visaCountry" onchange="handleVisaCountryChange(this)">
-            <option value="">দেশ নির্বাচন করুন</option>
-            <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
-          </select>
-          <div class="flex" style="gap:6px;">
-            <input id="visaName" placeholder="ভিসার ধরন (যেমন: ফ্রি ভিসা, কোম্পানি ভিসা)" style="flex:1;">
-            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addVisaType()">যোগ করুন</button>
-          </div>
-        </div>
-        <div id="visaManageList" style="margin-top:12px;"></div>
-      </div>
-      <div class="card">
         <h3 style="margin-top:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
         <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
         <input id="waWebhook" placeholder="WhatsApp send webhook URL" style="width:100%;margin-bottom:8px;">
@@ -284,7 +269,7 @@
       </div>
       <div class="card">
         <h3 style="margin-top:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
-        <p class="hint">দেশ যোগ/মুছুন এবং প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)। নিচে যেকোনো দেশের নামে ক্লিক করলে সেই দেশের ফিল্ডগুলো দেখা যাবে।</p>
+        <p class="hint">দেশ যোগ/মুছুন, প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন, এবং "ভিসা ব্যবস্থাপনা" টাইপ বেছে নিয়ে সেই দেশের ভিসার ধরনও এখান থেকেই যোগ করুন। নিচে যেকোনো দেশের নামে ক্লিক করলে সেই দেশের ফিল্ড ও ভিসার ধরনগুলো দেখা যাবে।</p>
 
         <div id="countryList" style="margin:12px 0;"></div>
 
@@ -299,6 +284,7 @@
             <option value="date">ডেট</option>
             <option value="dropdown">ড্রপডাউন</option>
             <option value="description">ডিসক্রিপশন</option>
+            <option value="visa">ভিসা ব্যবস্থাপনা</option>
           </select>
           <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
           <select id="cfCountry" onchange="handleCfCountryChange(this)">
@@ -730,12 +716,6 @@ function renderCountrySelects(){
     cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
     cfSel.value = current;
   }
-  const visaSel = document.getElementById('visaCountry');
-  if(visaSel){
-    const current = visaSel.value;
-    visaSel.innerHTML = '<option value="">দেশ নির্বাচন করুন</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
-    visaSel.value = current;
-  }
   renderCountryList();
 }
 
@@ -745,20 +725,29 @@ function renderCountryList(){
   const entries = Object.entries(countries).sort((a,b) => a[1].localeCompare(b[1], 'bn'));
 
   const allFields = Object.entries(customFields).filter(([fid, f]) => !f.country);
-  let html = renderCountryAccordionRow('__all__', 'সকল দেশ', allFields, false);
+  let html = renderCountryAccordionRow('__all__', 'সকল দেশ', allFields, [], false);
 
   html += entries.map(([id, name]) => {
     const fields = Object.entries(customFields).filter(([fid, f]) => f.country === name);
-    return renderCountryAccordionRow(id, name, fields, true);
+    const visas = Object.entries(visaTypes).filter(([vid, v]) => v.country === name);
+    return renderCountryAccordionRow(id, name, fields, visas, true);
   }).join('');
 
   container.innerHTML = html;
 }
 
-function renderCountryAccordionRow(id, name, fields, deletable){
+function renderCountryAccordionRow(id, name, fields, visas, deletable){
   const label = deletable ? ('🌍 ' + name) : name;
   const delBtn = deletable
     ? `<button class="del" onclick="event.stopPropagation(); deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>`
+    : '';
+  const visaHtml = visas.length
+    ? `<div style="margin-left:14px;margin-bottom:10px;">
+        <p class="hint" style="margin:0 0 6px;font-weight:700;color:#1c2733;">ভিসার ধরন</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          ${visas.map(([vid, v]) => `<span style="background:#f0f3f7;border:1px solid var(--border);border-radius:20px;padding:4px 8px 4px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">${v.name}<button onclick="deleteVisaType('${vid}')" style="border:none;background:none;color:var(--fail);cursor:pointer;font-weight:700;font-size:13px;line-height:1;">×</button></span>`).join('')}
+        </div>
+      </div>`
     : '';
   const fieldsHtml = fields.length
     ? fields.map(([fid, f]) => `
@@ -773,7 +762,7 @@ function renderCountryAccordionRow(id, name, fields, deletable){
         <div>${label}</div>
         <div style="display:flex;align-items:center;gap:10px;">${delBtn}<span id="chev-${id}">▾</span></div>
       </div>
-      <div id="fields-${id}" style="display:none;margin:6px 0 10px;">${fieldsHtml}</div>
+      <div id="fields-${id}" style="display:none;margin:6px 0 10px;">${visaHtml}${fieldsHtml}</div>
     </div>`;
 }
 
@@ -802,49 +791,15 @@ let visaTypes = {};
 function loadVisaTypes(){
   db.ref('visa_types').on('value', snap => {
     visaTypes = snap.val() || {};
-    renderVisaManageList();
+    renderCountryList();
     renderVisaInfoList();
   });
-}
-
-function addVisaType(){
-  const country = document.getElementById('visaCountry').value;
-  const name = document.getElementById('visaName').value.trim();
-  if(!country){ alert('দেশ নির্বাচন করুন'); return; }
-  if(!name){ alert('ভিসার ধরনের নাম দিন'); return; }
-  db.ref('visa_types').push({ country, name, created_at: Date.now() }).then(() => {
-    document.getElementById('visaName').value = '';
-  }).catch(err => { alert('ভিসা যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
 }
 
 function deleteVisaType(vid){
   if(!confirm('এই ভিসার ধরনটা মুছে ফেলতে চান?')) return;
   db.ref('visa_types/' + vid).remove()
     .catch(err => { alert('ভিসা ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
-}
-
-function renderVisaManageList(){
-  const container = document.getElementById('visaManageList');
-  if(!container) return;
-  const entries = Object.entries(visaTypes);
-  if(!entries.length){
-    container.innerHTML = '<p class="hint">এখনো কোনো ভিসার ধরন যোগ করা হয়নি।</p>';
-    return;
-  }
-  const groups = {};
-  entries.forEach(([vid, v]) => {
-    if(!groups[v.country]) groups[v.country] = [];
-    groups[v.country].push([vid, v]);
-  });
-  const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
-  container.innerHTML = countryNames.map(country => {
-    const rows = groups[country].map(([vid, v]) => `
-      <div class="fieldRow">
-        <div>${v.name}</div>
-        <button class="del" onclick="deleteVisaType('${vid}')">মুছুন</button>
-      </div>`).join('');
-    return `<p class="hint" style="margin:10px 0 4px;font-weight:700;color:#1c2733;">🌍 ${country}</p>${rows}`;
-  }).join('');
 }
 
 function renderVisaInfoList(){
@@ -874,15 +829,6 @@ function handleCfCountryChange(sel){
   if(sel.value === '__add__'){
     sel.value = sel.dataset.prev || '';
     addCountry('cfCountry');
-  } else {
-    sel.dataset.prev = sel.value;
-  }
-}
-
-function handleVisaCountryChange(sel){
-  if(sel.value === '__add__'){
-    sel.value = sel.dataset.prev || '';
-    addCountry('visaCountry');
   } else {
     sel.dataset.prev = sel.value;
   }
@@ -920,13 +866,42 @@ function closeAddUserModal(){
 }
 function toggleCfOptions(){
   const type = document.getElementById('cfType').value;
-  document.getElementById('cfOptions').style.display = (type === 'dropdown') ? '' : 'none';
+  const optionsInput = document.getElementById('cfOptions');
+  const labelInput = document.getElementById('cfLabel');
+  optionsInput.style.display = (type === 'dropdown' || type === 'visa') ? '' : 'none';
+  if(type === 'visa'){
+    optionsInput.placeholder = 'ভিসার ধরন, কমা দিয়ে আলাদা (যেমন: ফ্রি ভিসা, কোম্পানি ভিসা)';
+    labelInput.placeholder = 'ফিল্ডের নাম (ভিসার জন্য প্রয়োজন নেই)';
+  } else {
+    optionsInput.placeholder = 'অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)';
+    labelInput.placeholder = 'ফিল্ডের নাম (যেমন: স্পন্সর আইডি)';
+  }
 }
 
 function addCustomField(){
   const label = document.getElementById('cfLabel').value.trim();
   const type = document.getElementById('cfType').value;
   const country = document.getElementById('cfCountry').value;
+
+  if(type === 'visa'){
+    if(!country){ alert('ভিসার ধরন যোগ করতে একটা নির্দিষ্ট দেশ নির্বাচন করুন (সকল দেশের জন্য প্রযোজ্য দিয়ে হবে না)।'); return; }
+    const visaNames = document.getElementById('cfOptions').value.split(',').map(s => s.trim()).filter(Boolean);
+    if(!visaNames.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (একাধিক হলে কমা দিয়ে আলাদা করুন)।'); return; }
+    const updates = {};
+    visaNames.forEach(name => {
+      const key = db.ref('visa_types').push().key;
+      updates[key] = { country, name, created_at: Date.now() };
+    });
+    db.ref('visa_types').update(updates).then(() => {
+      document.getElementById('cfLabel').value = '';
+      document.getElementById('cfOptions').value = '';
+      document.getElementById('cfType').value = 'text';
+      document.getElementById('cfCountry').value = '';
+      toggleCfOptions();
+    }).catch(err => { alert('ভিসা যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
+    return;
+  }
+
   if(!label){ alert('ফিল্ডের নাম দিন'); return; }
   const field = { label, type, country, created_at: Date.now() };
   if(type === 'dropdown'){
@@ -949,7 +924,7 @@ function deleteCustomField(fid){
     .catch(err => { alert('ফিল্ড ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
 }
 
-const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন', description:'ডিসক্রিপশন' };
+const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন', description:'ডিসক্রিপশন', visa:'ভিসা ব্যবস্থাপনা' };
 
 function renderCustomFieldInputs(){
   const wrap = document.getElementById('customFieldsWrap');
