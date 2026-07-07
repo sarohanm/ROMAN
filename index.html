@@ -198,28 +198,10 @@
 
     <!-- USERS TAB -->
     <div class="panel" id="panel-users">
-      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openFieldBuilder()" title="কাস্টম ফিল্ড তৈরি করুন">+</button></div>
-      <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">নতুন ইউজার যোগ করুন</h3>
-        <div class="formGrid">
-          <input id="uName" placeholder="পূর্ণ নাম">
-          <input id="uPhone" placeholder="ফোন নম্বর">
-          <input id="uEmail" placeholder="ইমেইল (ঐচ্ছিক)">
-          <input id="uPassport" placeholder="পাসপোর্ট নম্বর">
-        </div>
-        <p class="hint">আর্থিক হিসাব (ঐচ্ছিক — পরে জার্নি ট্যাব থেকেও আপডেট করা যাবে)</p>
-        <div class="formGrid">
-          <input id="uFee" type="number" placeholder="এজেন্সি ফি / আয় (৳)">
-          <input id="uMedCost" type="number" placeholder="মেডিকেল খরচ (৳)">
-          <input id="uVisaCost" type="number" placeholder="ভিসা খরচ (৳)">
-          <input id="uFlightCost" type="number" placeholder="ফ্লাইট খরচ (৳)">
-        </div>
-        <div id="customFieldsWrap"></div>
-        <button class="btn small" onclick="addUser()">যোগ করুন</button>
-      </div>
+      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন">+</button></div>
       <div class="card">
         <table>
-          <thead><tr><th>নাম</th><th>ফোন</th><th>পাসপোর্ট</th><th>ডকুমেন্ট স্ট্যাটাস</th><th></th></tr></thead>
+          <thead><tr><th>নাম</th><th>ফোন</th><th>দেশ</th><th>পাসপোর্ট</th><th>ডকুমেন্ট স্ট্যাটাস</th><th></th></tr></thead>
           <tbody id="userRows"></tbody>
         </table>
       </div>
@@ -280,30 +262,49 @@
           ২) cron-job.org থেকে প্রতি ১৫ মিনিটে একটা HTTPS endpoint কল করান যা flights চেক করে notifications/ এ এন্ট্রি লিখবে।
         </p>
       </div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">কাস্টম ফিল্ড তৈরি করুন</h3>
+        <p class="hint">প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)।</p>
+
+        <div id="customFieldList" style="margin:12px 0;"></div>
+
+        <div class="formGrid" style="margin-top:12px;">
+          <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)">
+          <select id="cfType" onchange="toggleCfOptions()">
+            <option value="text">টেক্সট</option>
+            <option value="number">নাম্বার</option>
+            <option value="date">ডেট</option>
+            <option value="dropdown">ড্রপডাউন</option>
+            <option value="description">ডিসক্রিপশন</option>
+          </select>
+          <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
+          <div class="flex" style="gap:6px;">
+            <select id="cfCountry" style="flex:1;">
+              <option value="">সকল দেশের জন্য প্রযোজ্য</option>
+            </select>
+            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCountry('cfCountry')">+ দেশ</button>
+          </div>
+        </div>
+        <button class="btn small" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+      </div>
     </div>
 
   </div>
 
-  <!-- CUSTOM FIELD BUILDER MODAL -->
-  <div class="modalOverlay" id="fieldBuilderModal">
+  <!-- ADD USER MODAL -->
+  <div class="modalOverlay" id="addUserModal">
     <div class="modalBox">
-      <button class="close-x" onclick="closeFieldBuilder()">✕</button>
-      <h3>কাস্টম ফিল্ড তৈরি করুন</h3>
-      <p class="hint">প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)।</p>
-
-      <div id="customFieldList" style="margin:12px 0;"></div>
-
-      <div class="formGrid" style="margin-top:12px;">
-        <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)">
-        <select id="cfType" onchange="toggleCfOptions()">
-          <option value="text">টেক্সট</option>
-          <option value="number">নাম্বার</option>
-          <option value="date">ডেট</option>
-          <option value="dropdown">ড্রপডাউন</option>
-        </select>
-        <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
+      <button class="close-x" onclick="closeAddUserModal()">✕</button>
+      <h3 style="margin-top:0;">নতুন ইউজার যোগ করুন</h3>
+      <div class="formGrid">
+        <div class="flex" style="gap:6px;">
+          <select id="uCountry" style="flex:1;" onchange="renderCustomFieldInputs()">
+            <option value="">দেশ নির্বাচন করুন</option>
+          </select>
+          <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addUser()">যোগ করুন</button>
+        </div>
       </div>
-      <button class="btn small" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+      <div id="customFieldsWrap"></div>
     </div>
   </div>
 
@@ -470,6 +471,7 @@ async function enterApp(){
   }
   loadJourneys();
   loadUsers();
+  loadCountries();
   loadCustomFields();
   loadTemplates();
   loadLogs();
@@ -509,9 +511,9 @@ function loadJourneys(){
         const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
         const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
         return `<tr>
-          <td data-label="নাম">${u.full_name || '-'}</td>
-          <td data-label="ফোন">${u.phone || '-'}</td>
-          <td data-label="পাসপোর্ট">${u.passport_no || '-'}</td>
+          <td data-label="নাম">${getUserName(u)}</td>
+          <td data-label="ফোন">${getUserPhone(u)}</td>
+          <td data-label="পাসপোর্ট">${getUserPassport(u)}</td>
           <td data-label="বর্তমান স্টেজ"><span class="stagePill">${STAGE_LABEL[j.current_stage] || j.current_stage}</span></td>
           <td data-label="ফ্লাইট">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</td>
           <td data-label="আয়/খরচ (৳)">
@@ -590,17 +592,22 @@ async function queueNotification(journeyId, stage){
 }
 
 /* ================= USERS ================= */
-function addUser(){
-  const full_name = document.getElementById('uName').value.trim();
-  const phone = document.getElementById('uPhone').value.trim();
-  const email = document.getElementById('uEmail').value.trim();
-  const passport_no = document.getElementById('uPassport').value.trim();
-  if(!full_name || !phone){ alert('নাম ও ফোন আবশ্যক'); return; }
+function getUserField(u, directKey, keywords){
+  if(u && u[directKey]) return u[directKey];
+  const cd = (u && u.custom_data) || {};
+  for(const [fid, val] of Object.entries(cd)){
+    const f = customFields[fid];
+    if(f && f.label && keywords.some(k => f.label.toLowerCase().includes(k)) && val) return val;
+  }
+  return '';
+}
+function getUserName(u){ return getUserField(u, 'full_name', ['নাম','name']) || '-'; }
+function getUserPhone(u){ return getUserField(u, 'phone', ['ফোন','phone','মোবাইল','mobile']) || '-'; }
+function getUserPassport(u){ return getUserField(u, 'passport_no', ['পাসপোর্ট','passport']) || '-'; }
 
-  const agency_fee = parseFloat(document.getElementById('uFee').value) || 0;
-  const cost_medical = parseFloat(document.getElementById('uMedCost').value) || 0;
-  const cost_visa = parseFloat(document.getElementById('uVisaCost').value) || 0;
-  const cost_flight = parseFloat(document.getElementById('uFlightCost').value) || 0;
+function addUser(){
+  const country = document.getElementById('uCountry').value;
+  if(!country){ alert('দেশ নির্বাচন করুন'); return; }
 
   const custom_data = {};
   Object.entries(customFields).forEach(([fid, f]) => {
@@ -609,24 +616,20 @@ function addUser(){
   });
 
   const userRef = db.ref('users').push();
-  userRef.set({ full_name, phone, email, passport_no, doc_status: {}, custom_data, created_at: Date.now() })
+  userRef.set({ country, doc_status: {}, custom_data, created_at: Date.now() })
     .then(() => {
       db.ref('journeys').push({
         user_id: userRef.key, current_stage: 'DOC_COLLECTED', updated_at: Date.now(),
-        agency_fee, cost_medical, cost_visa, cost_flight
+        agency_fee: 0, cost_medical: 0, cost_visa: 0, cost_flight: 0
       });
-      document.getElementById('uName').value = '';
-      document.getElementById('uPhone').value = '';
-      document.getElementById('uEmail').value = '';
-      document.getElementById('uPassport').value = '';
-      document.getElementById('uFee').value = '';
-      document.getElementById('uMedCost').value = '';
-      document.getElementById('uVisaCost').value = '';
-      document.getElementById('uFlightCost').value = '';
+      document.getElementById('uCountry').value = '';
       Object.keys(customFields).forEach(fid => {
         const el = document.getElementById('cf-' + fid);
         if(el) el.value = '';
       });
+      renderCustomFieldInputs();
+      closeAddUserModal();
+      alert('ইউজার সফলভাবে যোগ হয়েছে!');
     })
     .catch(err => {
       alert('ইউজার সেভ করতে ব্যর্থ: ' + err.message);
@@ -639,16 +642,17 @@ function loadUsers(){
     const users = snap.val() || {};
     const rows = Object.entries(users).map(([uid, u]) => `
       <tr>
-        <td data-label="নাম">${u.full_name}</td>
-        <td data-label="ফোন">${u.phone}</td>
-        <td data-label="পাসপোর্ট">${u.passport_no || '-'}</td>
+        <td data-label="নাম">${getUserName(u)}</td>
+        <td data-label="ফোন">${getUserPhone(u)}</td>
+        <td data-label="দেশ">${u.country || '-'}</td>
+        <td data-label="পাসপোর্ট">${getUserPassport(u)}</td>
         <td data-label="ডকুমেন্ট স্ট্যাটাস">${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</td>
         <td data-label="">
           <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
           <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
         </td>
       </tr>`).join('');
-    document.getElementById('userRows').innerHTML = rows || '<tr><td colspan="5" class="hint">কোনো ইউজার নেই</td></tr>';
+    document.getElementById('userRows').innerHTML = rows || '<tr><td colspan="6" class="hint">কোনো ইউজার নেই</td></tr>';
     window._usersCache = users;
   });
 }
@@ -670,6 +674,56 @@ function deleteUser(uid){
     });
 }
 
+/* ================= COUNTRIES ================= */
+let countries = {};
+const DEFAULT_COUNTRIES = ['সৌদি আরব','সংযুক্ত আরব আমিরাত (দুবাই)','কাতার','ওমান','কুয়েত','বাহরাইন','মালয়েশিয়া','সিঙ্গাপুর'];
+
+function loadCountries(){
+  db.ref('countries').on('value', snap => {
+    countries = snap.val() || {};
+    if(Object.keys(countries).length === 0){
+      // প্রথমবার — ডিফল্ট দেশগুলো সেভ করে দাও
+      const seed = {};
+      DEFAULT_COUNTRIES.forEach(name => { seed[db.ref('countries').push().key] = name; });
+      db.ref('countries').set(seed).catch(err => console.error('seed countries error:', err));
+      return; // পরের 'value' ইভেন্টেই রেন্ডার হবে
+    }
+    renderCountrySelects();
+  });
+}
+
+function renderCountrySelects(){
+  const opts = Object.entries(countries)
+    .sort((a,b) => a[1].localeCompare(b[1], 'bn'))
+    .map(([id, name]) => `<option value="${name}">${name}</option>`).join('');
+
+  const uSel = document.getElementById('uCountry');
+  if(uSel){
+    const current = uSel.value;
+    uSel.innerHTML = '<option value="">দেশ নির্বাচন করুন</option>' + opts;
+    uSel.value = current;
+  }
+  const cfSel = document.getElementById('cfCountry');
+  if(cfSel){
+    const current = cfSel.value;
+    cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts;
+    cfSel.value = current;
+  }
+}
+
+function addCountry(targetId){
+  targetId = targetId || 'uCountry';
+  const name = prompt('নতুন দেশের নাম লিখুন:');
+  if(!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if(Object.values(countries).includes(trimmed)){ alert('এই দেশটা ইতিমধ্যে তালিকায় আছে।'); return; }
+  db.ref('countries').push(trimmed).then(ref => {
+    const target = document.getElementById(targetId);
+    if(target) target.value = trimmed;
+    if(targetId === 'uCountry') renderCustomFieldInputs();
+  }).catch(err => { alert('দেশ যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
+}
+
 /* ================= CUSTOM FIELDS (FORM BUILDER) ================= */
 let customFields = {};
 
@@ -681,11 +735,11 @@ function loadCustomFields(){
   });
 }
 
-function openFieldBuilder(){
-  document.getElementById('fieldBuilderModal').classList.add('active');
+function openAddUserModal(){
+  document.getElementById('addUserModal').classList.add('active');
 }
-function closeFieldBuilder(){
-  document.getElementById('fieldBuilderModal').classList.remove('active');
+function closeAddUserModal(){
+  document.getElementById('addUserModal').classList.remove('active');
 }
 function toggleCfOptions(){
   const type = document.getElementById('cfType').value;
@@ -695,8 +749,9 @@ function toggleCfOptions(){
 function addCustomField(){
   const label = document.getElementById('cfLabel').value.trim();
   const type = document.getElementById('cfType').value;
+  const country = document.getElementById('cfCountry').value;
   if(!label){ alert('ফিল্ডের নাম দিন'); return; }
-  const field = { label, type, created_at: Date.now() };
+  const field = { label, type, country, created_at: Date.now() };
   if(type === 'dropdown'){
     const options = document.getElementById('cfOptions').value.split(',').map(s => s.trim()).filter(Boolean);
     if(options.length < 2){ alert('ড্রপডাউনের জন্য অন্তত ২টা অপশন কমা দিয়ে দিন'); return; }
@@ -706,6 +761,7 @@ function addCustomField(){
     document.getElementById('cfLabel').value = '';
     document.getElementById('cfOptions').value = '';
     document.getElementById('cfType').value = 'text';
+    document.getElementById('cfCountry').value = '';
     toggleCfOptions();
   }).catch(err => { alert('ফিল্ড সেভ ব্যর্থ: ' + err.message); console.error(err); });
 }
@@ -716,7 +772,7 @@ function deleteCustomField(fid){
     .catch(err => { alert('ফিল্ড ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
 }
 
-const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন' };
+const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন', description:'ডিসক্রিপশন' };
 
 function renderFieldBuilderList(){
   const container = document.getElementById('customFieldList');
@@ -727,20 +783,24 @@ function renderFieldBuilderList(){
   }
   container.innerHTML = entries.map(([fid, f]) => `
     <div class="fieldRow">
-      <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
+      <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''}) — ${f.country ? '🌍 ' + f.country : 'সকল দেশ'}</span></div>
       <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
     </div>`).join('');
 }
 
 function renderCustomFieldInputs(){
   const wrap = document.getElementById('customFieldsWrap');
-  const entries = Object.entries(customFields);
+  const selectedCountry = (document.getElementById('uCountry') || {}).value || '';
+  const entries = Object.entries(customFields).filter(([fid, f]) => !f.country || f.country === selectedCountry);
   if(!entries.length){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="formGrid">' +
     entries.map(([fid, f]) => {
       if(f.type === 'dropdown'){
         const opts = (f.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
         return `<select id="cf-${fid}"><option value="">${f.label}</option>${opts}</select>`;
+      }
+      if(f.type === 'description'){
+        return `<textarea id="cf-${fid}" rows="2" placeholder="${f.label}" style="width:100%;"></textarea>`;
       }
       return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}">`;
     }).join('') + '</div>';
@@ -940,7 +1000,7 @@ function renderUpcomingFlights(flights){
     const hoursLeft = Math.round((j.flight_datetime - Date.now()) / (1000*60*60));
     return `<div class="dash-row">
       <div>
-        <div class="dash-row-title">${u.full_name || '-'}</div>
+        <div class="dash-row-title">${getUserName(u)}</div>
         <div class="dash-row-sub">${new Date(j.flight_datetime).toLocaleString('bn-BD')}</div>
       </div>
       <div class="flight-pill">T-${hoursLeft}h</div>
