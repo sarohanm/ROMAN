@@ -263,6 +263,11 @@
         </p>
       </div>
       <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">দেশ ব্যবস্থাপনা</h3>
+        <p class="hint">এখানে যোগ করা দেশগুলো দেখুন এবং প্রয়োজনে মুছে ফেলুন।</p>
+        <div id="countryList" style="margin:12px 0;"></div>
+      </div>
+      <div class="card">
         <h3 style="margin-top:0;font-size:14px;">কাস্টম ফিল্ড তৈরি করুন</h3>
         <p class="hint">প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)।</p>
 
@@ -283,6 +288,7 @@
           <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
           <select id="cfCountry" onchange="handleCfCountryChange(this)">
             <option value="">সকল দেশের জন্য প্রযোজ্য</option>
+            <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
           </select>
         </div>
       </div>
@@ -708,6 +714,32 @@ function renderCountrySelects(){
     cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
     cfSel.value = current;
   }
+  renderCountryList();
+}
+
+function renderCountryList(){
+  const container = document.getElementById('countryList');
+  if(!container) return;
+  const entries = Object.entries(countries).sort((a,b) => a[1].localeCompare(b[1], 'bn'));
+  if(!entries.length){
+    container.innerHTML = '<p class="hint">এখনো কোনো দেশ যোগ করা হয়নি।</p>';
+    return;
+  }
+  container.innerHTML = entries.map(([id, name]) => `
+    <div class="fieldRow">
+      <div>🌍 ${name}</div>
+      <button class="del" onclick="deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>
+    </div>`).join('');
+}
+
+function deleteCountry(id, name){
+  const inUse = Object.values(customFields).some(f => f.country === name);
+  const msg = inUse
+    ? `"${name}" দেশটা এক বা একাধিক কাস্টম ফিল্ডে ব্যবহার হচ্ছে। তবুও মুছে ফেলতে চান?`
+    : `"${name}" দেশটা মুছে ফেলতে চান?`;
+  if(!confirm(msg)) return;
+  db.ref('countries/' + id).remove()
+    .catch(err => { alert('দেশ মুছতে ব্যর্থ: ' + err.message); console.error(err); });
 }
 
 function handleCfCountryChange(sel){
@@ -789,11 +821,26 @@ function renderFieldBuilderList(){
     container.innerHTML = '<p class="hint">এখনো কোনো কাস্টম ফিল্ড তৈরি হয়নি।</p>';
     return;
   }
-  container.innerHTML = entries.map(([fid, f]) => `
-    <div class="fieldRow">
-      <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''}) — ${f.country ? '🌍 ' + f.country : 'সকল দেশ'}</span></div>
-      <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
-    </div>`).join('');
+  const groups = {};
+  entries.forEach(([fid, f]) => {
+    const key = f.country || '__all__';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push([fid, f]);
+  });
+  const groupKeys = Object.keys(groups).sort((a, b) => {
+    if(a === '__all__') return -1;
+    if(b === '__all__') return 1;
+    return a.localeCompare(b, 'bn');
+  });
+  container.innerHTML = groupKeys.map(key => {
+    const label = key === '__all__' ? 'সকল দেশ' : ('🌍 ' + key);
+    const rows = groups[key].map(([fid, f]) => `
+      <div class="fieldRow">
+        <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
+        <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
+      </div>`).join('');
+    return `<p class="hint" style="margin:10px 0 4px;font-weight:700;color:#1c2733;">${label}</p>${rows}`;
+  }).join('');
 }
 
 function renderCustomFieldInputs(){
