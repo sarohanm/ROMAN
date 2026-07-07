@@ -269,7 +269,10 @@
         <div id="customFieldList" style="margin:12px 0;"></div>
 
         <div class="formGrid" style="margin-top:12px;">
-          <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)">
+          <div class="flex" style="gap:6px;">
+            <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)" style="flex:1;">
+            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+          </div>
           <select id="cfType" onchange="toggleCfOptions()">
             <option value="text">টেক্সট</option>
             <option value="number">নাম্বার</option>
@@ -278,14 +281,10 @@
             <option value="description">ডিসক্রিপশন</option>
           </select>
           <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
-          <div class="flex" style="gap:6px;">
-            <select id="cfCountry" style="flex:1;">
-              <option value="">সকল দেশের জন্য প্রযোজ্য</option>
-            </select>
-            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCountry('cfCountry')">+ দেশ</button>
-          </div>
+          <select id="cfCountry" onchange="handleCfCountryChange(this)">
+            <option value="">সকল দেশের জন্য প্রযোজ্য</option>
+          </select>
         </div>
-        <button class="btn small" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
       </div>
     </div>
 
@@ -706,8 +705,17 @@ function renderCountrySelects(){
   const cfSel = document.getElementById('cfCountry');
   if(cfSel){
     const current = cfSel.value;
-    cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts;
+    cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
     cfSel.value = current;
+  }
+}
+
+function handleCfCountryChange(sel){
+  if(sel.value === '__add__'){
+    sel.value = sel.dataset.prev || '';
+    addCountry('cfCountry');
+  } else {
+    sel.dataset.prev = sel.value;
   }
 }
 
