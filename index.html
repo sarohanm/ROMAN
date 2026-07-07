@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Talent Overseas — Admin Panel</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- face-api.js for face verification (same pattern as Friend's House) -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<!-- Chart.js for dashboard chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --navy:#0f2438; --navy2:#16324f; --gold:#c9a24b; --bg:#f4f6f9;
+    --ok:#1e8e5a; --fail:#c0392b; --warn:#c9a24b; --border:#e1e6ec;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#1c2733;}
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--navy2));}
+  .loginBox{background:#fff;padding:36px;border-radius:14px;width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);}
+  .loginBox h1{font-size:18px;margin:0 0 4px;color:var(--navy);}
+  .loginBox p.sub{font-size:12px;color:#7a8794;margin:0 0 20px;}
+  .loginBox input{width:100%;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;}
+  .btn{background:var(--navy);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;width:100%;}
+  .btn:hover{background:var(--navy2);}
+  .btn.gold{background:var(--gold);color:#1c2733;}
+  .btn.small{width:auto;padding:6px 12px;font-size:12px;}
+  .btn.danger{background:var(--fail);}
+  #faceStep{display:none;text-align:center;}
+  video, canvas{border-radius:10px;width:100%;max-width:280px;}
+  #loginMsg{font-size:12px;color:var(--fail);min-height:16px;margin-top:4px;}
+
+  #app{display:none;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);}
+  .shell{display:flex;flex-direction:column;min-height:100vh;}
+  .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(15,36,56,.35);flex-shrink:0;}
+  .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+  .nav-brand{font-size:15px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .nav-r{display:flex;align-items:center;gap:8px;}
+  .logout-btn{width:32px;height:32px;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);color:#f2a9a1;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;}
+  .logout-btn:active{background:rgba(192,57,43,.3);}
+  .main{flex:1;padding:14px 14px 78px;overflow-x:auto;width:100%;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .topbar h1{font-size:17px;margin:0;color:var(--navy);}
+  .roleTag{font-size:11px;background:rgba(201,162,75,.18);border:1px solid rgba(201,162,75,.35);padding:3px 10px;border-radius:20px;color:var(--gold);font-weight:700;white-space:nowrap;}
+  .bot-nav{position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--navy);display:flex;align-items:center;justify-content:space-around;z-index:200;border-top:1px solid rgba(255,255,255,.06);box-shadow:0 -4px 20px rgba(15,36,56,.3);padding:0 2px;padding-bottom:env(safe-area-inset-bottom,0);max-width:480px;margin:0 auto;}
+  .bn{flex:1;height:100%;max-width:84px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(255,255,255,.4);font-size:17px;transition:.2s;padding:4px 2px;}
+  .bn span{font-size:8px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+  .bn.active{color:var(--gold);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+  th{color:#5b6a78;font-weight:600;font-size:12px;text-transform:uppercase;}
+
+  /* Responsive: turn tables into stacked cards on narrow screens */
+  @media (max-width:600px){
+    .card table, .card thead, .card tbody, .card th, .card td, .card tr{display:block;}
+    .card thead{position:absolute;left:-9999px;top:-9999px;}
+    .card table{min-width:0;}
+    .card tbody tr{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fff;}
+    .card tbody tr:last-child{margin-bottom:0;}
+    .card td{border:none;padding:5px 0;white-space:normal;word-break:break-word;}
+    .card td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8794a1;margin-bottom:2px;}
+    .main{overflow-x:hidden;}
+  }
+  select,input,textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+  .stagePill{padding:3px 9px;border-radius:20px;font-size:11px;color:#fff;background:var(--navy2);}
+  .badge-ok{color:var(--ok);font-weight:600;}
+  .badge-fail{color:var(--fail);font-weight:600;}
+  .badge-pending{color:var(--warn);font-weight:600;}
+  .formGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;}
+  .formGrid input,.formGrid select{width:100%;}
+  .hint{font-size:11px;color:#8794a1;margin-top:4px;}
+  .flex{display:flex;gap:8px;align-items:center;}
+  .card{padding:14px;}
+  table{min-width:520px;}
+
+  /* ===== Dashboard ===== */
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+  .dc{background:#fff;border-radius:14px;padding:13px 12px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid var(--border);}
+  .dc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--navy));border-radius:0 0 3px 3px;}
+  .dc-ico{width:32px;height:32px;border-radius:9px;background:var(--ic,rgba(15,36,56,.08));display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ac,var(--navy));margin-bottom:8px;}
+  .dc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8794a1;margin-bottom:3px;}
+  .dc-val{font-size:19px;font-weight:800;color:var(--navy);line-height:1.15;}
+  .dc-sub{font-size:10.5px;color:#8794a1;margin-top:3px;}
+  .dc-head{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .dc-pl{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;background:rgba(135,148,161,.12);color:#7a8794;line-height:1.3;}
+  .dc-pl.profit{color:#1e8e5a;background:rgba(30,142,90,.12);}
+  .dc-pl.loss{color:#c0392b;background:rgba(192,57,43,.12);}
+  .plus-btn{width:34px;height:34px;border-radius:9px;background:var(--navy);color:#fff;border:none;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .plus-btn:active{background:var(--navy2);}
+  .modalOverlay{display:none;position:fixed;inset:0;background:rgba(15,36,56,.55);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+  .modalOverlay.active{display:flex;}
+  .modalBox{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;margin-top:24px;}
+  .modalBox h3{margin:0 0 4px;font-size:15px;color:var(--navy);}
+  .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:#8794a1;cursor:pointer;}
+  .modalBox{position:relative;}
+  .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
+  .fieldRow .fr-meta{color:#8794a1;font-size:11px;}
+  .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12px;font-weight:700;}
+  .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
+  .chart-wrap{height:150px;position:relative;}
+  .dash-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
+  .dash-row:last-child{border-bottom:none;}
+  .dash-row-title{font-size:12.5px;color:#1c2733;font-weight:600;}
+  .dash-row-sub{font-size:11px;color:#8794a1;}
+  .flight-pill{font-size:10.5px;font-weight:700;color:var(--navy2);background:rgba(15,36,56,.06);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .dash-empty{text-align:center;color:#8794a1;font-size:12px;padding:16px 0;}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="loginBox">
+    <h1>Talent Overseas Pvt. Ltd.</h1>
+    <p class="sub">Admin / Agent Panel — লগইন করুন</p>
+
+    <div id="passStep">
+      <input id="loginEmail" type="email" placeholder="Email">
+      <input id="loginPass" type="password" placeholder="Password">
+      <button class="btn" onclick="handlePasswordLogin()">লগইন</button>
+    </div>
+
+    <div id="faceStep">
+      <p style="font-size:13px;margin-bottom:8px;">দ্বিতীয় ধাপ: ফেস ভেরিফিকেশন</p>
+      <video id="video" autoplay muted></video>
+      <div style="margin-top:10px;" class="flex">
+        <button class="btn small" onclick="verifyFace()">ভেরিফাই করুন</button>
+        <button class="btn small gold" onclick="enrollFace()">প্রথমবার হলে এনরোল করুন</button>
+      </div>
+    </div>
+
+    <div id="loginMsg"></div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+<div class="shell">
+  <div class="top-nav">
+    <div class="nav-brand">✈️ Talent Overseas</div>
+    <div class="nav-r">
+      <span class="roleTag" id="roleTag">Admin</span>
+      <button class="logout-btn" onclick="logout()" title="লগআউট">↩</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD TAB -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="topbar"><h1>ড্যাশবোর্ড</h1></div>
+      <div class="dash-grid">
+        <div class="dc" style="--ac:#0f2438;--ic:rgba(15,36,56,.08)"><div class="dc-head"><div class="dc-ico">👤</div><div class="dc-pl" id="plTotal">৳০</div></div><div class="dc-label">মোট প্রার্থী</div><div class="dc-val" id="dTotalUsers">০</div><div class="dc-sub">সিস্টেমে নিবন্ধিত</div></div>
+        <div class="dc" style="--ac:#16324f;--ic:rgba(22,50,79,.08)"><div class="dc-head"><div class="dc-ico">🧳</div><div class="dc-pl" id="plActive">৳০</div></div><div class="dc-label">চলমান জার্নি</div><div class="dc-val" id="dActiveJourneys">০</div><div class="dc-sub">প্রসেসিং চলছে</div></div>
+        <div class="dc" style="--ac:#1e8e5a;--ic:rgba(30,142,90,.1)"><div class="dc-head"><div class="dc-ico">✈️</div><div class="dc-pl" id="plDeparted">৳০</div></div><div class="dc-label">এ মাসে রওনা</div><div class="dc-val" id="dDepartedMonth">০</div><div class="dc-sub">সফলভাবে ডিপার্টেড</div></div>
+        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-head"><div class="dc-ico">⚠️</div><div class="dc-pl" id="plMedical">৳০</div></div><div class="dc-label">মেডিকেল ফেইল</div><div class="dc-val" id="dMedicalFailed">০</div><div class="dc-sub">মোট</div></div>
+        <div class="dc" style="--ac:#c9a24b;--ic:rgba(201,162,75,.15)"><div class="dc-head"><div class="dc-ico">📄</div><div class="dc-pl" id="plVisa">৳০</div></div><div class="dc-label">ভিসা পেন্ডিং</div><div class="dc-val" id="dVisaPending">০</div><div class="dc-sub">আবেদন করা হয়েছে</div></div>
+        <div class="dc" style="--ac:#2563eb;--ic:rgba(37,99,235,.08)"><div class="dc-head"><div class="dc-ico">🛫</div><div class="dc-pl" id="plUpcoming">৳০</div></div><div class="dc-label">আসন্ন ফ্লাইট</div><div class="dc-val" id="dUpcomingFlights">০</div><div class="dc-sub">পরবর্তী ৭ দিনে</div></div>
+        <div class="dc" style="--ac:#1e8e5a;--ic:rgba(30,142,90,.1)"><div class="dc-ico">✅</div><div class="dc-label">নোটিফিকেশন সেন্ট</div><div class="dc-val" id="dNotifSent">০</div><div class="dc-sub">আজ</div></div>
+        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-ico">❌</div><div class="dc-label">নোটিফিকেশন ফেইল</div><div class="dc-val" id="dNotifFailed">০</div><div class="dc-sub">আজ</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">📊 স্টেজ অনুযায়ী প্রার্থী</div>
+        <div class="chart-wrap"><canvas id="stageChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">🛫 আসন্ন ফ্লাইট</div>
+        <div id="upcomingFlightsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">🔔 সাম্প্রতিক নোটিফিকেশন</div>
+        <div id="recentActivityList"></div>
+      </div>
+    </div>
+
+    <!-- JOURNEYS TAB -->
+    <div class="panel" id="panel-journeys">
+      <div class="topbar"><h1>জার্নি</h1></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>নাম</th><th>ফোন</th><th>পাসপোর্ট</th><th>বর্তমান স্টেজ</th><th>ফ্লাইট</th><th>আয়/খরচ (৳)</th><th>পরবর্তী স্টেজে যান</th><th></th></tr></thead>
+          <tbody id="journeyRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div class="panel" id="panel-users">
+      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openFieldBuilder()" title="কাস্টম ফিল্ড তৈরি করুন">+</button></div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">নতুন ইউজার যোগ করুন</h3>
+        <div class="formGrid">
+          <input id="uName" placeholder="পূর্ণ নাম">
+          <input id="uPhone" placeholder="ফোন নম্বর">
+          <input id="uEmail" placeholder="ইমেইল (ঐচ্ছিক)">
+          <input id="uPassport" placeholder="পাসপোর্ট নম্বর">
+        </div>
+        <p class="hint">আর্থিক হিসাব (ঐচ্ছিক — পরে জার্নি ট্যাব থেকেও আপডেট করা যাবে)</p>
+        <div class="formGrid">
+          <input id="uFee" type="number" placeholder="এজেন্সি ফি / আয় (৳)">
+          <input id="uMedCost" type="number" placeholder="মেডিকেল খরচ (৳)">
+          <input id="uVisaCost" type="number" placeholder="ভিসা খরচ (৳)">
+          <input id="uFlightCost" type="number" placeholder="ফ্লাইট খরচ (৳)">
+        </div>
+        <div id="customFieldsWrap"></div>
+        <button class="btn small" onclick="addUser()">যোগ করুন</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>নাম</th><th>ফোন</th><th>পাসপোর্ট</th><th>ডকুমেন্ট স্ট্যাটাস</th><th></th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TEMPLATES TAB -->
+    <div class="panel" id="panel-templates">
+      <div class="topbar"><h1>টেমপ্লেট</h1></div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
+        <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
+        <div class="formGrid">
+          <input id="tKey" placeholder="Template Key (যেমন: visa_approved)">
+          <select id="tChannel">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="sms">SMS</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <textarea id="tBody" rows="3" style="width:100%;" placeholder="প্রিয় {{name}}, আপনার ভিসা অনুমোদিত হয়েছে..."></textarea>
+        <div style="margin-top:8px;"><button class="btn small" onclick="saveTemplate()">সেভ করুন</button></div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Key</th><th>Channel</th><th>Body</th><th></th></tr></thead>
+          <tbody id="templateRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LOGS TAB -->
+    <div class="panel" id="panel-logs">
+      <div class="topbar"><h1>নোটিফিকেশন লগ</h1></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>সময়</th><th>জার্নি</th><th>চ্যানেল</th><th>টেমপ্লেট</th><th>স্ট্যাটাস</th><th></th></tr></thead>
+          <tbody id="logRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="panel admin-only" id="panel-settings">
+      <div class="topbar"><h1>সেটিংস</h1></div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
+        <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
+        <input id="waWebhook" placeholder="WhatsApp send webhook URL" style="width:100%;margin-bottom:8px;">
+        <input id="smsWebhook" placeholder="SMS send webhook URL" style="width:100%;margin-bottom:8px;">
+        <input id="aviationKey" placeholder="AviationStack API key" style="width:100%;margin-bottom:8px;">
+        <button class="btn small" onclick="saveSettings()">সেভ করুন</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">⏱ T-minus শিডিউলার (কনফিগারেশন নোট)</h3>
+        <p class="hint">
+          এই HTML ফাইল ব্রাউজার বন্ধ থাকলে cron চালাতে পারবে না। T-48h/T-24h/T-3h অ্যালার্টের জন্য:<br>
+          ১) Firebase Cloud Function (scheduled, প্রতি ১৫ মিনিটে) — <code>checkUpcomingFlights</code> — অথবা<br>
+          ২) cron-job.org থেকে প্রতি ১৫ মিনিটে একটা HTTPS endpoint কল করান যা flights চেক করে notifications/ এ এন্ট্রি লিখবে।
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CUSTOM FIELD BUILDER MODAL -->
+  <div class="modalOverlay" id="fieldBuilderModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeFieldBuilder()">✕</button>
+      <h3>কাস্টম ফিল্ড তৈরি করুন</h3>
+      <p class="hint">প্রার্থীর ফর্মে অতিরিক্ত ফিল্ড যোগ করুন — যেমন দেশভেদে ভিন্ন তথ্য (স্পন্সর আইডি, কাফালা নম্বর ইত্যাদি)।</p>
+
+      <div id="customFieldList" style="margin:12px 0;"></div>
+
+      <div class="formGrid" style="margin-top:12px;">
+        <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)">
+        <select id="cfType" onchange="toggleCfOptions()">
+          <option value="text">টেক্সট</option>
+          <option value="number">নাম্বার</option>
+          <option value="date">ডেট</option>
+          <option value="dropdown">ড্রপডাউন</option>
+        </select>
+        <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
+      </div>
+      <button class="btn small" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
+    </div>
+  </div>
+
+  <div class="bot-nav">
+    <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')">📊<span>ড্যাশবোর্ড</span></button>
+    <button class="bn" data-tab="journeys" onclick="showTab('journeys')">🧳<span>জার্নি</span></button>
+    <button class="bn" data-tab="users" onclick="showTab('users')">👤<span>ইউজার</span></button>
+    <button class="bn" data-tab="templates" onclick="showTab('templates')">✉️<span>টেমপ্লেট</span></button>
+    <button class="bn" data-tab="logs" onclick="showTab('logs')">🔔<span>লগ</span></button>
+    <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')">⚙️<span>সেটিংস</span></button>
+  </div>
+</div>
+</div>
+
+<script>
+/* ================= FIREBASE CONFIG =================
+   Talent Overseas Firebase প্রজেক্ট।
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyAgVJbrqR-B4zguaFKVCusNE1AqUF-kt-k",
+  authDomain: "talent-overseas-9db5f.firebaseapp.com",
+  databaseURL: "https://talent-overseas-9db5f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "talent-overseas-9db5f",
+  storageBucket: "talent-overseas-9db5f.firebasestorage.app",
+  messagingSenderId: "19530408",
+  appId: "1:19530408:web:821285f55713eeb32d389d"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+/* ================= STATE MACHINE ================= */
+const VALID_TRANSITIONS = {
+  DOC_COLLECTED:      ["PASSPORT_APPLIED"],
+  PASSPORT_APPLIED:   ["PASSPORT_ISSUED"],
+  PASSPORT_ISSUED:    ["VISA_APPLIED"],
+  VISA_APPLIED:       ["VISA_APPROVED"],
+  VISA_APPROVED:      ["MEDICAL_SCHEDULED"],
+  MEDICAL_SCHEDULED:  ["MEDICAL_PASSED","MEDICAL_FAILED"],
+  MEDICAL_PASSED:     ["FLIGHT_BOOKED"],
+  FLIGHT_BOOKED:      ["FLIGHT_CONFIRMED"],
+  FLIGHT_CONFIRMED:   ["DEPARTED"],
+  MEDICAL_FAILED:     [],
+  DEPARTED:           []
+};
+const STAGE_LABEL = {
+  DOC_COLLECTED:"ডকুমেন্ট সংগ্রহ", PASSPORT_APPLIED:"পাসপোর্ট আবেদন", PASSPORT_ISSUED:"পাসপোর্ট ইস্যু",
+  VISA_APPLIED:"ভিসা আবেদন", VISA_APPROVED:"ভিসা অনুমোদিত", MEDICAL_SCHEDULED:"মেডিকেল শিডিউল",
+  MEDICAL_PASSED:"মেডিকেল পাশ", MEDICAL_FAILED:"মেডিকেল ফেইল", FLIGHT_BOOKED:"ফ্লাইট বুকড",
+  FLIGHT_CONFIRMED:"ফ্লাইট কনফার্মড", DEPARTED:"রওনা হয়েছে"
+};
+
+let currentUser = null;   // firebase auth user
+let currentRole = "agent";
+let pendingUid = null;    // uid waiting on face verification
+
+/* ================= LOGIN: STEP 1 - PASSWORD ================= */
+function handlePasswordLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const msg = document.getElementById('loginMsg');
+  msg.textContent = "";
+
+  // ⚠️ TEMPORARY DEFAULT LOGIN — Firebase Authentication বাইপাস করে সরাসরি প্রবেশ।
+  // এটা নিরাপত্তাহীন (কেউ এই কোড দেখলে/জানলে বিনা পাসওয়ার্ডে ঢুকতে পারবে)।
+  // আসল Firebase user সেটআপ হয়ে গেলে এই ব্লকটা মুছে দেওয়া জরুরি।
+  if (email === "admin" && pass === "12345") {
+    pendingUid = "default-admin-uid";
+    currentRole = "admin";
+    document.getElementById('passStep').style.display = 'none';
+    document.getElementById('faceStep').style.display = 'block';
+    startCamera();
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(cred => {
+      pendingUid = cred.user.uid;
+      document.getElementById('passStep').style.display = 'none';
+      document.getElementById('faceStep').style.display = 'block';
+      startCamera();
+    })
+    .catch(err => { msg.textContent = "লগইন ব্যর্থ: " + err.message; });
+}
+
+function startCamera(){
+  const video = document.getElementById('video');
+  navigator.mediaDevices.getUserMedia({video:{width:280,height:210}})
+    .then(stream => { video.srcObject = stream; })
+    .catch(() => { document.getElementById('loginMsg').textContent = "ক্যামেরা এক্সেস দিতে হবে।"; });
+}
+function stopCamera(){
+  const video = document.getElementById('video');
+  if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); }
+}
+
+/* ================= LOGIN: STEP 2 - FACE (face-api.js) ================= */
+let modelsLoaded = false;
+async function loadModels(){
+  if(modelsLoaded) return;
+  const MODEL_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights";
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  modelsLoaded = true;
+}
+
+async function getDescriptor(){
+  await loadModels();
+  const video = document.getElementById('video');
+  const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks().withFaceDescriptor();
+  if(!detection) throw new Error("মুখ শনাক্ত করা যায়নি, ভালো আলোতে চেষ্টা করুন।");
+  return Array.from(detection.descriptor);
+}
+
+async function enrollFace(){
+  const msg = document.getElementById('loginMsg');
+  try{
+    const descriptor = await getDescriptor();
+    await db.ref('admins/' + pendingUid + '/faceDescriptor').set(descriptor);
+    msg.style.color = "var(--ok)";
+    msg.textContent = "ফেস এনরোল সম্পন্ন হয়েছে। এখন 'ভেরিফাই করুন' চাপুন।";
+  }catch(e){ msg.style.color="var(--fail)"; msg.textContent = e.message; }
+}
+
+async function verifyFace(){
+  const msg = document.getElementById('loginMsg');
+  try{
+    const liveDescriptor = await getDescriptor();
+    const snap = await db.ref('admins/' + pendingUid + '/faceDescriptor').once('value');
+    if(!snap.exists()){
+      msg.style.color="var(--fail)";
+      msg.textContent = "কোনো এনরোল করা ফেস পাওয়া যায়নি। আগে 'এনরোল করুন' চাপুন।";
+      return;
+    }
+    const stored = snap.val();
+    const dist = faceapi.euclideanDistance(liveDescriptor, stored);
+    if(dist < 0.5){
+      msg.style.color = "var(--ok)";
+      msg.textContent = "ভেরিফাই সফল, প্রবেশ করানো হচ্ছে...";
+      stopCamera();
+      await enterApp();
+    } else {
+      msg.style.color="var(--fail)";
+      msg.textContent = "ফেস মিলেনি (dist: " + dist.toFixed(2) + "), আবার চেষ্টা করুন।";
+    }
+  }catch(e){ msg.style.color="var(--fail)"; msg.textContent = e.message; }
+}
+
+async function enterApp(){
+  if (pendingUid === "default-admin-uid") {
+    currentRole = "admin"; // টেমপোরারি ডিফল্ট লগইনের জন্য সরাসরি admin role
+  } else {
+    const roleSnap = await db.ref('admins/' + pendingUid + '/role').once('value');
+    currentRole = roleSnap.exists() ? roleSnap.val() : 'agent';
+  }
+  currentUser = pendingUid;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('roleTag').textContent = currentRole === 'admin' ? 'Admin' : 'Agent';
+  if(currentRole !== 'admin'){
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+  }
+  loadJourneys();
+  loadUsers();
+  loadCustomFields();
+  loadTemplates();
+  loadLogs();
+  loadDashboard();
+}
+
+function logout(){
+  auth.signOut();
+  location.reload();
+}
+
+/* ================= TEMPORARY: LOGIN + FACE VERIFICATION HOLD =================
+   বারবার আপডেটের সময় ঝামেলা এড়াতে লগইন/ফেস ভেরিফিকেশন আপাতত স্কিপ করা হচ্ছে।
+   সরাসরি admin role নিয়ে অ্যাপে ঢুকিয়ে দেওয়া হচ্ছে।
+   ⚠️ এই ব্লকটা রিমুভ করলে আগের লগইন + ফেস ভেরিফিকেশন ফ্লো ফিরে আসবে (কোডে অক্ষত রাখা আছে)।
+   পাবলিক/লাইভ সাইটে আপলোডের আগে এই ব্লকটা মুছে ফেলা জরুরি।
+*/
+pendingUid = "default-admin-uid";
+enterApp();
+
+/* ================= TABS ================= */
+function showTab(name){
+  document.querySelectorAll('.bn').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.bn[data-tab="'+name+'"]').classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+/* ================= JOURNEYS ================= */
+function loadJourneys(){
+  db.ref('journeys').on('value', snap => {
+    const journeys = snap.val() || {};
+    db.ref('users').once('value').then(uSnap => {
+      const users = uSnap.val() || {};
+      const rows = Object.entries(journeys).map(([jid, j]) => {
+        const u = users[j.user_id] || {};
+        const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
+        const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
+        return `<tr>
+          <td data-label="নাম">${u.full_name || '-'}</td>
+          <td data-label="ফোন">${u.phone || '-'}</td>
+          <td data-label="পাসপোর্ট">${u.passport_no || '-'}</td>
+          <td data-label="বর্তমান স্টেজ"><span class="stagePill">${STAGE_LABEL[j.current_stage] || j.current_stage}</span></td>
+          <td data-label="ফ্লাইট">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</td>
+          <td data-label="আয়/খরচ (৳)">
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;">
+              <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
+              <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
+              <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
+              <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
+              <button class="btn small" style="padding:3px 8px;font-size:11px;" onclick="saveJourneyFinance('${jid}')">সেভ</button>
+            </div>
+          </td>
+          <td data-label="পরবর্তী স্টেজে যান">
+            ${nextStages.length ? `<select id="next-${jid}">${options}</select>` : '<span class="hint">শেষ স্টেজ</span>'}
+          </td>
+          <td data-label="">${nextStages.length ? `<button class="btn small" onclick="advanceStage('${jid}')">আপডেট</button>` : ''}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('journeyRows').innerHTML = rows || '<tr><td colspan="7" class="hint">কোনো জার্নি নেই</td></tr>';
+    });
+  });
+}
+
+async function advanceStage(journeyId){
+  const select = document.getElementById('next-' + journeyId);
+  const toStage = select.value;
+  const jSnap = await db.ref('journeys/' + journeyId).once('value');
+  const journey = jSnap.val();
+  const allowed = VALID_TRANSITIONS[journey.current_stage] || [];
+  if(!allowed.includes(toStage)){
+    alert('অবৈধ স্টেজ পরিবর্তন: ' + journey.current_stage + ' -> ' + toStage);
+    return;
+  }
+  await db.ref('journeys/' + journeyId).update({ current_stage: toStage, updated_at: Date.now() });
+  await db.ref('status_logs').push({
+    journey_id: journeyId, stage: toStage, changed_by: currentUser, created_at: Date.now()
+  });
+  await queueNotification(journeyId, toStage);
+}
+
+async function saveJourneyFinance(journeyId){
+  const agency_fee = parseFloat(document.getElementById('fee-' + journeyId).value) || 0;
+  const cost_medical = parseFloat(document.getElementById('med-' + journeyId).value) || 0;
+  const cost_visa = parseFloat(document.getElementById('visa-' + journeyId).value) || 0;
+  const cost_flight = parseFloat(document.getElementById('flight-' + journeyId).value) || 0;
+  await db.ref('journeys/' + journeyId).update({ agency_fee, cost_medical, cost_visa, cost_flight });
+  alert('হিসাব সেভ হয়েছে');
+}
+
+/* Writes a 'pending' notification and calls the configured webhook.
+   Actual WhatsApp/SMS sending + secret key handling happens server-side. */
+async function queueNotification(journeyId, stage){
+  const templateKey = stage.toLowerCase();
+  const notifRef = db.ref('notifications').push();
+  await notifRef.set({
+    journey_id: journeyId, channel: 'whatsapp', template_key: templateKey,
+    status: 'pending', created_at: Date.now()
+  });
+
+  const settingsSnap = await db.ref('settings').once('value');
+  const settings = settingsSnap.val() || {};
+  if(!settings.waWebhook){
+    await notifRef.update({ status: 'failed', error_message: 'কোনো webhook কনফিগার করা হয়নি (Settings ট্যাব দেখুন)' });
+    return;
+  }
+  try{
+    const resp = await fetch(settings.waWebhook, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ journey_id: journeyId, template_key: templateKey })
+    });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    await notifRef.update({ status: 'sent', sent_at: Date.now() });
+  }catch(e){
+    await notifRef.update({ status: 'failed', error_message: e.message });
+  }
+}
+
+/* ================= USERS ================= */
+function addUser(){
+  const full_name = document.getElementById('uName').value.trim();
+  const phone = document.getElementById('uPhone').value.trim();
+  const email = document.getElementById('uEmail').value.trim();
+  const passport_no = document.getElementById('uPassport').value.trim();
+  if(!full_name || !phone){ alert('নাম ও ফোন আবশ্যক'); return; }
+
+  const agency_fee = parseFloat(document.getElementById('uFee').value) || 0;
+  const cost_medical = parseFloat(document.getElementById('uMedCost').value) || 0;
+  const cost_visa = parseFloat(document.getElementById('uVisaCost').value) || 0;
+  const cost_flight = parseFloat(document.getElementById('uFlightCost').value) || 0;
+
+  const custom_data = {};
+  Object.entries(customFields).forEach(([fid, f]) => {
+    const el = document.getElementById('cf-' + fid);
+    if(el && el.value) custom_data[fid] = el.value;
+  });
+
+  const userRef = db.ref('users').push();
+  userRef.set({ full_name, phone, email, passport_no, doc_status: {}, custom_data, created_at: Date.now() })
+    .then(() => {
+      db.ref('journeys').push({
+        user_id: userRef.key, current_stage: 'DOC_COLLECTED', updated_at: Date.now(),
+        agency_fee, cost_medical, cost_visa, cost_flight
+      });
+      document.getElementById('uName').value = '';
+      document.getElementById('uPhone').value = '';
+      document.getElementById('uEmail').value = '';
+      document.getElementById('uPassport').value = '';
+      document.getElementById('uFee').value = '';
+      document.getElementById('uMedCost').value = '';
+      document.getElementById('uVisaCost').value = '';
+      document.getElementById('uFlightCost').value = '';
+      Object.keys(customFields).forEach(fid => {
+        const el = document.getElementById('cf-' + fid);
+        if(el) el.value = '';
+      });
+    })
+    .catch(err => {
+      alert('ইউজার সেভ করতে ব্যর্থ: ' + err.message);
+      console.error('addUser error:', err);
+    });
+}
+
+function loadUsers(){
+  db.ref('users').on('value', snap => {
+    const users = snap.val() || {};
+    const rows = Object.entries(users).map(([uid, u]) => `
+      <tr>
+        <td data-label="নাম">${u.full_name}</td>
+        <td data-label="ফোন">${u.phone}</td>
+        <td data-label="পাসপোর্ট">${u.passport_no || '-'}</td>
+        <td data-label="ডকুমেন্ট স্ট্যাটাস">${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</td>
+        <td data-label="">
+          <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
+          <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
+        </td>
+      </tr>`).join('');
+    document.getElementById('userRows').innerHTML = rows || '<tr><td colspan="5" class="hint">কোনো ইউজার নেই</td></tr>';
+    window._usersCache = users;
+  });
+}
+function viewUserDetails(uid){
+  const u = (window._usersCache || {})[uid] || {};
+  const cd = u.custom_data || {};
+  const lines = Object.entries(cd).map(([fid, val]) => {
+    const label = (customFields[fid] && customFields[fid].label) || fid;
+    return label + ': ' + val;
+  });
+  alert(lines.length ? lines.join('\n') : 'এই ইউজারের জন্য কোনো অতিরিক্ত/কাস্টম তথ্য নেই।');
+}
+function deleteUser(uid){
+  if(!confirm('নিশ্চিত মুছবেন?')) return;
+  db.ref('users/' + uid).remove()
+    .catch(err => {
+      alert('ডিলিট করতে ব্যর্থ: ' + err.message);
+      console.error('deleteUser error:', err);
+    });
+}
+
+/* ================= CUSTOM FIELDS (FORM BUILDER) ================= */
+let customFields = {};
+
+function loadCustomFields(){
+  db.ref('custom_fields').on('value', snap => {
+    customFields = snap.val() || {};
+    renderFieldBuilderList();
+    renderCustomFieldInputs();
+  });
+}
+
+function openFieldBuilder(){
+  document.getElementById('fieldBuilderModal').classList.add('active');
+}
+function closeFieldBuilder(){
+  document.getElementById('fieldBuilderModal').classList.remove('active');
+}
+function toggleCfOptions(){
+  const type = document.getElementById('cfType').value;
+  document.getElementById('cfOptions').style.display = (type === 'dropdown') ? '' : 'none';
+}
+
+function addCustomField(){
+  const label = document.getElementById('cfLabel').value.trim();
+  const type = document.getElementById('cfType').value;
+  if(!label){ alert('ফিল্ডের নাম দিন'); return; }
+  const field = { label, type, created_at: Date.now() };
+  if(type === 'dropdown'){
+    const options = document.getElementById('cfOptions').value.split(',').map(s => s.trim()).filter(Boolean);
+    if(options.length < 2){ alert('ড্রপডাউনের জন্য অন্তত ২টা অপশন কমা দিয়ে দিন'); return; }
+    field.options = options;
+  }
+  db.ref('custom_fields').push(field).then(() => {
+    document.getElementById('cfLabel').value = '';
+    document.getElementById('cfOptions').value = '';
+    document.getElementById('cfType').value = 'text';
+    toggleCfOptions();
+  }).catch(err => { alert('ফিল্ড সেভ ব্যর্থ: ' + err.message); console.error(err); });
+}
+
+function deleteCustomField(fid){
+  if(!confirm('এই ফিল্ডটা মুছে ফেললে ফর্ম থেকে বাদ যাবে (আগের ইউজারদের সেভ করা ডেটা মুছবে না)। নিশ্চিত?')) return;
+  db.ref('custom_fields/' + fid).remove()
+    .catch(err => { alert('ফিল্ড ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
+}
+
+const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন' };
+
+function renderFieldBuilderList(){
+  const container = document.getElementById('customFieldList');
+  const entries = Object.entries(customFields);
+  if(!entries.length){
+    container.innerHTML = '<p class="hint">এখনো কোনো কাস্টম ফিল্ড তৈরি হয়নি।</p>';
+    return;
+  }
+  container.innerHTML = entries.map(([fid, f]) => `
+    <div class="fieldRow">
+      <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
+      <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
+    </div>`).join('');
+}
+
+function renderCustomFieldInputs(){
+  const wrap = document.getElementById('customFieldsWrap');
+  const entries = Object.entries(customFields);
+  if(!entries.length){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="formGrid">' +
+    entries.map(([fid, f]) => {
+      if(f.type === 'dropdown'){
+        const opts = (f.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
+        return `<select id="cf-${fid}"><option value="">${f.label}</option>${opts}</select>`;
+      }
+      return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}">`;
+    }).join('') + '</div>';
+}
+
+/* ================= TEMPLATES ================= */
+function saveTemplate(){
+  const key = document.getElementById('tKey').value.trim();
+  const channel = document.getElementById('tChannel').value;
+  const body = document.getElementById('tBody').value.trim();
+  if(!key || !body){ alert('Key এবং Body আবশ্যক'); return; }
+  db.ref('templates/' + key).set({ channel, body }).then(() => {
+    document.getElementById('tKey').value = '';
+    document.getElementById('tBody').value = '';
+  }).catch(err => { alert('টেমপ্লেট সেভ ব্যর্থ: ' + err.message); console.error(err); });
+}
+function loadTemplates(){
+  db.ref('templates').on('value', snap => {
+    const templates = snap.val() || {};
+    const rows = Object.entries(templates).map(([key, t]) => `
+      <tr>
+        <td data-label="Key">${key}</td>
+        <td data-label="Channel">${t.channel}</td>
+        <td data-label="Body" style="max-width:340px;">${t.body}</td>
+        <td data-label=""><button class="btn small danger" onclick="deleteTemplate('${key}')">ডিলিট</button></td>
+      </tr>`).join('');
+    document.getElementById('templateRows').innerHTML = rows || '<tr><td colspan="4" class="hint">কোনো টেমপ্লেট নেই</td></tr>';
+  });
+}
+function deleteTemplate(key){
+  db.ref('templates/' + key).remove()
+    .catch(err => { alert('টেমপ্লেট ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
+}
+
+/* ================= LOGS ================= */
+function loadLogs(){
+  db.ref('notifications').limitToLast(100).on('value', snap => {
+    const logs = snap.val() || {};
+    const rows = Object.entries(logs).reverse().map(([id, n]) => {
+      const statusClass = n.status === 'sent' ? 'badge-ok' : n.status === 'failed' ? 'badge-fail' : 'badge-pending';
+      return `<tr>
+        <td data-label="সময়">${new Date(n.created_at).toLocaleString('bn-BD')}</td>
+        <td data-label="জার্নি">${n.journey_id}</td>
+        <td data-label="চ্যানেল">${n.channel}</td>
+        <td data-label="টেমপ্লেট">${n.template_key}</td>
+        <td data-label="স্ট্যাটাস" class="${statusClass}">${n.status}${n.error_message ? ' — ' + n.error_message : ''}</td>
+        <td data-label="">${n.status === 'failed' ? `<button class="btn small" onclick="retryNotification('${id}')">রিট্রাই</button>` : ''}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('logRows').innerHTML = rows || '<tr><td colspan="6" class="hint">কোনো লগ নেই</td></tr>';
+  });
+}
+async function retryNotification(id){
+  const nSnap = await db.ref('notifications/' + id).once('value');
+  const n = nSnap.val();
+  await queueNotification(n.journey_id, n.template_key.toUpperCase());
+}
+
+/* ================= SETTINGS ================= */
+function saveSettings(){
+  const waWebhook = document.getElementById('waWebhook').value.trim();
+  const smsWebhook = document.getElementById('smsWebhook').value.trim();
+  const aviationKey = document.getElementById('aviationKey').value.trim();
+  db.ref('settings').update({ waWebhook, smsWebhook, aviationKey })
+    .then(() => alert('সেভ হয়েছে'))
+    .catch(err => { alert('সেটিংস সেভ ব্যর্থ: ' + err.message); console.error(err); });
+}
+db.ref('settings').once('value').then(snap => {
+  const s = snap.val() || {};
+  if(document.getElementById('waWebhook')) document.getElementById('waWebhook').value = s.waWebhook || '';
+  if(document.getElementById('smsWebhook')) document.getElementById('smsWebhook').value = s.smsWebhook || '';
+  if(document.getElementById('aviationKey')) document.getElementById('aviationKey').value = s.aviationKey || '';
+});
+
+/* ================= DASHBOARD ================= */
+let stageChartInstance = null;
+let dashJourneys = {}, dashUsers = {}, dashNotifs = {};
+
+function loadDashboard(){
+  db.ref('journeys').on('value', snap => { dashJourneys = snap.val() || {}; renderDashboard(); });
+  db.ref('users').on('value', snap => { dashUsers = snap.val() || {}; renderDashboard(); });
+  db.ref('notifications').limitToLast(200).on('value', snap => { dashNotifs = snap.val() || {}; renderDashboard(); });
+}
+
+function renderDashboard(){
+  const journeys = Object.values(dashJourneys);
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const in7Days = now.getTime() + 7*24*60*60*1000;
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  // Core counts
+  const totalUsers = Object.keys(dashUsers).length;
+  const activeJourneys = journeys.filter(j => j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
+  const departedMonth = journeys.filter(j => j.current_stage === 'DEPARTED' && (j.updated_at||0) >= startOfMonth).length;
+  const medicalFailed = journeys.filter(j => j.current_stage === 'MEDICAL_FAILED').length;
+  const visaPending = journeys.filter(j => j.current_stage === 'VISA_APPLIED').length;
+  const upcomingFlights = journeys.filter(j => j.flight_datetime && j.flight_datetime >= now.getTime() && j.flight_datetime <= in7Days);
+
+  document.getElementById('dTotalUsers').textContent = totalUsers;
+  document.getElementById('dActiveJourneys').textContent = activeJourneys;
+  document.getElementById('dDepartedMonth').textContent = departedMonth;
+  document.getElementById('dMedicalFailed').textContent = medicalFailed;
+  document.getElementById('dVisaPending').textContent = visaPending;
+  document.getElementById('dUpcomingFlights').textContent = upcomingFlights.length;
+
+  // Notifications sent/failed today
+  const notifsToday = Object.values(dashNotifs).filter(n => (n.created_at||0) >= startOfToday);
+  document.getElementById('dNotifSent').textContent = notifsToday.filter(n => n.status === 'sent').length;
+  document.getElementById('dNotifFailed').textContent = notifsToday.filter(n => n.status === 'failed').length;
+
+  renderProfitLoss(journeys, { startOfMonth, in7Days: in7Days, now });
+  renderStageChart(journeys);
+  renderUpcomingFlights(upcomingFlights);
+  renderRecentActivity();
+}
+
+function fmtTk(n){
+  const rounded = Math.round(n);
+  return '৳' + Math.abs(rounded).toLocaleString('bn-BD');
+}
+function netOf(j){
+  const fee = j.agency_fee || 0;
+  const cost = (j.cost_medical||0) + (j.cost_visa||0) + (j.cost_flight||0);
+  return { net: fee - cost, cost, fee };
+}
+
+/* kind: 'net' (▲profit / ▼loss / neutral at zero)
+   kind: 'lossOnly' (amount is a spend that only ever counts as loss)
+   kind: 'neutral' (amount is a spend-in-progress, no profit/loss judgement yet) */
+function applyBadge(id, amount, kind){
+  const el = document.getElementById(id);
+  if(!el) return;
+  let cls = 'dc-pl', arrow = '';
+  if(kind === 'net'){
+    if(amount > 0){ cls += ' profit'; arrow = '▲'; }
+    else if(amount < 0){ cls += ' loss'; arrow = '▼'; amount = Math.abs(amount); }
+  } else if(kind === 'lossOnly' && amount > 0){
+    cls += ' loss'; arrow = '▼';
+  }
+  el.className = cls;
+  el.textContent = (arrow ? arrow + ' ' : '') + fmtTk(amount);
+}
+
+function renderProfitLoss(journeys, ctx){
+  const isActive = j => j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED';
+  const sumNet = list => list.reduce((s, j) => s + netOf(j).net, 0);
+  const sumCost = list => list.reduce((s, j) => s + netOf(j).cost, 0);
+
+  const departedThisMonth = journeys.filter(j => j.current_stage === 'DEPARTED' && (j.updated_at||0) >= ctx.startOfMonth);
+  const medicalFailedList = journeys.filter(j => j.current_stage === 'MEDICAL_FAILED');
+  const visaPendingList = journeys.filter(j => j.current_stage === 'VISA_APPLIED');
+  const upcomingList = journeys.filter(j => j.flight_datetime && j.flight_datetime >= ctx.now.getTime() && j.flight_datetime <= ctx.in7Days);
+
+  applyBadge('plTotal', sumNet(journeys), 'net');                 // মোট প্রার্থী: সব মিলিয়ে নিট
+  applyBadge('plActive', sumNet(journeys.filter(isActive)), 'net'); // চলমান জার্নি: প্রত্যাশিত লাভ
+  applyBadge('plDeparted', sumNet(departedThisMonth), 'net');      // এ মাসে রওনা: বাস্তবায়িত লাভ
+  applyBadge('plMedical', sumCost(medicalFailedList), 'lossOnly'); // মেডিকেল ফেইল: খরচ = ক্ষতি
+  applyBadge('plVisa', sumCost(visaPendingList), 'neutral');       // ভিসা পেন্ডিং: এখনো আটকে থাকা খরচ
+  applyBadge('plUpcoming', sumNet(upcomingList), 'net');           // আসন্ন ফ্লাইট: প্রত্যাশিত লাভ
+}
+
+function renderStageChart(journeys){
+  const stageCounts = {};
+  Object.keys(STAGE_LABEL).forEach(s => stageCounts[s] = 0);
+  journeys.forEach(j => { if(stageCounts[j.current_stage] !== undefined) stageCounts[j.current_stage]++; });
+
+  const labels = Object.keys(stageCounts).map(s => STAGE_LABEL[s]);
+  const data = Object.values(stageCounts);
+
+  const ctx = document.getElementById('stageChart');
+  if(!ctx || typeof Chart === 'undefined') return;
+  if(stageChartInstance) stageChartInstance.destroy();
+  stageChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: '#16324f', borderRadius: 4, maxBarThickness: 22 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 9 } }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }
+      }
+    }
+  });
+}
+
+function renderUpcomingFlights(flights){
+  const el = document.getElementById('upcomingFlightsList');
+  if(!flights.length){ el.innerHTML = '<div class="dash-empty">আগামী ৭ দিনে কোনো ফ্লাইট নেই</div>'; return; }
+  const sorted = flights.slice().sort((a,b) => a.flight_datetime - b.flight_datetime);
+  el.innerHTML = sorted.map(j => {
+    const u = dashUsers[j.user_id] || {};
+    const hoursLeft = Math.round((j.flight_datetime - Date.now()) / (1000*60*60));
+    return `<div class="dash-row">
+      <div>
+        <div class="dash-row-title">${u.full_name || '-'}</div>
+        <div class="dash-row-sub">${new Date(j.flight_datetime).toLocaleString('bn-BD')}</div>
+      </div>
+      <div class="flight-pill">T-${hoursLeft}h</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentActivity(){
+  const el = document.getElementById('recentActivityList');
+  const entries = Object.values(dashNotifs).sort((a,b) => (b.created_at||0) - (a.created_at||0)).slice(0, 8);
+  if(!entries.length){ el.innerHTML = '<div class="dash-empty">কোনো সাম্প্রতিক নোটিফিকেশন নেই</div>'; return; }
+  el.innerHTML = entries.map(n => {
+    const statusClass = n.status === 'sent' ? 'badge-ok' : n.status === 'failed' ? 'badge-fail' : 'badge-pending';
+    return `<div class="dash-row">
+      <div>
+        <div class="dash-row-title">${n.template_key || '-'}</div>
+        <div class="dash-row-sub">${n.created_at ? new Date(n.created_at).toLocaleString('bn-BD') : '-'} · ${n.channel || '-'}</div>
+      </div>
+      <div class="${statusClass}" style="font-size:11px;font-weight:700">${n.status}</div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
