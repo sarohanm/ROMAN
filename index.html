@@ -207,9 +207,30 @@
       </div>
     </div>
 
-    <!-- TEMPLATES TAB -->
+    <!-- TEMPLATES TAB (now shows visa info per country) -->
     <div class="panel" id="panel-templates">
-      <div class="topbar"><h1>টেমপ্লেট</h1></div>
+      <div class="topbar"><h1>ভিসার তথ্য</h1></div>
+      <div class="card">
+        <h3 style="margin-top:0;font-size:14px;">দেশ অনুযায়ী ভিসার ধরন</h3>
+        <p class="hint">এই এজেন্সির কাছে কোন কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে দেখা যাবে। নতুন ভিসার ধরন যোগ/মুছার জন্য সেটিংসে যান।</p>
+        <div id="visaInfoList" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- LOGS TAB -->
+    <div class="panel" id="panel-logs">
+      <div class="topbar"><h1>নোটিফিকেশন লগ</h1></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>সময়</th><th>জার্নি</th><th>চ্যানেল</th><th>টেমপ্লেট</th><th>স্ট্যাটাস</th><th></th></tr></thead>
+          <tbody id="logRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="panel admin-only" id="panel-settings">
+      <div class="topbar"><h1>সেটিংস</h1></div>
       <div class="card">
         <h3 style="margin-top:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
         <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
@@ -230,22 +251,21 @@
           <tbody id="templateRows"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- LOGS TAB -->
-    <div class="panel" id="panel-logs">
-      <div class="topbar"><h1>নোটিফিকেশন লগ</h1></div>
       <div class="card">
-        <table>
-          <thead><tr><th>সময়</th><th>জার্নি</th><th>চ্যানেল</th><th>টেমপ্লেট</th><th>স্ট্যাটাস</th><th></th></tr></thead>
-          <tbody id="logRows"></tbody>
-        </table>
+        <h3 style="margin-top:0;font-size:14px;">ভিসার ধরন ব্যবস্থাপনা</h3>
+        <p class="hint">কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে যোগ করুন। এটা "ভিসার তথ্য" ট্যাবে দেখা যাবে।</p>
+        <div class="formGrid">
+          <select id="visaCountry" onchange="handleVisaCountryChange(this)">
+            <option value="">দেশ নির্বাচন করুন</option>
+            <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
+          </select>
+          <div class="flex" style="gap:6px;">
+            <input id="visaName" placeholder="ভিসার ধরন (যেমন: ফ্রি ভিসা, কোম্পানি ভিসা)" style="flex:1;">
+            <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addVisaType()">যোগ করুন</button>
+          </div>
+        </div>
+        <div id="visaManageList" style="margin-top:12px;"></div>
       </div>
-    </div>
-
-    <!-- SETTINGS TAB -->
-    <div class="panel admin-only" id="panel-settings">
-      <div class="topbar"><h1>সেটিংস</h1></div>
       <div class="card">
         <h3 style="margin-top:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
         <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
@@ -312,7 +332,7 @@
     <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')">📊<span>ড্যাশবোর্ড</span></button>
     <button class="bn" data-tab="journeys" onclick="showTab('journeys')">🧳<span>জার্নি</span></button>
     <button class="bn" data-tab="users" onclick="showTab('users')">👤<span>ইউজার</span></button>
-    <button class="bn" data-tab="templates" onclick="showTab('templates')">✉️<span>টেমপ্লেট</span></button>
+    <button class="bn" data-tab="templates" onclick="showTab('templates')">🛂<span>ভিসা তথ্য</span></button>
     <button class="bn" data-tab="logs" onclick="showTab('logs')">🔔<span>লগ</span></button>
     <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')">⚙️<span>সেটিংস</span></button>
   </div>
@@ -474,6 +494,7 @@ async function enterApp(){
   loadCountries();
   loadCustomFields();
   loadTemplates();
+  loadVisaTypes();
   loadLogs();
   loadDashboard();
 }
@@ -709,6 +730,12 @@ function renderCountrySelects(){
     cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
     cfSel.value = current;
   }
+  const visaSel = document.getElementById('visaCountry');
+  if(visaSel){
+    const current = visaSel.value;
+    visaSel.innerHTML = '<option value="">দেশ নির্বাচন করুন</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
+    visaSel.value = current;
+  }
   renderCountryList();
 }
 
@@ -769,10 +796,93 @@ function deleteCountry(id, name){
     .catch(err => { alert('দেশ মুছতে ব্যর্থ: ' + err.message); console.error(err); });
 }
 
+/* ================= VISA TYPES (BY COUNTRY) ================= */
+let visaTypes = {};
+
+function loadVisaTypes(){
+  db.ref('visa_types').on('value', snap => {
+    visaTypes = snap.val() || {};
+    renderVisaManageList();
+    renderVisaInfoList();
+  });
+}
+
+function addVisaType(){
+  const country = document.getElementById('visaCountry').value;
+  const name = document.getElementById('visaName').value.trim();
+  if(!country){ alert('দেশ নির্বাচন করুন'); return; }
+  if(!name){ alert('ভিসার ধরনের নাম দিন'); return; }
+  db.ref('visa_types').push({ country, name, created_at: Date.now() }).then(() => {
+    document.getElementById('visaName').value = '';
+  }).catch(err => { alert('ভিসা যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
+}
+
+function deleteVisaType(vid){
+  if(!confirm('এই ভিসার ধরনটা মুছে ফেলতে চান?')) return;
+  db.ref('visa_types/' + vid).remove()
+    .catch(err => { alert('ভিসা ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
+}
+
+function renderVisaManageList(){
+  const container = document.getElementById('visaManageList');
+  if(!container) return;
+  const entries = Object.entries(visaTypes);
+  if(!entries.length){
+    container.innerHTML = '<p class="hint">এখনো কোনো ভিসার ধরন যোগ করা হয়নি।</p>';
+    return;
+  }
+  const groups = {};
+  entries.forEach(([vid, v]) => {
+    if(!groups[v.country]) groups[v.country] = [];
+    groups[v.country].push([vid, v]);
+  });
+  const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
+  container.innerHTML = countryNames.map(country => {
+    const rows = groups[country].map(([vid, v]) => `
+      <div class="fieldRow">
+        <div>${v.name}</div>
+        <button class="del" onclick="deleteVisaType('${vid}')">মুছুন</button>
+      </div>`).join('');
+    return `<p class="hint" style="margin:10px 0 4px;font-weight:700;color:#1c2733;">🌍 ${country}</p>${rows}`;
+  }).join('');
+}
+
+function renderVisaInfoList(){
+  const container = document.getElementById('visaInfoList');
+  if(!container) return;
+  const entries = Object.entries(visaTypes);
+  if(!entries.length){
+    container.innerHTML = '<p class="hint">এখনো কোনো ভিসার ধরন যোগ করা হয়নি। সেটিংস থেকে যোগ করুন।</p>';
+    return;
+  }
+  const groups = {};
+  entries.forEach(([vid, v]) => {
+    if(!groups[v.country]) groups[v.country] = [];
+    groups[v.country].push(v.name);
+  });
+  const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
+  container.innerHTML = countryNames.map(country => `
+    <div class="fieldRow" style="align-items:flex-start;flex-direction:column;gap:8px;">
+      <div style="font-weight:700;">🌍 ${country}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${groups[country].map(name => `<span style="background:#f0f3f7;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;">${name}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
 function handleCfCountryChange(sel){
   if(sel.value === '__add__'){
     sel.value = sel.dataset.prev || '';
     addCountry('cfCountry');
+  } else {
+    sel.dataset.prev = sel.value;
+  }
+}
+
+function handleVisaCountryChange(sel){
+  if(sel.value === '__add__'){
+    sel.value = sel.dataset.prev || '';
+    addCountry('visaCountry');
   } else {
     sel.dataset.prev = sel.value;
   }
