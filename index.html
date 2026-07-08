@@ -326,17 +326,15 @@
 
     <!-- USERS TAB -->
     <div class="panel" id="panel-users">
-      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button></div>
-      <div class="card">
-        <div class="filterBar">
-          <div class="searchWrap"><i class="fas fa-magnifying-glass"></i><input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()"></div>
-          <select id="uCountryFilter" onchange="renderUsers()">
-            <option value="">সব দেশ</option>
-          </select>
-          <select id="uStageFilter" onchange="renderUsers()">
-            <option value="">সব স্টেজ</option>
-          </select>
+      <div class="topbar">
+        <h1 style="margin:0;">ইউজার</h1>
+        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:14px;">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()">
         </div>
+        <button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button>
+      </div>
+      <div class="card">
         <div id="userRows"></div>
       </div>
     </div>
@@ -344,8 +342,8 @@
     <!-- TEMPLATES TAB (now shows visa info per country) -->
     <div class="panel" id="panel-templates">
       <div class="topbar">
-        <h1>ভিসার তথ্য</h1>
-        <div class="searchWrap" style="flex:0 1 200px;max-width:200px;">
+        <h1 style="margin:0;">ভিসার তথ্য</h1>
+        <div class="searchWrap" style="flex:1;margin-left:14px;">
           <i class="fas fa-magnifying-glass"></i>
           <input type="text" id="visaSearch" placeholder="দেশ খুঁজুন..." oninput="renderVisaInfoList()">
         </div>
