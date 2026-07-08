@@ -107,9 +107,10 @@
   .payProgWrap{margin:8px 0 12px;}
   .payProgOuter{height:8px;border-radius:6px;background:#eee7da;overflow:hidden;}
   .payProgInner{height:100%;border-radius:6px;background:linear-gradient(90deg,#1a9e5c,#25c17a);transition:width .3s ease;}
-  .payStatsRow{display:flex;gap:14px;font-size:11.5px;margin:6px 0 2px;flex-wrap:wrap;}
-  .payStatsRow .ps-item{display:flex;flex-direction:column;gap:1px;}
-  .payStatsRow .ps-item b{font-size:13px;}
+  .payStatsRow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;margin:6px 0 2px;}
+  .payStatsRow .ps-item{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .payStatsRow .ps-item b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .payStatsRow .ps-item:last-child{margin-left:0 !important;text-align:right;}
   /* Search bar with icon */
   .searchWrap{position:relative;flex:1 1 100%;}
   .searchWrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#a7b0bd;font-size:12px;}
@@ -119,6 +120,7 @@
   .visaCard:last-child{margin-bottom:0;}
   .visaCard .vc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .visaCard .vc-title{font-weight:800;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:7px;}
+  .vc-price{background:var(--gold-grad);color:#3a2a05;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;margin-left:auto;}
   .visaChip{background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#3b4552;}
   .visaStatRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
   .visaStatRow .vsr-stats{display:flex;gap:18px;}
@@ -175,6 +177,12 @@
   .accBody .accRow:last-child{border-bottom:none;}
   .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
   .accBody .accActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .accInfoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .accInfoItem{min-width:0;}
+  .accInfoItem .aii-lbl{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:3px;}
+  .accInfoItem .aii-val{font-size:12px;font-weight:600;color:#1c2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .financeGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+  .financeGrid input{width:100%;min-width:0;}
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
   .chev-ico.open{transform:rotate(180deg);}
@@ -335,7 +343,13 @@
 
     <!-- TEMPLATES TAB (now shows visa info per country) -->
     <div class="panel" id="panel-templates">
-      <div class="topbar"><h1>ভিসার তথ্য</h1></div>
+      <div class="topbar">
+        <h1>ভিসার তথ্য</h1>
+        <div class="searchWrap" style="flex:0 1 200px;max-width:200px;">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" id="visaSearch" placeholder="দেশ খুঁজুন..." oninput="renderVisaInfoList()">
+        </div>
+      </div>
       <div class="card">
         <div class="card-hd"><i class="fas fa-earth-asia"></i> দেশ অনুযায়ী ভিসার ধরন</div>
         <div id="visaInfoList" style="margin-top:12px;"></div>
@@ -787,16 +801,18 @@ function renderJourneys(){
             <span id="chev-j-${jid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
           </div>
           <div class="accBody" id="acc-j-${jid}">
-            <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${getUserPhone(u)}</div>
-            <div class="accRow"><div class="accLabel"><i class="fas fa-passport" style="margin-right:4px;"></i>পাসপোর্ট</div>${getUserPassport(u)}</div>
-            <div class="accRow"><div class="accLabel"><i class="fas fa-plane" style="margin-right:4px;"></i>ফ্লাইট</div>${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div>
+            <div class="accInfoGrid">
+              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>ফোন</div><div class="aii-val" title="${getUserPhone(u)}">${getUserPhone(u)}</div></div>
+              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-passport"></i>পাসপোর্ট</div><div class="aii-val" title="${getUserPassport(u)}">${getUserPassport(u)}</div></div>
+              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-plane"></i>ফ্লাইট</div><div class="aii-val" title="${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div></div>
+            </div>
             <div class="accRow">
               <div class="accLabel">আয়/খরচ (৳)</div>
-              <div style="display:flex;flex-wrap:nowrap;gap:6px;margin-top:4px;">
-                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="flex:0.7 1 0;min-width:0;">
-                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="flex:1.4 1 0;min-width:0;">
-                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="flex:1.1 1 0;min-width:0;">
-                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="flex:1.1 1 0;min-width:0;">
+              <div class="financeGrid">
+                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}">
+                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}">
+                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}">
+                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}">
               </div>
               <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
             </div>
@@ -878,11 +894,11 @@ function renderPaymentSection(jid, j){
         </div>
       </div>
       <div id="paymentList-${jid}">${rowsHtml}</div>
-      <div class="flex" style="margin-top:8px;gap:6px;">
-        <input type="number" id="payAmt-${jid}" placeholder="পরিমাণ (৳)" style="flex:1;">
-        <input type="text" id="payNote-${jid}" placeholder="নোট (ঐচ্ছিক)" style="flex:1;">
-        <button class="btn small" style="width:auto;flex-shrink:0;" onclick="addPayment('${jid}')"><i class="fas fa-plus"></i> যোগ করুন</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+        <input type="number" id="payAmt-${jid}" placeholder="পরিমাণ (৳)">
+        <input type="text" id="payNote-${jid}" placeholder="নোট (ঐচ্ছিক)">
       </div>
+      <button class="btn small" style="width:auto;margin-top:6px;" onclick="addPayment('${jid}')"><i class="fas fa-plus"></i> যোগ করুন</button>
     </div>`;
 }
 
@@ -1382,10 +1398,18 @@ function renderVisaInfoList(){
     if(!groups[v.country]) groups[v.country] = [];
     groups[v.country].push({ name: v.name, fee: v.fee || 0 });
   });
-  const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
+  const searchEl = document.getElementById('visaSearch');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  let countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
+  if(q) countryNames = countryNames.filter(c => c.toLowerCase().includes(q));
 
   const userEntries = Object.entries(usersCache);
   const journeyList = Object.values(journeysCache);
+
+  if(!countryNames.length){
+    container.innerHTML = '<p class="hint">এই নামে কোনো দেশ পাওয়া যায়নি।</p>';
+    return;
+  }
 
   container.innerHTML = countryNames.map(country => {
     const countryUserIds = userEntries.filter(([uid, u]) => u.country === country).map(([uid]) => uid);
@@ -1394,11 +1418,21 @@ function renderVisaInfoList(){
     const departed = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage === 'DEPARTED').length;
     const visaLine = groups[country].map(v => v.fee ? `${v.name} (৳${v.fee.toLocaleString('bn-BD')})` : v.name).join(', ');
     const flag = COUNTRY_FLAGS[country] || '🌍';
+    const fees = groups[country].map(v => v.fee).filter(f => f > 0);
+    let priceBadge = '';
+    if(fees.length === 1){
+      priceBadge = `<span class="vc-price">৳${fees[0].toLocaleString('bn-BD')}</span>`;
+    } else if(fees.length > 1){
+      const min = Math.min(...fees), max = Math.max(...fees);
+      priceBadge = min === max
+        ? `<span class="vc-price">৳${min.toLocaleString('bn-BD')}</span>`
+        : `<span class="vc-price">৳${min.toLocaleString('bn-BD')} – ৳${max.toLocaleString('bn-BD')}</span>`;
+    }
     const shareText = `${flag} ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
     return `
     <div class="visaCard">
       <div class="vc-head">
-        <div class="vc-title">${flag} ${country}</div>
+        <div class="vc-title">${flag} ${country}${priceBadge}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:7px;">
         ${groups[country].map(v => `<span class="visaChip">${v.name}${v.fee ? ` <b style="color:var(--navy);">৳${v.fee.toLocaleString('bn-BD')}</b>` : ''}</span>`).join('')}
