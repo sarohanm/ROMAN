@@ -21,8 +21,9 @@
 
 <style>
   :root{
-    --navy:#141820; --navy2:#2a3245; --gold:#d4922a; --teal:#2563eb; --bg:#f7f2ea;
+    --navy:#141820; --navy2:#2a3245; --gold:#e0a530; --teal:#2563eb; --bg:#f7f2ea;
     --ok:#1a9e5c; --fail:#dc3545; --warn:#d4922a; --border:#e2ddd5;
+    --gold-grad:linear-gradient(135deg,#f6d998,#e0a530 45%,#a8710f);
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#1c2733;}
@@ -36,6 +37,8 @@
   .btn.gold{background:var(--gold);color:#1c2733;}
   .btn.small{width:auto;padding:6px 12px;font-size:12px;}
   .btn.danger{background:var(--fail);}
+  .btn.success{background:var(--ok);}
+  .btn.info{background:var(--teal);}
   #faceStep{display:none;text-align:center;}
   video, canvas{border-radius:10px;width:100%;max-width:280px;}
   #loginMsg{font-size:12px;color:var(--fail);min-height:16px;margin-top:4px;}
@@ -43,8 +46,10 @@
   #app{display:none;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);}
   .shell{display:flex;flex-direction:column;min-height:100vh;}
   .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);flex-shrink:0;}
-  .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--gold) 0 10px,var(--teal) 10px 14px);}
-  .nav-brand{font-size:15px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a8710f,#f6d998 22%,#e0a530 50%,#f6d998 78%,#a8710f);}
+  .nav-brand{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .nav-brand i{color:var(--gold);}
   .nav-r{display:flex;align-items:center;gap:8px;}
   .logout-btn{width:32px;height:32px;background:rgba(220,53,69,.15);border:1px solid rgba(220,53,69,.3);color:#f2a3a3;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;}
   .logout-btn:active{background:rgba(220,53,69,.3);}
@@ -58,7 +63,7 @@
   .bn.active{color:var(--gold);}
   .panel{display:none;}
   .panel.active{display:block;}
-  .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+  .card{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px rgba(20,24,32,.06);}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
   th{color:#5b6a78;font-weight:600;font-size:12px;text-transform:uppercase;}
@@ -88,9 +93,10 @@
 
   /* ===== Dashboard ===== */
   .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
-  .dc{background:#fff;border-radius:14px;padding:13px 12px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid var(--border);}
-  .dc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--navy));border-radius:0 0 3px 3px;}
-  .dc-ico{width:32px;height:32px;border-radius:9px;background:var(--ic,rgba(20,24,32,.08));display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ac,var(--navy));margin-bottom:8px;}
+  .dc{background:#fff;border-radius:14px;padding:14px 13px;position:relative;overflow:hidden;box-shadow:0 4px 16px rgba(20,24,32,.07),0 1px 3px rgba(20,24,32,.04);border:1px solid var(--border);transition:transform .15s ease,box-shadow .15s ease;}
+  .dc:active{transform:scale(.98);box-shadow:0 2px 8px rgba(20,24,32,.08);}
+  .dc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--navy));}
+  .dc-ico{width:34px;height:34px;border-radius:10px;background:var(--ic,rgba(20,24,32,.08));display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ac,var(--navy));margin-bottom:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
   .dc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8896ab;margin-bottom:3px;}
   .dc-val{font-size:19px;font-weight:800;color:var(--navy);line-height:1.15;}
   .dc-sub{font-size:10.5px;color:#8896ab;margin-top:3px;}
@@ -125,6 +131,13 @@
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
   .chev-ico.open{transform:rotate(180deg);}
+  .settingsHead{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;transition:opacity .15s;}
+  .settingsHead:active{opacity:.65;}
+  .settingsHead .sh-ico{width:38px;height:38px;border-radius:11px;background:var(--ic,rgba(212,146,42,.12));color:var(--ac,var(--gold));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
+  .settingsHead h3{margin:0;font-size:14px;color:var(--navy);}
+  .settingsHead .chev-ico{color:var(--gold);font-size:13px;}
+  .settingsCard{position:relative;overflow:hidden;}
+  .settingsCard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--gold));}
   .chart-wrap{height:150px;position:relative;}
   .dash-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
   .dash-row:last-child{border-bottom:none;}
@@ -175,7 +188,7 @@
 <div id="app">
 <div class="shell">
   <div class="top-nav">
-    <div class="nav-brand"><i class="fas fa-plane-departure"></i> Talent Overseas</div>
+    <div class="nav-brand"><i class="fas fa-plane-departure"></i> <span class="brand-text">Talent Overseas</span></div>
     <div class="nav-r">
       <span class="roleTag" id="roleTag">Admin</span>
       <button class="logout-btn" onclick="logout()" title="লগআউট"><i class="fas fa-right-from-bracket"></i></button>
@@ -235,9 +248,9 @@
         <div class="card-hd"><i class="fas fa-download"></i> রিপোর্ট এক্সপোর্ট</div>
         <p class="hint">CSV ফাইল হিসেবে ডাউনলোড হবে, Excel/Google Sheets-এ সরাসরি খোলা যাবে।</p>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-          <button class="btn small" style="width:100%;" onclick="exportProfitLossReport()"><i class="fas fa-sack-dollar"></i> প্রফিট-লস রিপোর্ট (মাস অনুযায়ী)</button>
-          <button class="btn small" style="width:100%;" onclick="exportCustomerListReport()"><i class="fas fa-users"></i> কাস্টমার লিস্ট</button>
-          <button class="btn small" style="width:100%;" onclick="exportPaymentsReport()"><i class="fas fa-receipt"></i> পেমেন্ট/কিস্তি রিপোর্ট</button>
+          <button class="btn small success" style="width:100%;" onclick="exportProfitLossReport()"><i class="fas fa-sack-dollar"></i> প্রফিট-লস রিপোর্ট (মাস অনুযায়ী)</button>
+          <button class="btn small info" style="width:100%;" onclick="exportCustomerListReport()"><i class="fas fa-users"></i> কাস্টমার লিস্ট</button>
+          <button class="btn small gold" style="width:100%;" onclick="exportPaymentsReport()"><i class="fas fa-receipt"></i> পেমেন্ট/কিস্তি রিপোর্ট</button>
         </div>
       </div>
     </div>
@@ -297,9 +310,10 @@
     <!-- SETTINGS TAB -->
     <div class="panel admin-only" id="panel-settings">
       <div class="topbar"><h1>সেটিংস</h1></div>
-      <div class="card">
-        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('templatePanel')">
-          <h3 style="margin:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
+      <div class="card settingsCard" style="--ac:#d4922a">
+        <div class="settingsHead" style="--ic:rgba(212,146,42,.12);--ac:#d4922a" onclick="toggleSettingsPanel('templatePanel')">
+          <div class="sh-ico"><i class="fas fa-file-lines"></i></div>
+          <h3 style="flex:1;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
           <span id="chev-templatePanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="templatePanel" style="display:none;">
@@ -320,9 +334,10 @@
           </table>
         </div>
       </div>
-      <div class="card">
-        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('webhookPanel')">
-          <h3 style="margin:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
+      <div class="card settingsCard" style="--ac:#2563eb">
+        <div class="settingsHead" style="--ic:rgba(37,99,235,.12);--ac:#2563eb" onclick="toggleSettingsPanel('webhookPanel')">
+          <div class="sh-ico"><i class="fab fa-whatsapp"></i></div>
+          <h3 style="flex:1;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
           <span id="chev-webhookPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="webhookPanel" style="display:none;">
@@ -333,9 +348,10 @@
           <button class="btn small" onclick="saveSettings()">সেভ করুন</button>
         </div>
       </div>
-      <div class="card">
-        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsCountryPanel()">
-          <h3 style="margin:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
+      <div class="card settingsCard" style="--ac:#2a3245">
+        <div class="settingsHead" style="--ic:rgba(42,50,69,.1);--ac:#2a3245" onclick="toggleSettingsCountryPanel()">
+          <div class="sh-ico"><i class="fas fa-globe"></i></div>
+          <h3 style="flex:1;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
           <span id="chev-settingsCountryPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="settingsCountryPanel" style="display:none;">
@@ -367,9 +383,10 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('securityPanel')">
-          <h3 style="margin:0;font-size:14px;">পাসওয়ার্ড ও ফেসলক পরিবর্তন</h3>
+      <div class="card settingsCard" style="--ac:#dc3545">
+        <div class="settingsHead" style="--ic:rgba(220,53,69,.1);--ac:#dc3545" onclick="toggleSettingsPanel('securityPanel')">
+          <div class="sh-ico"><i class="fas fa-lock"></i></div>
+          <h3 style="flex:1;">পাসওয়ার্ড ও ফেসলক পরিবর্তন</h3>
           <span id="chev-securityPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="securityPanel" style="display:none;">
