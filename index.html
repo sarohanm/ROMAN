@@ -1441,10 +1441,7 @@ function renderVisaInfoList(){
           <span>চলমান প্রসেসিং <br><b style="color:var(--gold);">${active}</b></span>
           <span>রওনা সম্পন্ন <br><b style="color:var(--ok);">${departed}</b></span>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='showVisaCharges(${JSON.stringify(country)}, ${JSON.stringify(groups[country])})'><i class="fas fa-tag"></i> ভিসার মূল্য</button>
-          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
-        </div>
+        <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-paper-plane"></i> শেয়ার করুন</button>
       </div>
     </div>`;
   }).join('');
