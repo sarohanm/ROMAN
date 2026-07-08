@@ -105,6 +105,9 @@
   .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
   .fieldRow .fr-meta{color:#8794a1;font-size:11px;}
   .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12px;font-weight:700;}
+  .filterBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .filterBar input[type="text"]{flex:1 1 100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
+  .filterBar select{flex:1;min-width:110px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;}
   .accItem{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
   .accItem:last-child{margin-bottom:0;}
   .accHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;gap:8px;}
@@ -199,6 +202,12 @@
     <div class="panel" id="panel-journeys">
       <div class="topbar"><h1>জার্নি</h1></div>
       <div class="card">
+        <div class="filterBar">
+          <input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()">
+          <select id="jStageFilter" onchange="renderJourneys()">
+            <option value="">সব স্টেজ</option>
+          </select>
+        </div>
         <div id="journeyRows"></div>
       </div>
     </div>
@@ -207,6 +216,15 @@
     <div class="panel" id="panel-users">
       <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন">+</button></div>
       <div class="card">
+        <div class="filterBar">
+          <input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()">
+          <select id="uCountryFilter" onchange="renderUsers()">
+            <option value="">সব দেশ</option>
+          </select>
+          <select id="uStageFilter" onchange="renderUsers()">
+            <option value="">সব স্টেজ</option>
+          </select>
+        </div>
         <div id="userRows"></div>
       </div>
     </div>
@@ -517,6 +535,7 @@ async function enterApp(){
   if(currentRole !== 'admin'){
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
+  populateStageFilters();
   loadJourneys();
   loadUsers();
   loadCountries();
@@ -525,6 +544,14 @@ async function enterApp(){
   loadVisaTypes();
   loadLogs();
   loadDashboard();
+}
+
+function populateStageFilters(){
+  const opts = Object.entries(STAGE_LABEL).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+  const jSel = document.getElementById('jStageFilter');
+  const uSel = document.getElementById('uStageFilter');
+  if(jSel) jSel.insertAdjacentHTML('beforeend', opts);
+  if(uSel) uSel.insertAdjacentHTML('beforeend', opts);
 }
 
 function logout(){
@@ -552,12 +579,34 @@ function showTab(name){
 /* ================= JOURNEYS ================= */
 function loadJourneys(){
   db.ref('journeys').on('value', snap => {
-    const journeys = snap.val() || {};
-    journeysCache = journeys;
+    journeysCache = snap.val() || {};
     db.ref('users').once('value').then(uSnap => {
-      const users = uSnap.val() || {};
-      renderVisaInfoList();
-      const rows = Object.entries(journeys).map(([jid, j]) => {
+      usersCache = uSnap.val() || {};
+      window._usersCache = usersCache;
+      renderJourneys();
+    });
+  });
+}
+
+function renderJourneys(){
+  const journeys = journeysCache;
+  const users = usersCache;
+  renderVisaInfoList();
+  const searchEl = document.getElementById('jSearch');
+  const stageEl = document.getElementById('jStageFilter');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const stageFilter = stageEl ? stageEl.value : '';
+  let entries = Object.entries(journeys);
+  if(stageFilter) entries = entries.filter(([jid, j]) => j.current_stage === stageFilter);
+  if(q){
+    entries = entries.filter(([jid, j]) => {
+      const u = users[j.user_id] || {};
+      const hay = (getUserName(u) + ' ' + getUserPhone(u) + ' ' + getUserPassport(u)).toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  {
+      const rows = entries.map(([jid, j]) => {
         const u = users[j.user_id] || {};
         const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
         const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
@@ -585,6 +634,7 @@ function loadJourneys(){
                 <button class="btn small" onclick="saveJourneyFinance('${jid}')">সেভ</button>
               </div>
             </div>
+            ${renderPaymentSection(jid, j)}
             ${nextStages.length ? `
             <div class="accRow">
               <div class="accLabel">পরবর্তী স্টেজে যান</div>
@@ -595,13 +645,15 @@ function loadJourneys(){
             </div>` : `<div class="accRow"><div class="accLabel">পরবর্তী স্টেজে যান</div><span class="hint">শেষ স্টেজ</span></div>`}
             <div class="accActions">
               <button class="btn small" onclick="shareUserProgress('${j.user_id}')">শেয়ার করুন</button>
+              <button class="btn small gold" onclick="sendWhatsAppUser('${j.user_id}')">WhatsApp পাঠান</button>
             </div>
           </div>
         </div>`;
       }).join('');
-      document.getElementById('journeyRows').innerHTML = rows || '<p class="hint">কোনো জার্নি নেই</p>';
-    });
-  });
+      const emptyMsg = (q || stageFilter) ? 'ফিল্টারে কোনো জার্নি পাওয়া যায়নি' : 'কোনো জার্নি নেই';
+      document.getElementById('journeyRows').innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
+  }
+  if(document.getElementById('userRows')) renderUsers();
 }
 
 async function advanceStage(journeyId){
@@ -628,6 +680,56 @@ async function saveJourneyFinance(journeyId){
   const cost_flight = parseFloat(document.getElementById('flight-' + journeyId).value) || 0;
   await db.ref('journeys/' + journeyId).update({ agency_fee, cost_medical, cost_visa, cost_flight });
   alert('হিসাব সেভ হয়েছে');
+}
+
+/* ================= PAYMENT / INSTALLMENT TRACKING ================= */
+function renderPaymentSection(jid, j){
+  const payments = j.payments || {};
+  const totalFee = j.agency_fee || 0;
+  const entries = Object.entries(payments).sort((a,b) => (a[1].date||0) - (b[1].date||0));
+  const paid = entries.reduce((sum, [pid, p]) => sum + (p.amount || 0), 0);
+  const due = totalFee - paid;
+  const rowsHtml = entries.length
+    ? entries.map(([pid, p]) => `
+      <div class="fieldRow">
+        <div>
+          <div>৳${p.amount}</div>
+          <div class="fr-meta">${p.date ? new Date(p.date).toLocaleDateString('bn-BD') : ''}${p.note ? ' · ' + p.note : ''}</div>
+        </div>
+        <button class="del" onclick="deletePayment('${jid}','${pid}')">✕</button>
+      </div>`).join('')
+    : '<p class="hint">এখনো কোনো কিস্তি যোগ করা হয়নি।</p>';
+  return `
+    <div class="accRow">
+      <div class="accLabel">পেমেন্ট / কিস্তি</div>
+      <div style="display:flex;gap:14px;font-size:12px;margin:6px 0 10px;flex-wrap:wrap;">
+        <span>মোট ফি: <strong>৳${totalFee}</strong></span>
+        <span style="color:var(--ok);">পরিশোধিত: <strong>৳${paid}</strong></span>
+        <span style="color:${due > 0 ? 'var(--fail)' : 'var(--ok)'};">বাকি: <strong>৳${due}</strong></span>
+      </div>
+      <div id="paymentList-${jid}">${rowsHtml}</div>
+      <div class="flex" style="margin-top:8px;gap:6px;">
+        <input type="number" id="payAmt-${jid}" placeholder="পরিমাণ (৳)" style="flex:1;">
+        <input type="text" id="payNote-${jid}" placeholder="নোট (ঐচ্ছিক)" style="flex:1;">
+        <button class="btn small" style="width:auto;flex-shrink:0;" onclick="addPayment('${jid}')">যোগ করুন</button>
+      </div>
+    </div>`;
+}
+
+async function addPayment(journeyId){
+  const amtInput = document.getElementById('payAmt-' + journeyId);
+  const noteInput = document.getElementById('payNote-' + journeyId);
+  const amount = parseFloat(amtInput.value);
+  if(!amount || amount <= 0){ alert('সঠিক পরিমাণ লিখুন'); return; }
+  const note = noteInput.value.trim();
+  await db.ref('journeys/' + journeyId + '/payments').push({ amount, note, date: Date.now() });
+  amtInput.value = '';
+  noteInput.value = '';
+}
+
+async function deletePayment(journeyId, paymentId){
+  if(!confirm('এই কিস্তিটা মুছে ফেলতে চান?')) return;
+  await db.ref('journeys/' + journeyId + '/payments/' + paymentId).remove();
 }
 
 /* Writes a 'pending' notification and calls the configured webhook.
@@ -707,37 +809,71 @@ function addUser(){
 
 function loadUsers(){
   db.ref('users').on('value', snap => {
-    const users = snap.val() || {};
-    usersCache = users;
+    usersCache = snap.val() || {};
+    window._usersCache = usersCache;
     renderVisaInfoList();
-    const rows = Object.entries(users).map(([uid, u]) => {
-      const j = getJourneyForUser(uid);
-      const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
-      return `
-      <div class="accItem">
-        <div class="accHead" onclick="toggleAccItem('u-${uid}')">
-          <div>
-            <div class="accName">${getUserName(u)}</div>
-            <div class="accSub">${u.country || '-'} · ${stageLabel}</div>
-          </div>
-          <span id="chev-u-${uid}">▾</span>
-        </div>
-        <div class="accBody" id="acc-u-${uid}">
-          <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
-          <div class="accRow"><div class="accLabel">দেশ</div>${u.country || '-'}</div>
-          <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
-          <div class="accRow"><div class="accLabel">ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
-          <div class="accActions">
-            <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
-            <button class="btn small" onclick="shareUserProgress('${uid}')">শেয়ার করুন</button>
-            <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-    document.getElementById('userRows').innerHTML = rows || '<p class="hint">কোনো ইউজার নেই</p>';
-    window._usersCache = users;
+    populateCountryFilter(usersCache);
+    renderUsers();
   });
+}
+
+function populateCountryFilter(users){
+  const sel = document.getElementById('uCountryFilter');
+  if(!sel) return;
+  const current = sel.value;
+  const countries = [...new Set(Object.values(users).map(u => u.country).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">সব দেশ</option>' + countries.map(c => `<option value="${c}">${c}</option>`).join('');
+  sel.value = countries.includes(current) ? current : '';
+}
+
+function renderUsers(){
+  const users = usersCache;
+  const searchEl = document.getElementById('uSearch');
+  const countryEl = document.getElementById('uCountryFilter');
+  const stageEl = document.getElementById('uStageFilter');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const countryFilter = countryEl ? countryEl.value : '';
+  const stageFilter = stageEl ? stageEl.value : '';
+  let entries = Object.entries(users);
+  if(countryFilter) entries = entries.filter(([uid, u]) => u.country === countryFilter);
+  if(stageFilter) entries = entries.filter(([uid, u]) => {
+    const j = getJourneyForUser(uid);
+    return j && j.current_stage === stageFilter;
+  });
+  if(q){
+    entries = entries.filter(([uid, u]) => {
+      const hay = (getUserName(u) + ' ' + getUserPhone(u) + ' ' + getUserPassport(u)).toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  const rows = entries.map(([uid, u]) => {
+    const j = getJourneyForUser(uid);
+    const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+    return `
+    <div class="accItem">
+      <div class="accHead" onclick="toggleAccItem('u-${uid}')">
+        <div>
+          <div class="accName">${getUserName(u)}</div>
+          <div class="accSub">${u.country || '-'} · ${stageLabel}</div>
+        </div>
+        <span id="chev-u-${uid}">▾</span>
+      </div>
+      <div class="accBody" id="acc-u-${uid}">
+        <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
+        <div class="accRow"><div class="accLabel">দেশ</div>${u.country || '-'}</div>
+        <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
+        <div class="accRow"><div class="accLabel">ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
+        <div class="accActions">
+          <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
+          <button class="btn small" onclick="shareUserProgress('${uid}')">শেয়ার করুন</button>
+          <button class="btn small gold" onclick="sendWhatsAppUser('${uid}')">WhatsApp পাঠান</button>
+          <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const emptyMsg = (q || countryFilter || stageFilter) ? 'ফিল্টারে কোনো ইউজার পাওয়া যায়নি' : 'কোনো ইউজার নেই';
+  document.getElementById('userRows').innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
 }
 function toggleAccItem(id){
   const el = document.getElementById('acc-' + id);
@@ -756,6 +892,16 @@ function shareUserProgress(uid){
   const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
   const text = `👤 ${getUserName(u)}\nদেশ: ${u.country || '-'}\nবর্তমান অবস্থা: ${stageLabel}` + (j && j.flight_datetime ? `\nফ্লাইট: ${new Date(j.flight_datetime).toLocaleString('bn-BD')}` : '');
   shareVisaInfo(text);
+}
+function sendWhatsAppUser(uid){
+  const u = (window._usersCache || {})[uid] || {};
+  const j = getJourneyForUser(uid);
+  const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+  const text = `প্রিয় ${getUserName(u)}, আপনার (${u.country || '-'}) ভিসা প্রসেসিং-এর বর্তমান অবস্থা: ${stageLabel}।`;
+  const phone = getUserPhone(u).replace(/[^0-9]/g, '');
+  if(!phone){ alert('এই ইউজারের কোনো ফোন নম্বর পাওয়া যায়নি।'); return; }
+  const withCC = phone.startsWith('88') ? phone : ('88' + phone.replace(/^0/, ''));
+  window.open(`https://wa.me/${withCC}?text=${encodeURIComponent(text)}`, '_blank');
 }
 function viewUserDetails(uid){
   const u = (window._usersCache || {})[uid] || {};
