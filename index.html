@@ -105,6 +105,16 @@
   .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
   .fieldRow .fr-meta{color:#8794a1;font-size:11px;}
   .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12px;font-weight:700;}
+  .accItem{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+  .accItem:last-child{margin-bottom:0;}
+  .accHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;gap:8px;}
+  .accHead .accName{font-weight:700;font-size:13px;color:#1c2733;}
+  .accHead .accSub{font-size:11px;color:#8794a1;margin-top:2px;}
+  .accBody{display:none;padding:0 12px 12px;border-top:1px solid var(--border);}
+  .accBody .accRow{padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+  .accBody .accRow:last-child{border-bottom:none;}
+  .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8794a1;margin-bottom:2px;}
+  .accBody .accActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .chart-wrap{height:150px;position:relative;}
   .dash-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
@@ -189,10 +199,7 @@
     <div class="panel" id="panel-journeys">
       <div class="topbar"><h1>জার্নি</h1></div>
       <div class="card">
-        <table>
-          <thead><tr><th>নাম</th><th>ফোন</th><th>পাসপোর্ট</th><th>বর্তমান স্টেজ</th><th>ফ্লাইট</th><th>আয়/খরচ (৳)</th><th>পরবর্তী স্টেজে যান</th><th></th></tr></thead>
-          <tbody id="journeyRows"></tbody>
-        </table>
+        <div id="journeyRows"></div>
       </div>
     </div>
 
@@ -200,10 +207,7 @@
     <div class="panel" id="panel-users">
       <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন">+</button></div>
       <div class="card">
-        <table>
-          <thead><tr><th>নাম</th><th>ফোন</th><th>দেশ</th><th>পাসপোর্ট</th><th>ডকুমেন্ট স্ট্যাটাস</th><th></th></tr></thead>
-          <tbody id="userRows"></tbody>
-        </table>
+        <div id="userRows"></div>
       </div>
     </div>
 
@@ -232,40 +236,40 @@
     <div class="panel admin-only" id="panel-settings">
       <div class="topbar"><h1>সেটিংস</h1></div>
       <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
-        <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
-        <div class="formGrid">
-          <input id="tKey" placeholder="Template Key (যেমন: visa_approved)">
-          <select id="tChannel">
-            <option value="whatsapp">WhatsApp</option>
-            <option value="sms">SMS</option>
-            <option value="email">Email</option>
-          </select>
+        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('templatePanel')">
+          <h3 style="margin:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
+          <span id="chev-templatePanel">▾</span>
         </div>
-        <textarea id="tBody" rows="3" style="width:100%;" placeholder="প্রিয় {{name}}, আপনার ভিসা অনুমোদিত হয়েছে..."></textarea>
-        <div style="margin-top:8px;"><button class="btn small" onclick="saveTemplate()">সেভ করুন</button></div>
+        <div id="templatePanel" style="display:none;">
+          <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
+          <div class="formGrid">
+            <input id="tKey" placeholder="Template Key (যেমন: visa_approved)">
+            <select id="tChannel">
+              <option value="whatsapp">WhatsApp</option>
+              <option value="sms">SMS</option>
+              <option value="email">Email</option>
+            </select>
+          </div>
+          <textarea id="tBody" rows="3" style="width:100%;" placeholder="প্রিয় {{name}}, আপনার ভিসা অনুমোদিত হয়েছে..."></textarea>
+          <div style="margin-top:8px;"><button class="btn small" onclick="saveTemplate()">সেভ করুন</button></div>
+          <table style="margin-top:12px;">
+            <thead><tr><th>Key</th><th>Channel</th><th>Body</th><th></th></tr></thead>
+            <tbody id="templateRows"></tbody>
+          </table>
+        </div>
       </div>
       <div class="card">
-        <table>
-          <thead><tr><th>Key</th><th>Channel</th><th>Body</th><th></th></tr></thead>
-          <tbody id="templateRows"></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
-        <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
-        <input id="waWebhook" placeholder="WhatsApp send webhook URL" style="width:100%;margin-bottom:8px;">
-        <input id="smsWebhook" placeholder="SMS send webhook URL" style="width:100%;margin-bottom:8px;">
-        <input id="aviationKey" placeholder="AviationStack API key" style="width:100%;margin-bottom:8px;">
-        <button class="btn small" onclick="saveSettings()">সেভ করুন</button>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">⏱ T-minus শিডিউলার (কনফিগারেশন নোট)</h3>
-        <p class="hint">
-          এই HTML ফাইল ব্রাউজার বন্ধ থাকলে cron চালাতে পারবে না। T-48h/T-24h/T-3h অ্যালার্টের জন্য:<br>
-          ১) Firebase Cloud Function (scheduled, প্রতি ১৫ মিনিটে) — <code>checkUpcomingFlights</code> — অথবা<br>
-          ২) cron-job.org থেকে প্রতি ১৫ মিনিটে একটা HTTPS endpoint কল করান যা flights চেক করে notifications/ এ এন্ট্রি লিখবে।
-        </p>
+        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('webhookPanel')">
+          <h3 style="margin:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
+          <span id="chev-webhookPanel">▾</span>
+        </div>
+        <div id="webhookPanel" style="display:none;">
+          <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
+          <input id="waWebhook" placeholder="WhatsApp send webhook URL" style="width:100%;margin-bottom:8px;">
+          <input id="smsWebhook" placeholder="SMS send webhook URL" style="width:100%;margin-bottom:8px;">
+          <input id="aviationKey" placeholder="AviationStack API key" style="width:100%;margin-bottom:8px;">
+          <button class="btn small" onclick="saveSettings()">সেভ করুন</button>
+        </div>
       </div>
       <div class="card">
         <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsCountryPanel()">
@@ -298,6 +302,37 @@
             <textarea id="cfVisaText" rows="4" style="display:none;width:100%;" placeholder="প্রতি লাইনে একটা ভিসার ধরন লিখুন (Enter চেপে নতুন লাইন)"></textarea>
             <button type="button" class="btn small" id="cfVisaAddBtn" style="display:none;" onclick="addCustomField()">ভিসা যোগ করুন</button>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('securityPanel')">
+          <h3 style="margin:0;font-size:14px;">পাসওয়ার্ড ও ফেসলক পরিবর্তন</h3>
+          <span id="chev-securityPanel">▾</span>
+        </div>
+        <div id="securityPanel" style="display:none;">
+          <div class="fieldRow" style="cursor:default;margin-top:8px;">
+            <div style="font-weight:700;">পাসওয়ার্ড পরিবর্তন করুন</div>
+          </div>
+          <div class="formGrid">
+            <input id="pcEmail" type="email" placeholder="Email">
+            <input id="pcCurrentPass" type="password" placeholder="বর্তমান পাসওয়ার্ড">
+            <input id="pcNewPass" type="password" placeholder="নতুন পাসওয়ার্ড">
+            <input id="pcConfirmPass" type="password" placeholder="নতুন পাসওয়ার্ড আবার লিখুন">
+          </div>
+          <div style="margin-top:8px;"><button class="btn small" onclick="changeAdminPassword()">পরিবর্তন করুন</button></div>
+          <div id="pcMsg" style="font-size:12px;margin-top:6px;"></div>
+
+          <div class="fieldRow" style="cursor:default;margin-top:16px;">
+            <div style="font-weight:700;">ফেসলক পরিবর্তন করুন</div>
+          </div>
+          <p class="hint">ক্যামেরার সামনে সরাসরি তাকান, তারপর নিচের বাটনে চাপ দিয়ে নতুন ফেস এনরোল করুন। এটি আগের এনরোল করা ফেসকে প্রতিস্থাপন করবে।</p>
+          <video id="faceLockVideo" autoplay muted style="width:100%;max-width:280px;border-radius:8px;"></video>
+          <div class="flex" style="margin-top:10px;gap:8px;">
+            <button class="btn small" onclick="startFaceLockCamera()">ক্যামেরা চালু করুন</button>
+            <button class="btn small gold" onclick="reEnrollFaceLock()">নতুন ফেস এনরোল করুন</button>
+          </div>
+          <div id="flMsg" style="font-size:12px;margin-top:6px;"></div>
         </div>
       </div>
     </div>
@@ -518,34 +553,53 @@ function showTab(name){
 function loadJourneys(){
   db.ref('journeys').on('value', snap => {
     const journeys = snap.val() || {};
+    journeysCache = journeys;
     db.ref('users').once('value').then(uSnap => {
       const users = uSnap.val() || {};
+      renderVisaInfoList();
       const rows = Object.entries(journeys).map(([jid, j]) => {
         const u = users[j.user_id] || {};
         const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
         const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
-        return `<tr>
-          <td data-label="নাম">${getUserName(u)}</td>
-          <td data-label="ফোন">${getUserPhone(u)}</td>
-          <td data-label="পাসপোর্ট">${getUserPassport(u)}</td>
-          <td data-label="বর্তমান স্টেজ"><span class="stagePill">${STAGE_LABEL[j.current_stage] || j.current_stage}</span></td>
-          <td data-label="ফ্লাইট">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</td>
-          <td data-label="আয়/খরচ (৳)">
-            <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;">
-              <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
-              <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
-              <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
-              <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="width:100%;padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:6px;">
-              <button class="btn small" style="padding:3px 8px;font-size:11px;" onclick="saveJourneyFinance('${jid}')">সেভ</button>
+        const stageLabel = STAGE_LABEL[j.current_stage] || j.current_stage;
+        return `
+        <div class="accItem">
+          <div class="accHead" onclick="toggleAccItem('j-${jid}')">
+            <div>
+              <div class="accName">${getUserName(u)}</div>
+              <div class="accSub"><span class="stagePill">${stageLabel}</span></div>
             </div>
-          </td>
-          <td data-label="পরবর্তী স্টেজে যান">
-            ${nextStages.length ? `<select id="next-${jid}">${options}</select>` : '<span class="hint">শেষ স্টেজ</span>'}
-          </td>
-          <td data-label="">${nextStages.length ? `<button class="btn small" onclick="advanceStage('${jid}')">আপডেট</button>` : ''}</td>
-        </tr>`;
+            <span id="chev-j-${jid}">▾</span>
+          </div>
+          <div class="accBody" id="acc-j-${jid}">
+            <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
+            <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
+            <div class="accRow"><div class="accLabel">ফ্লাইট</div>${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div>
+            <div class="accRow">
+              <div class="accLabel">আয়/খরচ (৳)</div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="width:100%;">
+                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="width:100%;">
+                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="width:100%;">
+                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="width:100%;">
+                <button class="btn small" onclick="saveJourneyFinance('${jid}')">সেভ</button>
+              </div>
+            </div>
+            ${nextStages.length ? `
+            <div class="accRow">
+              <div class="accLabel">পরবর্তী স্টেজে যান</div>
+              <div class="flex" style="margin-top:4px;gap:6px;">
+                <select id="next-${jid}" style="flex:1;">${options}</select>
+                <button class="btn small" style="width:auto;flex-shrink:0;" onclick="advanceStage('${jid}')">আপডেট</button>
+              </div>
+            </div>` : `<div class="accRow"><div class="accLabel">পরবর্তী স্টেজে যান</div><span class="hint">শেষ স্টেজ</span></div>`}
+            <div class="accActions">
+              <button class="btn small" onclick="shareUserProgress('${j.user_id}')">শেয়ার করুন</button>
+            </div>
+          </div>
+        </div>`;
       }).join('');
-      document.getElementById('journeyRows').innerHTML = rows || '<tr><td colspan="7" class="hint">কোনো জার্নি নেই</td></tr>';
+      document.getElementById('journeyRows').innerHTML = rows || '<p class="hint">কোনো জার্নি নেই</p>';
     });
   });
 }
@@ -654,21 +708,54 @@ function addUser(){
 function loadUsers(){
   db.ref('users').on('value', snap => {
     const users = snap.val() || {};
-    const rows = Object.entries(users).map(([uid, u]) => `
-      <tr>
-        <td data-label="নাম">${getUserName(u)}</td>
-        <td data-label="ফোন">${getUserPhone(u)}</td>
-        <td data-label="দেশ">${u.country || '-'}</td>
-        <td data-label="পাসপোর্ট">${getUserPassport(u)}</td>
-        <td data-label="ডকুমেন্ট স্ট্যাটাস">${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</td>
-        <td data-label="">
-          <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
-          <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
-        </td>
-      </tr>`).join('');
-    document.getElementById('userRows').innerHTML = rows || '<tr><td colspan="6" class="hint">কোনো ইউজার নেই</td></tr>';
+    usersCache = users;
+    renderVisaInfoList();
+    const rows = Object.entries(users).map(([uid, u]) => {
+      const j = getJourneyForUser(uid);
+      const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+      return `
+      <div class="accItem">
+        <div class="accHead" onclick="toggleAccItem('u-${uid}')">
+          <div>
+            <div class="accName">${getUserName(u)}</div>
+            <div class="accSub">${u.country || '-'} · ${stageLabel}</div>
+          </div>
+          <span id="chev-u-${uid}">▾</span>
+        </div>
+        <div class="accBody" id="acc-u-${uid}">
+          <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
+          <div class="accRow"><div class="accLabel">দেশ</div>${u.country || '-'}</div>
+          <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
+          <div class="accRow"><div class="accLabel">ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
+          <div class="accActions">
+            <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
+            <button class="btn small" onclick="shareUserProgress('${uid}')">শেয়ার করুন</button>
+            <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('userRows').innerHTML = rows || '<p class="hint">কোনো ইউজার নেই</p>';
     window._usersCache = users;
   });
+}
+function toggleAccItem(id){
+  const el = document.getElementById('acc-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+}
+function getJourneyForUser(uid){
+  return Object.values(journeysCache).find(j => j.user_id === uid) || null;
+}
+function shareUserProgress(uid){
+  const u = (window._usersCache || {})[uid] || {};
+  const j = getJourneyForUser(uid);
+  const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+  const text = `👤 ${getUserName(u)}\nদেশ: ${u.country || '-'}\nবর্তমান অবস্থা: ${stageLabel}` + (j && j.flight_datetime ? `\nফ্লাইট: ${new Date(j.flight_datetime).toLocaleString('bn-BD')}` : '');
+  shareVisaInfo(text);
 }
 function viewUserDetails(uid){
   const u = (window._usersCache || {})[uid] || {};
@@ -724,6 +811,81 @@ function renderCountrySelects(){
     cfSel.value = current;
   }
   renderCountryList();
+}
+
+function toggleSettingsPanel(id){
+  const el = document.getElementById(id);
+  const chev = document.getElementById('chev-' + id);
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+}
+
+/* ================= PASSWORD CHANGE ================= */
+async function changeAdminPassword(){
+  const msg = document.getElementById('pcMsg');
+  const email = document.getElementById('pcEmail').value.trim();
+  const currentPass = document.getElementById('pcCurrentPass').value;
+  const newPass = document.getElementById('pcNewPass').value;
+  const confirmPass = document.getElementById('pcConfirmPass').value;
+  msg.style.color = "var(--fail)";
+
+  if(!email || !currentPass || !newPass || !confirmPass){
+    msg.textContent = "সব ঘর পূরণ করুন।";
+    return;
+  }
+  if(newPass !== confirmPass){
+    msg.textContent = "নতুন পাসওয়ার্ড দুইবার একই হতে হবে।";
+    return;
+  }
+  if(newPass.length < 6){
+    msg.textContent = "নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।";
+    return;
+  }
+  try{
+    const cred = await auth.signInWithEmailAndPassword(email, currentPass);
+    await cred.user.updatePassword(newPass);
+    msg.style.color = "var(--ok)";
+    msg.textContent = "পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে।";
+    document.getElementById('pcCurrentPass').value = '';
+    document.getElementById('pcNewPass').value = '';
+    document.getElementById('pcConfirmPass').value = '';
+  }catch(e){
+    msg.style.color = "var(--fail)";
+    msg.textContent = "ব্যর্থ: " + e.message;
+  }
+}
+
+/* ================= FACE LOCK CHANGE ================= */
+function startFaceLockCamera(){
+  const video = document.getElementById('faceLockVideo');
+  navigator.mediaDevices.getUserMedia({video:{width:280,height:210}})
+    .then(stream => { video.srcObject = stream; })
+    .catch(() => { document.getElementById('flMsg').style.color="var(--fail)"; document.getElementById('flMsg').textContent = "ক্যামেরা এক্সেস দিতে হবে।"; });
+}
+function stopFaceLockCamera(){
+  const video = document.getElementById('faceLockVideo');
+  if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); }
+}
+async function reEnrollFaceLock(){
+  const msg = document.getElementById('flMsg');
+  try{
+    await loadModels();
+    const video = document.getElementById('faceLockVideo');
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks().withFaceDescriptor();
+    if(!detection) throw new Error("মুখ শনাক্ত করা যায়নি, ভালো আলোতে চেষ্টা করুন।");
+    const descriptor = Array.from(detection.descriptor);
+    const uid = currentUser || pendingUid;
+    await db.ref('admins/' + uid + '/faceDescriptor').set(descriptor);
+    msg.style.color = "var(--ok)";
+    msg.textContent = "নতুন ফেসলক সফলভাবে সেভ হয়েছে।";
+    stopFaceLockCamera();
+  }catch(e){
+    msg.style.color="var(--fail)";
+    msg.textContent = e.message;
+  }
 }
 
 function toggleSettingsCountryPanel(){
@@ -812,6 +974,8 @@ function deleteCountry(id, name){
 
 /* ================= VISA TYPES (BY COUNTRY) ================= */
 let visaTypes = {};
+let journeysCache = {};
+let usersCache = {};
 
 function loadVisaTypes(){
   db.ref('visa_types').on('value', snap => {
@@ -841,13 +1005,41 @@ function renderVisaInfoList(){
     groups[v.country].push(v.name);
   });
   const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
-  container.innerHTML = countryNames.map(country => `
+
+  const userEntries = Object.entries(usersCache);
+  const journeyList = Object.values(journeysCache);
+
+  container.innerHTML = countryNames.map(country => {
+    const countryUserIds = userEntries.filter(([uid, u]) => u.country === country).map(([uid]) => uid);
+    const total = countryUserIds.length;
+    const active = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
+    const visaLine = groups[country].join(', ');
+    const shareText = `🌍 ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
+    return `
     <div class="fieldRow" style="align-items:flex-start;flex-direction:column;gap:8px;">
-      <div style="font-weight:700;">🌍 ${country}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+        <div style="font-weight:700;">🌍 ${country}</div>
+        <button type="button" class="btn small" style="width:auto;padding:4px 10px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'>শেয়ার করুন</button>
+      </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;">
         ${groups[country].map(name => `<span style="background:#f0f3f7;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;">${name}</span>`).join('')}
       </div>
-    </div>`).join('');
+      <div style="display:flex;gap:16px;font-size:12px;color:#5b6b7a;margin-top:2px;">
+        <span>মোট প্রার্থী: <strong style="color:#1c2733;">${total}</strong></span>
+        <span>চলমান প্রসেসিং: <strong style="color:#1c2733;">${active}</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function shareVisaInfo(text){
+  if(navigator.share){
+    navigator.share({ title: 'ভিসার তথ্য', text }).catch(() => {});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(() => alert('তথ্য কপি হয়েছে, এখন যেকোনো জায়গায় পেস্ট করে পাঠাতে পারবেন।'));
+  } else {
+    prompt('নিচের তথ্যটি কপি করুন:', text);
+  }
 }
 
 function handleCfCountryChange(sel){
