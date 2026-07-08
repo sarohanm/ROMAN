@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Talent Overseas — Admin Panel</title>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+  crossorigin="anonymous" referrerpolicy="no-referrer">
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -17,13 +21,13 @@
 
 <style>
   :root{
-    --navy:#0f2438; --navy2:#16324f; --gold:#c9a24b; --bg:#f4f6f9;
-    --ok:#1e8e5a; --fail:#c0392b; --warn:#c9a24b; --border:#e1e6ec;
+    --navy:#141820; --navy2:#2a3245; --gold:#d4922a; --teal:#2563eb; --bg:#f7f2ea;
+    --ok:#1a9e5c; --fail:#dc3545; --warn:#d4922a; --border:#e2ddd5;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#1c2733;}
-  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--navy2));}
-  .loginBox{background:#fff;padding:36px;border-radius:14px;width:340px;box-shadow:0 20px 50px rgba(0,0,0,.35);}
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 15% 15%,rgba(37,99,235,.35),transparent 45%),linear-gradient(135deg,var(--navy),var(--navy2));}
+  .loginBox{background:#fff;padding:36px;border-radius:14px;width:340px;box-shadow:0 24px 60px rgba(20,24,32,.4);}
   .loginBox h1{font-size:18px;margin:0 0 4px;color:var(--navy);}
   .loginBox p.sub{font-size:12px;color:#7a8794;margin:0 0 20px;}
   .loginBox input{width:100%;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;}
@@ -38,17 +42,17 @@
 
   #app{display:none;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);}
   .shell{display:flex;flex-direction:column;min-height:100vh;}
-  .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(15,36,56,.35);flex-shrink:0;}
-  .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+  .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);flex-shrink:0;}
+  .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,var(--gold) 0 10px,var(--teal) 10px 14px);}
   .nav-brand{font-size:15px;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:8px;white-space:nowrap;}
   .nav-r{display:flex;align-items:center;gap:8px;}
-  .logout-btn{width:32px;height:32px;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.3);color:#f2a9a1;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;}
-  .logout-btn:active{background:rgba(192,57,43,.3);}
+  .logout-btn{width:32px;height:32px;background:rgba(220,53,69,.15);border:1px solid rgba(220,53,69,.3);color:#f2a3a3;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;}
+  .logout-btn:active{background:rgba(220,53,69,.3);}
   .main{flex:1;padding:14px 14px 78px;overflow-x:auto;width:100%;}
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .topbar h1{font-size:17px;margin:0;color:var(--navy);}
-  .roleTag{font-size:11px;background:rgba(201,162,75,.18);border:1px solid rgba(201,162,75,.35);padding:3px 10px;border-radius:20px;color:var(--gold);font-weight:700;white-space:nowrap;}
-  .bot-nav{position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--navy);display:flex;align-items:center;justify-content:space-around;z-index:200;border-top:1px solid rgba(255,255,255,.06);box-shadow:0 -4px 20px rgba(15,36,56,.3);padding:0 2px;padding-bottom:env(safe-area-inset-bottom,0);max-width:480px;margin:0 auto;}
+  .roleTag{font-size:11px;background:rgba(212,146,42,.18);border:1px solid rgba(212,146,42,.35);padding:3px 10px;border-radius:20px;color:var(--gold);font-weight:700;white-space:nowrap;}
+  .bot-nav{position:fixed;bottom:0;left:0;right:0;height:58px;background:var(--navy);display:flex;align-items:center;justify-content:space-around;z-index:200;border-top:1px solid rgba(255,255,255,.06);box-shadow:0 -4px 20px rgba(20,24,32,.3);padding:0 2px;padding-bottom:env(safe-area-inset-bottom,0);max-width:480px;margin:0 auto;}
   .bn{flex:1;height:100%;max-width:84px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(255,255,255,.4);font-size:17px;transition:.2s;padding:4px 2px;}
   .bn span{font-size:8px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
   .bn.active{color:var(--gold);}
@@ -67,7 +71,7 @@
     .card tbody tr{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#fff;}
     .card tbody tr:last-child{margin-bottom:0;}
     .card td{border:none;padding:5px 0;white-space:normal;word-break:break-word;}
-    .card td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8794a1;margin-bottom:2px;}
+    .card td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
     .main{overflow-x:hidden;}
   }
   select,input,textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
@@ -77,7 +81,7 @@
   .badge-pending{color:var(--warn);font-weight:600;}
   .formGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;}
   .formGrid input,.formGrid select{width:100%;}
-  .hint{font-size:11px;color:#8794a1;margin-top:4px;}
+  .hint{font-size:11px;color:#8896ab;margin-top:4px;}
   .flex{display:flex;gap:8px;align-items:center;}
   .card{padding:14px;}
   table{min-width:520px;}
@@ -86,24 +90,24 @@
   .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
   .dc{background:#fff;border-radius:14px;padding:13px 12px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid var(--border);}
   .dc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--navy));border-radius:0 0 3px 3px;}
-  .dc-ico{width:32px;height:32px;border-radius:9px;background:var(--ic,rgba(15,36,56,.08));display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ac,var(--navy));margin-bottom:8px;}
-  .dc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8794a1;margin-bottom:3px;}
+  .dc-ico{width:32px;height:32px;border-radius:9px;background:var(--ic,rgba(20,24,32,.08));display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ac,var(--navy));margin-bottom:8px;}
+  .dc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8896ab;margin-bottom:3px;}
   .dc-val{font-size:19px;font-weight:800;color:var(--navy);line-height:1.15;}
-  .dc-sub{font-size:10.5px;color:#8794a1;margin-top:3px;}
+  .dc-sub{font-size:10.5px;color:#8896ab;margin-top:3px;}
   .dc-head{display:flex;align-items:center;justify-content:space-between;gap:6px;}
-  .dc-pl{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;background:rgba(135,148,161,.12);color:#7a8794;line-height:1.3;}
-  .dc-pl.profit{color:#1e8e5a;background:rgba(30,142,90,.12);}
-  .dc-pl.loss{color:#c0392b;background:rgba(192,57,43,.12);}
+  .dc-pl{display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;background:rgba(136,150,171,.12);color:#7a8794;line-height:1.3;}
+  .dc-pl.profit{color:#1a9e5c;background:rgba(26,158,92,.12);}
+  .dc-pl.loss{color:#dc3545;background:rgba(220,53,69,.12);}
   .plus-btn{width:34px;height:34px;border-radius:9px;background:var(--navy);color:#fff;border:none;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .plus-btn:active{background:var(--navy2);}
-  .modalOverlay{display:none;position:fixed;inset:0;background:rgba(15,36,56,.55);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
+  .modalOverlay{display:none;position:fixed;inset:0;background:rgba(20,24,32,.55);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
   .modalOverlay.active{display:flex;}
   .modalBox{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;margin-top:24px;}
   .modalBox h3{margin:0 0 4px;font-size:15px;color:var(--navy);}
-  .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:#8794a1;cursor:pointer;}
+  .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:#8896ab;cursor:pointer;}
   .modalBox{position:relative;}
   .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
-  .fieldRow .fr-meta{color:#8794a1;font-size:11px;}
+  .fieldRow .fr-meta{color:#8896ab;font-size:11px;}
   .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12px;font-weight:700;}
   .filterBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
   .filterBar input[type="text"]{flex:1 1 100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
@@ -112,27 +116,29 @@
   .accItem:last-child{margin-bottom:0;}
   .accHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;gap:8px;}
   .accHead .accName{font-weight:700;font-size:13px;color:#1c2733;}
-  .accHead .accSub{font-size:11px;color:#8794a1;margin-top:2px;}
+  .accHead .accSub{font-size:11px;color:#8896ab;margin-top:2px;}
   .accBody{display:none;padding:0 12px 12px;border-top:1px solid var(--border);}
   .accBody .accRow{padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
   .accBody .accRow:last-child{border-bottom:none;}
-  .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8794a1;margin-bottom:2px;}
+  .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
   .accBody .accActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
+  .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
+  .chev-ico.open{transform:rotate(180deg);}
   .chart-wrap{height:150px;position:relative;}
   .dash-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
   .dash-row:last-child{border-bottom:none;}
   .dash-row-title{font-size:12.5px;color:#1c2733;font-weight:600;}
-  .dash-row-sub{font-size:11px;color:#8794a1;}
-  .flight-pill{font-size:10.5px;font-weight:700;color:var(--navy2);background:rgba(15,36,56,.06);padding:3px 9px;border-radius:20px;white-space:nowrap;}
-  .dash-empty{text-align:center;color:#8794a1;font-size:12px;padding:16px 0;}
+  .dash-row-sub{font-size:11px;color:#8896ab;}
+  .flight-pill{font-size:10.5px;font-weight:700;color:var(--teal);background:rgba(37,99,235,.1);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .dash-empty{text-align:center;color:#8896ab;font-size:12px;padding:16px 0;}
   .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
   .cal-nav-btn{width:auto;padding:6px 12px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
-  .cal-dow{color:#8794a1;font-weight:700;font-size:10px;padding:4px 0;}
-  .cal-day{position:relative;padding:8px 0;border-radius:8px;cursor:pointer;background:#f4f6f9;font-size:12px;}
+  .cal-dow{color:#8896ab;font-weight:700;font-size:10px;padding:4px 0;}
+  .cal-day{position:relative;padding:8px 0;border-radius:8px;cursor:pointer;background:var(--bg);font-size:12px;}
   .cal-day.other-month{opacity:.3;cursor:default;}
-  .cal-day.today{box-shadow:inset 0 0 0 1.5px var(--gold);}
+  .cal-day.today{box-shadow:inset 0 0 0 1.5px var(--teal);}
   .cal-day.selected{background:var(--navy);color:#fff;}
   .cal-day .dot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold);}
   .cal-day.selected .dot{background:#fff;}
@@ -169,10 +175,10 @@
 <div id="app">
 <div class="shell">
   <div class="top-nav">
-    <div class="nav-brand">✈️ Talent Overseas</div>
+    <div class="nav-brand"><i class="fas fa-plane-departure"></i> Talent Overseas</div>
     <div class="nav-r">
       <span class="roleTag" id="roleTag">Admin</span>
-      <button class="logout-btn" onclick="logout()" title="লগআউট">↩</button>
+      <button class="logout-btn" onclick="logout()" title="লগআউট"><i class="fas fa-right-from-bracket"></i></button>
     </div>
   </div>
 
@@ -182,30 +188,30 @@
     <div class="panel active" id="panel-dashboard">
       <div class="topbar"><h1>ড্যাশবোর্ড</h1></div>
       <div class="dash-grid">
-        <div class="dc" style="--ac:#0f2438;--ic:rgba(15,36,56,.08)"><div class="dc-head"><div class="dc-ico">👤</div><div class="dc-pl" id="plTotal">৳০</div></div><div class="dc-label">মোট প্রার্থী</div><div class="dc-val" id="dTotalUsers">০</div><div class="dc-sub">সিস্টেমে নিবন্ধিত</div></div>
-        <div class="dc" style="--ac:#16324f;--ic:rgba(22,50,79,.08)"><div class="dc-head"><div class="dc-ico">🧳</div><div class="dc-pl" id="plActive">৳০</div></div><div class="dc-label">চলমান জার্নি</div><div class="dc-val" id="dActiveJourneys">০</div><div class="dc-sub">প্রসেসিং চলছে</div></div>
-        <div class="dc" style="--ac:#1e8e5a;--ic:rgba(30,142,90,.1)"><div class="dc-head"><div class="dc-ico">✈️</div><div class="dc-pl" id="plDeparted">৳০</div></div><div class="dc-label">এ মাসে রওনা</div><div class="dc-val" id="dDepartedMonth">০</div><div class="dc-sub">সফলভাবে ডিপার্টেড</div></div>
-        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-head"><div class="dc-ico">⚠️</div><div class="dc-pl" id="plMedical">৳০</div></div><div class="dc-label">মেডিকেল ফেইল</div><div class="dc-val" id="dMedicalFailed">০</div><div class="dc-sub">মোট</div></div>
-        <div class="dc" style="--ac:#c9a24b;--ic:rgba(201,162,75,.15)"><div class="dc-head"><div class="dc-ico">📄</div><div class="dc-pl" id="plVisa">৳০</div></div><div class="dc-label">ভিসা পেন্ডিং</div><div class="dc-val" id="dVisaPending">০</div><div class="dc-sub">আবেদন করা হয়েছে</div></div>
-        <div class="dc" style="--ac:#2563eb;--ic:rgba(37,99,235,.08)"><div class="dc-head"><div class="dc-ico">🛫</div><div class="dc-pl" id="plUpcoming">৳০</div></div><div class="dc-label">আসন্ন ফ্লাইট</div><div class="dc-val" id="dUpcomingFlights">০</div><div class="dc-sub">পরবর্তী ৭ দিনে</div></div>
-        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-ico">⏳</div><div class="dc-label">মেয়াদ শেষ/কাছাকাছি</div><div class="dc-val" id="dExpiring">০</div><div class="dc-sub">পাসপোর্ট, ভিসা ইত্যাদি</div></div>
-        <div class="dc" style="--ac:#1e8e5a;--ic:rgba(30,142,90,.1)"><div class="dc-ico">✅</div><div class="dc-label">নোটিফিকেশন সেন্ট</div><div class="dc-val" id="dNotifSent">০</div><div class="dc-sub">আজ</div></div>
-        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-ico">❌</div><div class="dc-label">নোটিফিকেশন ফেইল</div><div class="dc-val" id="dNotifFailed">০</div><div class="dc-sub">আজ</div></div>
+        <div class="dc" style="--ac:#141820;--ic:rgba(20,24,32,.08)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-users"></i></div><div class="dc-pl" id="plTotal">৳০</div></div><div class="dc-label">মোট প্রার্থী</div><div class="dc-val" id="dTotalUsers">০</div><div class="dc-sub">সিস্টেমে নিবন্ধিত</div></div>
+        <div class="dc" style="--ac:#2a3245;--ic:rgba(42,50,69,.08)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-suitcase-rolling"></i></div><div class="dc-pl" id="plActive">৳০</div></div><div class="dc-label">চলমান জার্নি</div><div class="dc-val" id="dActiveJourneys">০</div><div class="dc-sub">প্রসেসিং চলছে</div></div>
+        <div class="dc" style="--ac:#1a9e5c;--ic:rgba(26,158,92,.1)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-plane-departure"></i></div><div class="dc-pl" id="plDeparted">৳০</div></div><div class="dc-label">এ মাসে রওনা</div><div class="dc-val" id="dDepartedMonth">০</div><div class="dc-sub">সফলভাবে ডিপার্টেড</div></div>
+        <div class="dc" style="--ac:#dc3545;--ic:rgba(220,53,69,.1)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-triangle-exclamation"></i></div><div class="dc-pl" id="plMedical">৳০</div></div><div class="dc-label">মেডিকেল ফেইল</div><div class="dc-val" id="dMedicalFailed">০</div><div class="dc-sub">মোট</div></div>
+        <div class="dc" style="--ac:#d4922a;--ic:rgba(212,146,42,.15)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-file-lines"></i></div><div class="dc-pl" id="plVisa">৳০</div></div><div class="dc-label">ভিসা পেন্ডিং</div><div class="dc-val" id="dVisaPending">০</div><div class="dc-sub">আবেদন করা হয়েছে</div></div>
+        <div class="dc" style="--ac:#2563eb;--ic:rgba(37,99,235,.1)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-plane"></i></div><div class="dc-pl" id="plUpcoming">৳০</div></div><div class="dc-label">আসন্ন ফ্লাইট</div><div class="dc-val" id="dUpcomingFlights">০</div><div class="dc-sub">পরবর্তী ৭ দিনে</div></div>
+        <div class="dc" style="--ac:#dc3545;--ic:rgba(220,53,69,.1)"><div class="dc-ico"><i class="fas fa-hourglass-half"></i></div><div class="dc-label">মেয়াদ শেষ/কাছাকাছি</div><div class="dc-val" id="dExpiring">০</div><div class="dc-sub">পাসপোর্ট, ভিসা ইত্যাদি</div></div>
+        <div class="dc" style="--ac:#1a9e5c;--ic:rgba(26,158,92,.1)"><div class="dc-ico"><i class="fas fa-circle-check"></i></div><div class="dc-label">নোটিফিকেশন সেন্ট</div><div class="dc-val" id="dNotifSent">০</div><div class="dc-sub">আজ</div></div>
+        <div class="dc" style="--ac:#dc3545;--ic:rgba(220,53,69,.1)"><div class="dc-ico"><i class="fas fa-circle-xmark"></i></div><div class="dc-label">নোটিফিকেশন ফেইল</div><div class="dc-val" id="dNotifFailed">০</div><div class="dc-sub">আজ</div></div>
       </div>
 
       <div class="card">
-        <div class="card-hd">📊 স্টেজ অনুযায়ী প্রার্থী</div>
+        <div class="card-hd"><i class="fas fa-chart-column"></i> স্টেজ অনুযায়ী প্রার্থী</div>
         <div class="chart-wrap"><canvas id="stageChart"></canvas></div>
       </div>
 
       <div class="card">
-        <div class="card-hd">⏳ মেয়াদ শেষ হওয়ার সতর্কতা</div>
+        <div class="card-hd"><i class="fas fa-hourglass-half"></i> মেয়াদ শেষ হওয়ার সতর্কতা</div>
         <div id="expiryAlertsList"></div>
         <p class="hint" style="margin-top:8px;">এখানে দেখাতে হলে সেটিংস থেকে "কাস্টম ফিল্ড তৈরি করুন" দিয়ে "ডেট" টাইপের ফিল্ড বানান (যেমন: পাসপোর্ট মেয়াদ, ভিসা মেয়াদ, মেডিকেল রিপোর্ট মেয়াদ) এবং প্রতিটা ইউজারের জন্য পূরণ করুন।</p>
       </div>
 
       <div class="card">
-        <div class="card-hd">🗓️ ফ্লাইট ক্যালেন্ডার</div>
+        <div class="card-hd"><i class="fas fa-calendar-days"></i> ফ্লাইট ক্যালেন্ডার</div>
         <div class="cal-header">
           <button class="btn small cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
           <div id="calMonthLabel" style="font-weight:700;font-size:13px;"></div>
@@ -216,22 +222,22 @@
       </div>
 
       <div class="card">
-        <div class="card-hd">🛫 আসন্ন ফ্লাইট</div>
+        <div class="card-hd"><i class="fas fa-plane"></i> আসন্ন ফ্লাইট</div>
         <div id="upcomingFlightsList"></div>
       </div>
 
       <div class="card">
-        <div class="card-hd">🔔 সাম্প্রতিক নোটিফিকেশন</div>
+        <div class="card-hd"><i class="fas fa-bell"></i> সাম্প্রতিক নোটিফিকেশন</div>
         <div id="recentActivityList"></div>
       </div>
 
       <div class="card">
-        <div class="card-hd">📥 রিপোর্ট এক্সপোর্ট</div>
+        <div class="card-hd"><i class="fas fa-download"></i> রিপোর্ট এক্সপোর্ট</div>
         <p class="hint">CSV ফাইল হিসেবে ডাউনলোড হবে, Excel/Google Sheets-এ সরাসরি খোলা যাবে।</p>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-          <button class="btn small" style="width:100%;" onclick="exportProfitLossReport()">💰 প্রফিট-লস রিপোর্ট (মাস অনুযায়ী)</button>
-          <button class="btn small" style="width:100%;" onclick="exportCustomerListReport()">👤 কাস্টমার লিস্ট</button>
-          <button class="btn small" style="width:100%;" onclick="exportPaymentsReport()">🧾 পেমেন্ট/কিস্তি রিপোর্ট</button>
+          <button class="btn small" style="width:100%;" onclick="exportProfitLossReport()"><i class="fas fa-sack-dollar"></i> প্রফিট-লস রিপোর্ট (মাস অনুযায়ী)</button>
+          <button class="btn small" style="width:100%;" onclick="exportCustomerListReport()"><i class="fas fa-users"></i> কাস্টমার লিস্ট</button>
+          <button class="btn small" style="width:100%;" onclick="exportPaymentsReport()"><i class="fas fa-receipt"></i> পেমেন্ট/কিস্তি রিপোর্ট</button>
         </div>
       </div>
     </div>
@@ -252,7 +258,7 @@
 
     <!-- USERS TAB -->
     <div class="panel" id="panel-users">
-      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন">+</button></div>
+      <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button></div>
       <div class="card">
         <div class="filterBar">
           <input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()">
@@ -294,7 +300,7 @@
       <div class="card">
         <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('templatePanel')">
           <h3 style="margin:0;font-size:14px;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
-          <span id="chev-templatePanel">▾</span>
+          <span id="chev-templatePanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="templatePanel" style="display:none;">
           <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
@@ -317,7 +323,7 @@
       <div class="card">
         <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('webhookPanel')">
           <h3 style="margin:0;font-size:14px;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
-          <span id="chev-webhookPanel">▾</span>
+          <span id="chev-webhookPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="webhookPanel" style="display:none;">
           <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
@@ -330,7 +336,7 @@
       <div class="card">
         <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsCountryPanel()">
           <h3 style="margin:0;font-size:14px;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
-          <span id="chev-settingsCountryPanel">▾</span>
+          <span id="chev-settingsCountryPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="settingsCountryPanel" style="display:none;">
           <div id="countryListPanel">
@@ -364,7 +370,7 @@
       <div class="card">
         <div class="fieldRow" style="cursor:pointer;" onclick="toggleSettingsPanel('securityPanel')">
           <h3 style="margin:0;font-size:14px;">পাসওয়ার্ড ও ফেসলক পরিবর্তন</h3>
-          <span id="chev-securityPanel">▾</span>
+          <span id="chev-securityPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="securityPanel" style="display:none;">
           <div class="fieldRow" style="cursor:default;margin-top:8px;">
@@ -398,7 +404,7 @@
   <!-- ADD USER MODAL -->
   <div class="modalOverlay" id="addUserModal">
     <div class="modalBox">
-      <button class="close-x" onclick="closeAddUserModal()">✕</button>
+      <button class="close-x" onclick="closeAddUserModal()"><i class="fas fa-xmark"></i></button>
       <h3 style="margin-top:0;">নতুন ইউজার যোগ করুন</h3>
       <div class="formGrid">
         <div class="flex" style="gap:6px;">
@@ -413,12 +419,12 @@
   </div>
 
   <div class="bot-nav">
-    <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')">📊<span>ড্যাশবোর্ড</span></button>
-    <button class="bn" data-tab="journeys" onclick="showTab('journeys')">🧳<span>জার্নি</span></button>
-    <button class="bn" data-tab="users" onclick="showTab('users')">👤<span>ইউজার</span></button>
-    <button class="bn" data-tab="templates" onclick="showTab('templates')">🛂<span>ভিসা তথ্য</span></button>
-    <button class="bn" data-tab="logs" onclick="showTab('logs')">🔔<span>লগ</span></button>
-    <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')">⚙️<span>সেটিংস</span></button>
+    <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')"><i class="fas fa-gauge-high"></i><span>ড্যাশবোর্ড</span></button>
+    <button class="bn" data-tab="journeys" onclick="showTab('journeys')"><i class="fas fa-suitcase-rolling"></i><span>জার্নি</span></button>
+    <button class="bn" data-tab="users" onclick="showTab('users')"><i class="fas fa-users"></i><span>ইউজার</span></button>
+    <button class="bn" data-tab="templates" onclick="showTab('templates')"><i class="fas fa-passport"></i><span>ভিসা তথ্য</span></button>
+    <button class="bn" data-tab="logs" onclick="showTab('logs')"><i class="fas fa-bell"></i><span>লগ</span></button>
+    <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')"><i class="fas fa-gear"></i><span>সেটিংস</span></button>
   </div>
 </div>
 </div>
@@ -656,7 +662,7 @@ function renderJourneys(){
               <div class="accName">${getUserName(u)}</div>
               <div class="accSub"><span class="stagePill">${stageLabel}</span></div>
             </div>
-            <span id="chev-j-${jid}">▾</span>
+            <span id="chev-j-${jid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
           </div>
           <div class="accBody" id="acc-j-${jid}">
             <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
@@ -734,7 +740,7 @@ function renderPaymentSection(jid, j){
           <div>৳${p.amount}</div>
           <div class="fr-meta">${p.date ? new Date(p.date).toLocaleDateString('bn-BD') : ''}${p.note ? ' · ' + p.note : ''}</div>
         </div>
-        <button class="del" onclick="deletePayment('${jid}','${pid}')">✕</button>
+        <button class="del" onclick="deletePayment('${jid}','${pid}')"><i class="fas fa-xmark"></i></button>
       </div>`).join('')
     : '<p class="hint">এখনো কোনো কিস্তি যোগ করা হয়নি।</p>';
   return `
@@ -894,7 +900,7 @@ function renderUsers(){
           <div class="accName">${getUserName(u)}</div>
           <div class="accSub">${u.country || '-'} · ${stageLabel}</div>
         </div>
-        <span id="chev-u-${uid}">▾</span>
+        <span id="chev-u-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
       </div>
       <div class="accBody" id="acc-u-${uid}">
         <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
@@ -919,7 +925,7 @@ function toggleAccItem(id){
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 function getJourneyForUser(uid){
   return Object.values(journeysCache).find(j => j.user_id === uid) || null;
@@ -1003,7 +1009,7 @@ function toggleSettingsPanel(id){
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 
 /* ================= PASSWORD CHANGE ================= */
@@ -1078,7 +1084,7 @@ function toggleSettingsCountryPanel(){
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 
 function toggleCountryListPanel(){
@@ -1087,7 +1093,7 @@ function toggleCountryListPanel(){
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 
 function renderCountryList(){
@@ -1108,7 +1114,7 @@ function renderCountryList(){
 }
 
 function renderCountryAccordionRow(id, name, fields, visas, deletable){
-  const label = deletable ? ('🌍 ' + name) : name;
+  const label = deletable ? ('<i class="fas fa-globe"></i> ' + name) : name;
   const delBtn = deletable
     ? `<button class="del" onclick="event.stopPropagation(); deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>`
     : '';
@@ -1116,13 +1122,13 @@ function renderCountryAccordionRow(id, name, fields, visas, deletable){
     ? `<div style="margin-left:14px;margin-bottom:10px;">
         <p class="hint" style="margin:0 0 6px;font-weight:700;color:#1c2733;">ভিসার ধরন</p>
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${visas.map(([vid, v]) => `<span style="background:#f0f3f7;border:1px solid var(--border);border-radius:20px;padding:4px 8px 4px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">${v.name}<button onclick="deleteVisaType('${vid}')" style="border:none;background:none;color:var(--fail);cursor:pointer;font-weight:700;font-size:13px;line-height:1;">×</button></span>`).join('')}
+          ${visas.map(([vid, v]) => `<span style="background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:4px 8px 4px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">${v.name}<button onclick="deleteVisaType('${vid}')" style="border:none;background:none;color:var(--fail);cursor:pointer;font-weight:700;font-size:13px;line-height:1;">×</button></span>`).join('')}
         </div>
       </div>`
     : '';
   const fieldsHtml = fields.length
     ? fields.map(([fid, f]) => `
-        <div class="fieldRow" style="margin-left:14px;background:#f8f9fb;">
+        <div class="fieldRow" style="margin-left:14px;background:#f8f4ec;">
           <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
           <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
         </div>`).join('')
@@ -1131,7 +1137,7 @@ function renderCountryAccordionRow(id, name, fields, visas, deletable){
     <div class="countryAccordion">
       <div class="fieldRow" style="cursor:pointer;" onclick="toggleCountryFields('${id}')">
         <div>${label}</div>
-        <div style="display:flex;align-items:center;gap:10px;">${delBtn}<span id="chev-${id}">▾</span></div>
+        <div style="display:flex;align-items:center;gap:10px;">${delBtn}<span id="chev-${id}" class="chev-ico"><i class="fas fa-chevron-down"></i></span></div>
       </div>
       <div id="fields-${id}" style="display:none;margin:6px 0 10px;">${visaHtml}${fieldsHtml}</div>
     </div>`;
@@ -1143,7 +1149,7 @@ function toggleCountryFields(id){
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.textContent = isOpen ? '▾' : '▴';
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 
 function deleteCountry(id, name){
@@ -1206,7 +1212,7 @@ function renderVisaInfoList(){
         <button type="button" class="btn small" style="width:auto;padding:4px 10px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'>শেয়ার করুন</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${groups[country].map(name => `<span style="background:#f0f3f7;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;">${name}</span>`).join('')}
+        ${groups[country].map(name => `<span style="background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;">${name}</span>`).join('')}
       </div>
       <div style="display:flex;gap:16px;font-size:12px;color:#5b6b7a;margin-top:2px;">
         <span>মোট প্রার্থী: <strong style="color:#1c2733;">${total}</strong></span>
@@ -1518,7 +1524,7 @@ function renderStageChart(journeys){
     type: 'bar',
     data: {
       labels,
-      datasets: [{ data, backgroundColor: '#16324f', borderRadius: 4, maxBarThickness: 22 }]
+      datasets: [{ data, backgroundColor: '#2563eb', borderRadius: 4, maxBarThickness: 22 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
