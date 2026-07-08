@@ -126,6 +126,16 @@
   .dash-row-sub{font-size:11px;color:#8794a1;}
   .flight-pill{font-size:10.5px;font-weight:700;color:var(--navy2);background:rgba(15,36,56,.06);padding:3px 9px;border-radius:20px;white-space:nowrap;}
   .dash-empty{text-align:center;color:#8794a1;font-size:12px;padding:16px 0;}
+  .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .cal-nav-btn{width:auto;padding:6px 12px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+  .cal-dow{color:#8794a1;font-weight:700;font-size:10px;padding:4px 0;}
+  .cal-day{position:relative;padding:8px 0;border-radius:8px;cursor:pointer;background:#f4f6f9;font-size:12px;}
+  .cal-day.other-month{opacity:.3;cursor:default;}
+  .cal-day.today{box-shadow:inset 0 0 0 1.5px var(--gold);}
+  .cal-day.selected{background:var(--navy);color:#fff;}
+  .cal-day .dot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold);}
+  .cal-day.selected .dot{background:#fff;}
 </style>
 </head>
 <body>
@@ -178,6 +188,7 @@
         <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-head"><div class="dc-ico">⚠️</div><div class="dc-pl" id="plMedical">৳০</div></div><div class="dc-label">মেডিকেল ফেইল</div><div class="dc-val" id="dMedicalFailed">০</div><div class="dc-sub">মোট</div></div>
         <div class="dc" style="--ac:#c9a24b;--ic:rgba(201,162,75,.15)"><div class="dc-head"><div class="dc-ico">📄</div><div class="dc-pl" id="plVisa">৳০</div></div><div class="dc-label">ভিসা পেন্ডিং</div><div class="dc-val" id="dVisaPending">০</div><div class="dc-sub">আবেদন করা হয়েছে</div></div>
         <div class="dc" style="--ac:#2563eb;--ic:rgba(37,99,235,.08)"><div class="dc-head"><div class="dc-ico">🛫</div><div class="dc-pl" id="plUpcoming">৳০</div></div><div class="dc-label">আসন্ন ফ্লাইট</div><div class="dc-val" id="dUpcomingFlights">০</div><div class="dc-sub">পরবর্তী ৭ দিনে</div></div>
+        <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-ico">⏳</div><div class="dc-label">মেয়াদ শেষ/কাছাকাছি</div><div class="dc-val" id="dExpiring">০</div><div class="dc-sub">পাসপোর্ট, ভিসা ইত্যাদি</div></div>
         <div class="dc" style="--ac:#1e8e5a;--ic:rgba(30,142,90,.1)"><div class="dc-ico">✅</div><div class="dc-label">নোটিফিকেশন সেন্ট</div><div class="dc-val" id="dNotifSent">০</div><div class="dc-sub">আজ</div></div>
         <div class="dc" style="--ac:#c0392b;--ic:rgba(192,57,43,.1)"><div class="dc-ico">❌</div><div class="dc-label">নোটিফিকেশন ফেইল</div><div class="dc-val" id="dNotifFailed">০</div><div class="dc-sub">আজ</div></div>
       </div>
@@ -188,6 +199,23 @@
       </div>
 
       <div class="card">
+        <div class="card-hd">⏳ মেয়াদ শেষ হওয়ার সতর্কতা</div>
+        <div id="expiryAlertsList"></div>
+        <p class="hint" style="margin-top:8px;">এখানে দেখাতে হলে সেটিংস থেকে "কাস্টম ফিল্ড তৈরি করুন" দিয়ে "ডেট" টাইপের ফিল্ড বানান (যেমন: পাসপোর্ট মেয়াদ, ভিসা মেয়াদ, মেডিকেল রিপোর্ট মেয়াদ) এবং প্রতিটা ইউজারের জন্য পূরণ করুন।</p>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">🗓️ ফ্লাইট ক্যালেন্ডার</div>
+        <div class="cal-header">
+          <button class="btn small cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
+          <div id="calMonthLabel" style="font-weight:700;font-size:13px;"></div>
+          <button class="btn small cal-nav-btn" onclick="calChangeMonth(1)">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div id="calDayList" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card">
         <div class="card-hd">🛫 আসন্ন ফ্লাইট</div>
         <div id="upcomingFlightsList"></div>
       </div>
@@ -195,6 +223,16 @@
       <div class="card">
         <div class="card-hd">🔔 সাম্প্রতিক নোটিফিকেশন</div>
         <div id="recentActivityList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">📥 রিপোর্ট এক্সপোর্ট</div>
+        <p class="hint">CSV ফাইল হিসেবে ডাউনলোড হবে, Excel/Google Sheets-এ সরাসরি খোলা যাবে।</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <button class="btn small" style="width:100%;" onclick="exportProfitLossReport()">💰 প্রফিট-লস রিপোর্ট (মাস অনুযায়ী)</button>
+          <button class="btn small" style="width:100%;" onclick="exportCustomerListReport()">👤 কাস্টমার লিস্ট</button>
+          <button class="btn small" style="width:100%;" onclick="exportPaymentsReport()">🧾 পেমেন্ট/কিস্তি রিপোর্ট</button>
+        </div>
       </div>
     </div>
 
@@ -1218,6 +1256,7 @@ function loadCustomFields(){
     customFields = snap.val() || {};
     renderCountryList();
     renderCustomFieldInputs();
+    if(document.getElementById('expiryAlertsList')) renderDashboard();
   });
 }
 
@@ -1403,6 +1442,10 @@ function renderDashboard(){
   document.getElementById('dVisaPending').textContent = visaPending;
   document.getElementById('dUpcomingFlights').textContent = upcomingFlights.length;
 
+  const expiringItems = getExpiringItems(dashUsers, 45);
+  document.getElementById('dExpiring').textContent = expiringItems.length;
+  renderExpiryAlerts(expiringItems);
+
   // Notifications sent/failed today
   const notifsToday = Object.values(dashNotifs).filter(n => (n.created_at||0) >= startOfToday);
   document.getElementById('dNotifSent').textContent = notifsToday.filter(n => n.status === 'sent').length;
@@ -1412,6 +1455,7 @@ function renderDashboard(){
   renderStageChart(journeys);
   renderUpcomingFlights(upcomingFlights);
   renderRecentActivity();
+  renderCalendar();
 }
 
 function fmtTk(n){
@@ -1487,6 +1531,47 @@ function renderStageChart(journeys){
   });
 }
 
+/* Scans every user's custom_data for date-type fields (passport expiry, visa
+   expiry, medical report expiry, etc. — created via Settings > কাস্টম ফিল্ড)
+   and returns items expiring within thresholdDays, or already expired. */
+function getExpiringItems(users, thresholdDays){
+  const now = Date.now();
+  const items = [];
+  Object.entries(users).forEach(([uid, u]) => {
+    const cd = u.custom_data || {};
+    Object.entries(cd).forEach(([fid, val]) => {
+      const f = customFields[fid];
+      if(!f || f.type !== 'date' || !val) return;
+      const dateVal = new Date(val + 'T00:00:00').getTime();
+      if(isNaN(dateVal)) return;
+      const daysLeft = Math.floor((dateVal - now) / (1000*60*60*24));
+      if(daysLeft <= thresholdDays){
+        items.push({ uid, label: f.label, dateStr: val, daysLeft });
+      }
+    });
+  });
+  return items.sort((a,b) => a.daysLeft - b.daysLeft);
+}
+
+function renderExpiryAlerts(items){
+  const el = document.getElementById('expiryAlertsList');
+  if(!el) return;
+  if(!items.length){ el.innerHTML = '<div class="dash-empty">আগামী ৪৫ দিনে কোনো মেয়াদ শেষ হচ্ছে না</div>'; return; }
+  el.innerHTML = items.map(it => {
+    const u = dashUsers[it.uid] || {};
+    const isExpired = it.daysLeft < 0;
+    const statusText = isExpired ? `${Math.abs(it.daysLeft)} দিন আগে মেয়াদ শেষ` : `${it.daysLeft} দিন বাকি`;
+    const color = isExpired ? 'var(--fail)' : (it.daysLeft <= 15 ? 'var(--fail)' : 'var(--warn)');
+    return `<div class="dash-row" style="cursor:pointer;" onclick="viewUserDetails('${it.uid}')">
+      <div>
+        <div class="dash-row-title">${getUserName(u)} · ${it.label}</div>
+        <div class="dash-row-sub">${new Date(it.dateStr).toLocaleDateString('bn-BD')}</div>
+      </div>
+      <div class="flight-pill" style="background:${color};color:#fff;">${statusText}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderUpcomingFlights(flights){
   const el = document.getElementById('upcomingFlightsList');
   if(!flights.length){ el.innerHTML = '<div class="dash-empty">আগামী ৭ দিনে কোনো ফ্লাইট নেই</div>'; return; }
@@ -1516,6 +1601,144 @@ function renderRecentActivity(){
         <div class="dash-row-sub">${n.created_at ? new Date(n.created_at).toLocaleString('bn-BD') : '-'} · ${n.channel || '-'}</div>
       </div>
       <div class="${statusClass}" style="font-size:11px;font-weight:700">${n.status}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ================= REPORT EXPORT (CSV) ================= */
+function csvCell(val){
+  const s = (val === null || val === undefined) ? '' : String(val);
+  if(/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function downloadCsv(filename, rows){
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportProfitLossReport(){
+  const rows = [['নাম','দেশ','স্টেজ','ফি (৳)','মেডিকেল খরচ (৳)','ভিসা খরচ (৳)','ফ্লাইট খরচ (৳)','মোট খরচ (৳)','নিট লাভ/ক্ষতি (৳)','সর্বশেষ আপডেট']];
+  Object.values(dashJourneys).forEach(j => {
+    const u = dashUsers[j.user_id] || {};
+    const { net, cost, fee } = netOf(j);
+    rows.push([
+      getUserName(u), u.country || '-', STAGE_LABEL[j.current_stage] || j.current_stage,
+      fee, j.cost_medical || 0, j.cost_visa || 0, j.cost_flight || 0, cost, net,
+      j.updated_at ? new Date(j.updated_at).toLocaleDateString('bn-BD') : '-'
+    ]);
+  });
+  downloadCsv('profit_loss_report_' + Date.now() + '.csv', rows);
+}
+
+function exportCustomerListReport(){
+  const rows = [['নাম','ফোন','পাসপোর্ট','দেশ','স্টেজ','যোগ হয়েছে']];
+  Object.entries(dashUsers).forEach(([uid, u]) => {
+    const j = getJourneyForUser(uid);
+    const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+    rows.push([
+      getUserName(u), getUserPhone(u), getUserPassport(u), u.country || '-', stageLabel,
+      u.created_at ? new Date(u.created_at).toLocaleDateString('bn-BD') : '-'
+    ]);
+  });
+  downloadCsv('customer_list_' + Date.now() + '.csv', rows);
+}
+
+function exportPaymentsReport(){
+  const rows = [['কাস্টমার নাম','স্টেজ','পরিমাণ (৳)','নোট','তারিখ']];
+  Object.values(dashJourneys).forEach(j => {
+    const u = dashUsers[j.user_id] || {};
+    const payments = j.payments || {};
+    Object.values(payments).forEach(p => {
+      rows.push([
+        getUserName(u), STAGE_LABEL[j.current_stage] || j.current_stage,
+        p.amount || 0, p.note || '', p.date ? new Date(p.date).toLocaleDateString('bn-BD') : '-'
+      ]);
+    });
+  });
+  if(rows.length === 1){ alert('এখনো কোনো পেমেন্ট এন্ট্রি নেই।'); return; }
+  downloadCsv('payments_report_' + Date.now() + '.csv', rows);
+}
+
+/* ================= FLIGHT CALENDAR ================= */
+let calViewDate = new Date();
+let calSelectedDateStr = null;
+const BN_DOW = ['রবি','সোম','মঙ্গল','বুধ','বৃহ','শুক্র','শনি'];
+const BN_MONTHS = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+
+function dateKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function calChangeMonth(delta){
+  calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth()+delta, 1);
+  renderCalendar();
+}
+
+function calSelectDay(key){
+  calSelectedDateStr = (calSelectedDateStr === key) ? null : key;
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const grid = document.getElementById('calGrid');
+  const label = document.getElementById('calMonthLabel');
+  if(!grid || !label) return;
+
+  const year = calViewDate.getFullYear(), month = calViewDate.getMonth();
+  label.textContent = BN_MONTHS[month] + ' ' + year;
+
+  const flightsByDate = {};
+  Object.values(dashJourneys).forEach(j => {
+    if(!j.flight_datetime) return;
+    const key = dateKey(new Date(j.flight_datetime));
+    (flightsByDate[key] = flightsByDate[key] || []).push(j);
+  });
+
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const todayKey = dateKey(new Date());
+
+  let html = BN_DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+
+  for(let i = startWeekday - 1; i >= 0; i--){
+    html += `<div class="cal-day other-month">${daysInPrevMonth - i}</div>`;
+  }
+  for(let day = 1; day <= daysInMonth; day++){
+    const key = dateKey(new Date(year, month, day));
+    const hasFlights = !!flightsByDate[key];
+    const classes = ['cal-day'];
+    if(key === todayKey) classes.push('today');
+    if(key === calSelectedDateStr) classes.push('selected');
+    html += `<div class="${classes.join(' ')}" onclick="calSelectDay('${key}')">${day}${hasFlights ? '<div class="dot"></div>' : ''}</div>`;
+  }
+  const trailing = (7 - ((startWeekday + daysInMonth) % 7)) % 7;
+  for(let i = 1; i <= trailing; i++){
+    html += `<div class="cal-day other-month">${i}</div>`;
+  }
+
+  grid.innerHTML = html;
+  renderCalDayList(flightsByDate);
+}
+
+function renderCalDayList(flightsByDate){
+  const el = document.getElementById('calDayList');
+  if(!el) return;
+  if(!calSelectedDateStr){ el.innerHTML = '<p class="hint">কোনো তারিখে ক্লিক করলে সেদিনের ফ্লাইট দেখা যাবে।</p>'; return; }
+  const flights = flightsByDate[calSelectedDateStr] || [];
+  if(!flights.length){ el.innerHTML = '<p class="hint">এই তারিখে কোনো ফ্লাইট নেই।</p>'; return; }
+  el.innerHTML = flights.map(j => {
+    const u = dashUsers[j.user_id] || {};
+    return `<div class="dash-row">
+      <div>
+        <div class="dash-row-title">${getUserName(u)}</div>
+        <div class="dash-row-sub">${new Date(j.flight_datetime).toLocaleString('bn-BD')}</div>
+      </div>
     </div>`;
   }).join('');
 }
