@@ -80,7 +80,52 @@
     .main{overflow-x:hidden;}
   }
   select,input,textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
-  .stagePill{padding:3px 9px;border-radius:20px;font-size:11px;color:#fff;background:var(--navy2);}
+  .stagePill{padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;color:#fff;background:var(--navy2);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+  .stagePill i{font-size:9px;}
+  .stagePill.st-doc{background:rgba(91,107,122,.14);color:#5b6b7a;}
+  .stagePill.st-pass{background:rgba(37,99,235,.14);color:#1d4fbf;}
+  .stagePill.st-visa{background:rgba(212,146,42,.16);color:#a8710f;}
+  .stagePill.st-med{background:rgba(147,51,234,.14);color:#7e22ce;}
+  .stagePill.st-fail{background:rgba(220,53,69,.14);color:var(--fail);}
+  .stagePill.st-flight{background:rgba(20,24,32,.1);color:var(--navy);}
+  .stagePill.st-done{background:rgba(26,158,92,.16);color:var(--ok);}
+  /* Stage progress tracker (mini step dots) */
+  .stageTrack{display:flex;align-items:center;gap:3px;margin:8px 0 2px;}
+  .stageTrack .st-dot{flex:1;height:5px;border-radius:3px;background:#e9e4da;}
+  .stageTrack .st-dot.done{background:var(--gold);}
+  .stageTrack .st-dot.current{background:var(--navy);}
+  .stageTrack .st-dot.fail{background:var(--fail);}
+  .stageTrackLbl{font-size:10.5px;color:#8896ab;margin-top:4px;display:flex;justify-content:space-between;}
+  /* Avatar circle with initials */
+  .avatarCircle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy2));color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+  .accHead{gap:11px;align-items:flex-start !important;}
+  .accHead .chev-ico{margin-top:8px;}
+  .accHead .accTextWrap{flex:1;min-width:0;}
+  .accHead .accName{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  /* Payment progress bar */
+  .payProgWrap{margin:8px 0 12px;}
+  .payProgOuter{height:8px;border-radius:6px;background:#eee7da;overflow:hidden;}
+  .payProgInner{height:100%;border-radius:6px;background:linear-gradient(90deg,#1a9e5c,#25c17a);transition:width .3s ease;}
+  .payStatsRow{display:flex;gap:14px;font-size:11.5px;margin:6px 0 2px;flex-wrap:wrap;}
+  .payStatsRow .ps-item{display:flex;flex-direction:column;gap:1px;}
+  .payStatsRow .ps-item b{font-size:13px;}
+  /* Search bar with icon */
+  .searchWrap{position:relative;flex:1 1 100%;}
+  .searchWrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#a7b0bd;font-size:12px;}
+  .searchWrap input{width:100%;padding:9px 12px 9px 32px !important;}
+  /* Visa/country info card */
+  .visaCard{border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:linear-gradient(180deg,#fff,#fbf9f5);}
+  .visaCard:last-child{margin-bottom:0;}
+  .visaCard .vc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
+  .visaCard .vc-title{font-weight:800;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:7px;}
+  .visaChip{background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#3b4552;}
+  .visaStatRow{display:flex;gap:18px;font-size:12px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .visaStatRow b{color:var(--navy);font-size:14px;}
+  /* Detail modal list */
+  .detailRow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .detailRow:last-child{border-bottom:none;}
+  .detailRow .dr-label{color:#8896ab;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+  .detailRow .dr-val{font-weight:600;color:#1c2733;text-align:right;}
   .badge-ok{color:var(--ok);font-weight:600;}
   .badge-fail{color:var(--fail);font-weight:600;}
   .badge-pending{color:var(--warn);font-weight:600;}
@@ -260,7 +305,7 @@
       <div class="topbar"><h1>জার্নি</h1></div>
       <div class="card">
         <div class="filterBar">
-          <input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()">
+          <div class="searchWrap"><i class="fas fa-magnifying-glass"></i><input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()"></div>
           <select id="jStageFilter" onchange="renderJourneys()">
             <option value="">সব স্টেজ</option>
           </select>
@@ -274,7 +319,7 @@
       <div class="topbar"><h1>ইউজার</h1><button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button></div>
       <div class="card">
         <div class="filterBar">
-          <input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()">
+          <div class="searchWrap"><i class="fas fa-magnifying-glass"></i><input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()"></div>
           <select id="uCountryFilter" onchange="renderUsers()">
             <option value="">সব দেশ</option>
           </select>
@@ -290,7 +335,7 @@
     <div class="panel" id="panel-templates">
       <div class="topbar"><h1>ভিসার তথ্য</h1></div>
       <div class="card">
-        <h3 style="margin-top:0;font-size:14px;">দেশ অনুযায়ী ভিসার ধরন</h3>
+        <div class="card-hd"><i class="fas fa-earth-asia"></i> দেশ অনুযায়ী ভিসার ধরন</div>
         <p class="hint">এই এজেন্সির কাছে কোন কোন দেশের জন্য কী কী ধরনের ভিসা আছে তা এখানে দেখা যাবে। নতুন ভিসার ধরন যোগ করতে সেটিংসে গিয়ে "কাস্টম ফিল্ড তৈরি করুন" থেকে "ভিসা ব্যবস্থাপনা" টাইপ বেছে নিন।</p>
         <div id="visaInfoList" style="margin-top:12px;"></div>
       </div>
@@ -418,6 +463,21 @@
 
   </div>
 
+  <!-- USER DETAIL MODAL -->
+  <div class="modalOverlay" id="userDetailModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeUserDetailModal()"><i class="fas fa-xmark"></i></button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <div class="avatarCircle" id="udmAvatar" style="width:44px;height:44px;font-size:16px;">-</div>
+        <div>
+          <h3 style="margin:0;" id="udmName">-</h3>
+          <div class="hint" style="margin:2px 0 0;" id="udmSub">-</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;" id="udmRows"></div>
+    </div>
+  </div>
+
   <!-- ADD USER MODAL -->
   <div class="modalOverlay" id="addUserModal">
     <div class="modalBox">
@@ -483,6 +543,47 @@ const STAGE_LABEL = {
   MEDICAL_PASSED:"মেডিকেল পাশ", MEDICAL_FAILED:"মেডিকেল ফেইল", FLIGHT_BOOKED:"ফ্লাইট বুকড",
   FLIGHT_CONFIRMED:"ফ্লাইট কনফার্মড", DEPARTED:"রওনা হয়েছে"
 };
+// Pipeline order used to draw the mini step-progress tracker (MEDICAL_FAILED is a branch, not part of the main line)
+const STAGE_ORDER = ["DOC_COLLECTED","PASSPORT_APPLIED","PASSPORT_ISSUED","VISA_APPLIED","VISA_APPROVED","MEDICAL_SCHEDULED","MEDICAL_PASSED","FLIGHT_BOOKED","FLIGHT_CONFIRMED","DEPARTED"];
+// Icon + color class per stage so every status is instantly recognizable at a glance
+const STAGE_META = {
+  DOC_COLLECTED:{icon:"fa-folder-open", cls:"st-doc"},
+  PASSPORT_APPLIED:{icon:"fa-passport", cls:"st-pass"},
+  PASSPORT_ISSUED:{icon:"fa-passport", cls:"st-pass"},
+  VISA_APPLIED:{icon:"fa-stamp", cls:"st-visa"},
+  VISA_APPROVED:{icon:"fa-circle-check", cls:"st-visa"},
+  MEDICAL_SCHEDULED:{icon:"fa-briefcase-medical", cls:"st-med"},
+  MEDICAL_PASSED:{icon:"fa-heart-pulse", cls:"st-med"},
+  MEDICAL_FAILED:{icon:"fa-triangle-exclamation", cls:"st-fail"},
+  FLIGHT_BOOKED:{icon:"fa-plane", cls:"st-flight"},
+  FLIGHT_CONFIRMED:{icon:"fa-plane-circle-check", cls:"st-flight"},
+  DEPARTED:{icon:"fa-plane-departure", cls:"st-done"}
+};
+// Country flag emoji so the "Visa info" cards are recognizable instantly, not just text
+const COUNTRY_FLAGS = {
+  "সৌদি আরব":"🇸🇦","সংযুক্ত আরব আমিরাত (দুবাই)":"🇦🇪","কাতার":"🇶🇦","ওমান":"🇴🇲",
+  "কুয়েত":"🇰🇼","বাহরাইন":"🇧🇭","মালয়েশিয়া":"🇲🇾","সিঙ্গাপুর":"🇸🇬"
+};
+function stagePillHtml(stageKey){
+  const meta = STAGE_META[stageKey] || {icon:"fa-circle", cls:""};
+  const label = STAGE_LABEL[stageKey] || stageKey || '-';
+  return `<span class="stagePill ${meta.cls}"><i class="fas ${meta.icon}"></i>${label}</span>`;
+}
+function stageTrackHtml(stageKey){
+  if(stageKey === 'MEDICAL_FAILED'){
+    return `<div class="stageTrack">${STAGE_ORDER.map((s,i)=>`<div class="st-dot ${i<=4?'done':''}"></div>`).join('')}</div>
+      <div class="stageTrackLbl"><span>শুরু</span><span style="color:var(--fail);font-weight:700;">মেডিকেলে বাতিল হয়েছে</span></div>`;
+  }
+  const idx = STAGE_ORDER.indexOf(stageKey);
+  const dots = STAGE_ORDER.map((s,i)=>{
+    let cls = '';
+    if(i < idx) cls = 'done';
+    else if(i === idx) cls = 'current';
+    return `<div class="st-dot ${cls}"></div>`;
+  }).join('');
+  const pct = Math.round(((idx+1)/STAGE_ORDER.length)*100);
+  return `<div class="stageTrack">${dots}</div><div class="stageTrackLbl"><span>শুরু</span><span>${pct}% সম্পন্ন</span></div>`;
+}
 
 let currentUser = null;   // firebase auth user
 let currentRole = "agent";
@@ -672,19 +773,22 @@ function renderJourneys(){
         const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
         const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
         const stageLabel = STAGE_LABEL[j.current_stage] || j.current_stage;
+        const initials = (getUserName(u) || '-').trim().charAt(0).toUpperCase() || '?';
         return `
         <div class="accItem">
           <div class="accHead" onclick="toggleAccItem('j-${jid}')">
-            <div>
+            <div class="avatarCircle">${initials}</div>
+            <div class="accTextWrap">
               <div class="accName">${getUserName(u)}</div>
-              <div class="accSub"><span class="stagePill">${stageLabel}</span></div>
+              <div class="accSub">${stagePillHtml(j.current_stage)}</div>
+              ${stageTrackHtml(j.current_stage)}
             </div>
             <span id="chev-j-${jid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
           </div>
           <div class="accBody" id="acc-j-${jid}">
-            <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
-            <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
-            <div class="accRow"><div class="accLabel">ফ্লাইট</div>${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div>
+            <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${getUserPhone(u)}</div>
+            <div class="accRow"><div class="accLabel"><i class="fas fa-passport" style="margin-right:4px;"></i>পাসপোর্ট</div>${getUserPassport(u)}</div>
+            <div class="accRow"><div class="accLabel"><i class="fas fa-plane" style="margin-right:4px;"></i>ফ্লাইট</div>${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div>
             <div class="accRow">
               <div class="accLabel">আয়/খরচ (৳)</div>
               <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
@@ -754,25 +858,30 @@ function renderPaymentSection(jid, j){
     ? entries.map(([pid, p]) => `
       <div class="fieldRow">
         <div>
-          <div>৳${p.amount}</div>
+          <div><i class="fas fa-circle-check" style="color:var(--ok);margin-right:5px;font-size:11px;"></i>৳${p.amount}</div>
           <div class="fr-meta">${p.date ? new Date(p.date).toLocaleDateString('bn-BD') : ''}${p.note ? ' · ' + p.note : ''}</div>
         </div>
         <button class="del" onclick="deletePayment('${jid}','${pid}')"><i class="fas fa-xmark"></i></button>
       </div>`).join('')
     : '<p class="hint">এখনো কোনো কিস্তি যোগ করা হয়নি।</p>';
+  const pct = totalFee > 0 ? Math.min(100, Math.max(0, Math.round((paid/totalFee)*100))) : 0;
   return `
     <div class="accRow">
-      <div class="accLabel">পেমেন্ট / কিস্তি</div>
-      <div style="display:flex;gap:14px;font-size:12px;margin:6px 0 10px;flex-wrap:wrap;">
-        <span>মোট ফি: <strong>৳${totalFee}</strong></span>
-        <span style="color:var(--ok);">পরিশোধিত: <strong>৳${paid}</strong></span>
-        <span style="color:${due > 0 ? 'var(--fail)' : 'var(--ok)'};">বাকি: <strong>৳${due}</strong></span>
+      <div class="accLabel"><i class="fas fa-receipt" style="margin-right:4px;"></i>পেমেন্ট / কিস্তি</div>
+      <div class="payProgWrap">
+        <div class="payProgOuter"><div class="payProgInner" style="width:${pct}%;"></div></div>
+        <div class="payStatsRow">
+          <div class="ps-item"><span class="hint" style="margin:0;">মোট ফি</span><b>৳${totalFee}</b></div>
+          <div class="ps-item"><span class="hint" style="margin:0;">পরিশোধিত</span><b style="color:var(--ok);">৳${paid}</b></div>
+          <div class="ps-item"><span class="hint" style="margin:0;">বাকি</span><b style="color:${due > 0 ? 'var(--fail)' : 'var(--ok)'};">৳${due}</b></div>
+          <div class="ps-item" style="margin-left:auto;"><span class="hint" style="margin:0;">অগ্রগতি</span><b>${pct}%</b></div>
+        </div>
       </div>
       <div id="paymentList-${jid}">${rowsHtml}</div>
       <div class="flex" style="margin-top:8px;gap:6px;">
         <input type="number" id="payAmt-${jid}" placeholder="পরিমাণ (৳)" style="flex:1;">
         <input type="text" id="payNote-${jid}" placeholder="নোট (ঐচ্ছিক)" style="flex:1;">
-        <button class="btn small" style="width:auto;flex-shrink:0;" onclick="addPayment('${jid}')">যোগ করুন</button>
+        <button class="btn small" style="width:auto;flex-shrink:0;" onclick="addPayment('${jid}')"><i class="fas fa-plus"></i> যোগ করুন</button>
       </div>
     </div>`;
 }
@@ -909,26 +1018,29 @@ function renderUsers(){
   }
   const rows = entries.map(([uid, u]) => {
     const j = getJourneyForUser(uid);
-    const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
+    const initials = (getUserName(u) || '-').trim().charAt(0).toUpperCase() || '?';
+    const flag = COUNTRY_FLAGS[u.country] || '🌍';
     return `
     <div class="accItem">
       <div class="accHead" onclick="toggleAccItem('u-${uid}')">
-        <div>
+        <div class="avatarCircle">${initials}</div>
+        <div class="accTextWrap">
           <div class="accName">${getUserName(u)}</div>
-          <div class="accSub">${u.country || '-'} · ${stageLabel}</div>
+          <div class="accSub">${flag} ${u.country || '-'}</div>
+          <div style="margin-top:6px;">${j ? stagePillHtml(j.current_stage) : '<span class="stagePill">শুরু হয়নি</span>'}</div>
         </div>
         <span id="chev-u-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
       </div>
       <div class="accBody" id="acc-u-${uid}">
-        <div class="accRow"><div class="accLabel">ফোন</div>${getUserPhone(u)}</div>
-        <div class="accRow"><div class="accLabel">দেশ</div>${u.country || '-'}</div>
-        <div class="accRow"><div class="accLabel">পাসপোর্ট</div>${getUserPassport(u)}</div>
-        <div class="accRow"><div class="accLabel">ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${getUserPhone(u)}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-earth-asia" style="margin-right:4px;"></i>দেশ</div>${flag} ${u.country || '-'}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-passport" style="margin-right:4px;"></i>পাসপোর্ট</div>${getUserPassport(u)}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-folder-open" style="margin-right:4px;"></i>ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status && Object.keys(u.doc_status).length ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
         <div class="accActions">
-          <button class="btn small" onclick="viewUserDetails('${uid}')">বিস্তারিত</button>
-          <button class="btn small" onclick="shareUserProgress('${uid}')">শেয়ার করুন</button>
-          <button class="btn small gold" onclick="sendWhatsAppUser('${uid}')">WhatsApp পাঠান</button>
-          <button class="btn small danger" onclick="deleteUser('${uid}')">ডিলিট</button>
+          <button class="btn small" onclick="viewUserDetails('${uid}')"><i class="fas fa-circle-info"></i> বিস্তারিত</button>
+          <button class="btn small" onclick="shareUserProgress('${uid}')"><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+          <button class="btn small gold" onclick="sendWhatsAppUser('${uid}')"><i class="fab fa-whatsapp"></i> WhatsApp পাঠান</button>
+          <button class="btn small danger" onclick="deleteUser('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
         </div>
       </div>
     </div>`;
@@ -966,12 +1078,35 @@ function sendWhatsAppUser(uid){
 }
 function viewUserDetails(uid){
   const u = (window._usersCache || {})[uid] || {};
+  const j = getJourneyForUser(uid);
+  const flag = COUNTRY_FLAGS[u.country] || '🌍';
+  const initials = (getUserName(u) || '-').trim().charAt(0).toUpperCase() || '?';
+
+  document.getElementById('udmAvatar').textContent = initials;
+  document.getElementById('udmName').textContent = getUserName(u);
+  document.getElementById('udmSub').textContent = `${flag} ${u.country || '-'} · ${j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি'}`;
+
+  const baseRows = [
+    ['ফোন', getUserPhone(u)],
+    ['পাসপোর্ট', getUserPassport(u)],
+    ['দেশ', `${flag} ${u.country || '-'}`],
+    ['বর্তমান স্টেজ', j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি'],
+    ['যোগ হয়েছে', u.created_at ? new Date(u.created_at).toLocaleDateString('bn-BD') : '-']
+  ];
   const cd = u.custom_data || {};
-  const lines = Object.entries(cd).map(([fid, val]) => {
+  const customRows = Object.entries(cd).map(([fid, val]) => {
     const label = (customFields[fid] && customFields[fid].label) || fid;
-    return label + ': ' + val;
+    return [label, val];
   });
-  alert(lines.length ? lines.join('\n') : 'এই ইউজারের জন্য কোনো অতিরিক্ত/কাস্টম তথ্য নেই।');
+  const allRows = baseRows.concat(customRows);
+  document.getElementById('udmRows').innerHTML = allRows.map(([label, val]) =>
+    `<div class="detailRow"><div class="dr-label">${label}</div><div class="dr-val">${val || '-'}</div></div>`
+  ).join('') || '<p class="hint">এই ইউজারের জন্য কোনো অতিরিক্ত তথ্য নেই।</p>';
+
+  document.getElementById('userDetailModal').classList.add('active');
+}
+function closeUserDetailModal(){
+  document.getElementById('userDetailModal').classList.remove('active');
 }
 function deleteUser(uid){
   if(!confirm('নিশ্চিত মুছবেন?')) return;
@@ -1220,20 +1355,23 @@ function renderVisaInfoList(){
     const countryUserIds = userEntries.filter(([uid, u]) => u.country === country).map(([uid]) => uid);
     const total = countryUserIds.length;
     const active = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
+    const departed = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage === 'DEPARTED').length;
     const visaLine = groups[country].join(', ');
-    const shareText = `🌍 ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
+    const flag = COUNTRY_FLAGS[country] || '🌍';
+    const shareText = `${flag} ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
     return `
-    <div class="fieldRow" style="align-items:flex-start;flex-direction:column;gap:8px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
-        <div style="font-weight:700;">🌍 ${country}</div>
-        <button type="button" class="btn small" style="width:auto;padding:4px 10px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'>শেয়ার করুন</button>
+    <div class="visaCard">
+      <div class="vc-head">
+        <div class="vc-title">${flag} ${country}</div>
+        <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${groups[country].map(name => `<span style="background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;">${name}</span>`).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        ${groups[country].map(name => `<span class="visaChip">${name}</span>`).join('')}
       </div>
-      <div style="display:flex;gap:16px;font-size:12px;color:#5b6b7a;margin-top:2px;">
-        <span>মোট প্রার্থী: <strong style="color:#1c2733;">${total}</strong></span>
-        <span>চলমান প্রসেসিং: <strong style="color:#1c2733;">${active}</strong></span>
+      <div class="visaStatRow">
+        <span>মোট প্রার্থী <br><b>${total}</b></span>
+        <span>চলমান প্রসেসিং <br><b style="color:var(--gold);">${active}</b></span>
+        <span>রওনা সম্পন্ন <br><b style="color:var(--ok);">${departed}</b></span>
       </div>
     </div>`;
   }).join('');
