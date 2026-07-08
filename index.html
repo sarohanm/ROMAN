@@ -18,6 +18,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <!-- Chart.js for dashboard chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
   :root{
@@ -119,7 +120,7 @@
   .visaCard .vc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .visaCard .vc-title{font-weight:800;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:7px;}
   .visaChip{background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#3b4552;}
-  .visaStatRow{display:flex;justify-content:space-between;align-items:center;gap:18px;font-size:12px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .visaStatRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
   .visaStatRow .vsr-stats{display:flex;gap:18px;}
   .visaStatRow b{color:var(--navy);font-size:14px;}
   /* Detail modal list */
@@ -422,7 +423,7 @@
               <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
             </div>
             <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
-            <textarea id="cfVisaText" rows="4" style="display:none;width:100%;" placeholder="প্রতি লাইনে একটা ভিসার ধরন লিখুন (Enter চেপে নতুন লাইন)"></textarea>
+            <textarea id="cfVisaText" rows="4" style="display:none;width:100%;" placeholder="প্রতি লাইনে একটা ভিসার ধরন লিখুন, চার্জ যোগ করতে ড্যাশ দিন (যেমন: ওয়ার্ক ভিসা - 50000)"></textarea>
             <button type="button" class="btn small" id="cfVisaAddBtn" style="display:none;" onclick="addCustomField()">ভিসা যোগ করুন</button>
           </div>
         </div>
@@ -791,13 +792,13 @@ function renderJourneys(){
             <div class="accRow"><div class="accLabel"><i class="fas fa-plane" style="margin-right:4px;"></i>ফ্লাইট</div>${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div>
             <div class="accRow">
               <div class="accLabel">আয়/খরচ (৳)</div>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;align-items:center;">
-                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="width:80px;flex:0 0 auto;">
-                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="width:130px;flex:0 0 auto;">
-                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="width:110px;flex:0 0 auto;">
-                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="width:110px;flex:0 0 auto;">
-                <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;flex:0 0 auto;">সেভ</button>
+              <div style="display:flex;flex-wrap:nowrap;gap:6px;margin-top:4px;">
+                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}" style="flex:0.7 1 0;min-width:0;">
+                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}" style="flex:1.4 1 0;min-width:0;">
+                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}" style="flex:1.1 1 0;min-width:0;">
+                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}" style="flex:1.1 1 0;min-width:0;">
               </div>
+              <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
             </div>
             ${renderPaymentSection(jid, j)}
             ${nextStages.length ? `
@@ -810,7 +811,6 @@ function renderJourneys(){
             </div>` : `<div class="accRow"><div class="accLabel">পরবর্তী স্টেজে যান</div><span class="hint">শেষ স্টেজ</span></div>`}
             <div class="accActions">
               <button class="btn small" onclick="shareUserProgress('${j.user_id}')">শেয়ার করুন</button>
-              <button class="btn small gold" onclick="sendWhatsAppUser('${j.user_id}')">WhatsApp পাঠান</button>
             </div>
           </div>
         </div>`;
@@ -1039,7 +1039,6 @@ function renderUsers(){
         <div class="accActions">
           <button class="btn small" onclick="viewUserDetails('${uid}')"><i class="fas fa-circle-info"></i> বিস্তারিত</button>
           <button class="btn small" onclick="shareUserProgress('${uid}')"><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
-          <button class="btn small gold" onclick="sendWhatsAppUser('${uid}')"><i class="fab fa-whatsapp"></i> WhatsApp পাঠান</button>
           <button class="btn small danger" onclick="deleteUser('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
         </div>
       </div>
@@ -1063,8 +1062,45 @@ function shareUserProgress(uid){
   const u = (window._usersCache || {})[uid] || {};
   const j = getJourneyForUser(uid);
   const stageLabel = j ? (STAGE_LABEL[j.current_stage] || j.current_stage) : 'শুরু হয়নি';
-  const text = `👤 ${getUserName(u)}\nদেশ: ${u.country || '-'}\nবর্তমান অবস্থা: ${stageLabel}` + (j && j.flight_datetime ? `\nফ্লাইট: ${new Date(j.flight_datetime).toLocaleString('bn-BD')}` : '');
-  shareVisaInfo(text);
+  const flag = COUNTRY_FLAGS[u.country] || '🌍';
+  const name = getUserName(u);
+
+  const card = document.createElement('div');
+  card.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;padding:28px;background:#fff;font-family:"Hind Siliguri","Noto Sans Bengali",sans-serif;border-radius:16px;border:1px solid #e2ddd3;';
+  card.innerHTML = `
+    <div style="font-size:12px;color:#9a8f7d;letter-spacing:1px;margin-bottom:14px;">ভিসার তথ্য</div>
+    <div style="font-size:22px;font-weight:800;color:#1a2233;margin-bottom:16px;">${name}</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;color:#3a4453;">
+      <div><span style="color:#8a93a3;">দেশ:</span> ${flag} ${u.country || '-'}</div>
+      <div><span style="color:#8a93a3;">ফোন:</span> ${getUserPhone(u)}</div>
+      <div><span style="color:#8a93a3;">পাসপোর্ট:</span> ${getUserPassport(u)}</div>
+      <div><span style="color:#8a93a3;">বর্তমান অবস্থা:</span> ${stageLabel}</div>
+      ${j && j.flight_datetime ? `<div><span style="color:#8a93a3;">ফ্লাইট:</span> ${new Date(j.flight_datetime).toLocaleString('bn-BD')}</div>` : ''}
+    </div>
+    <div style="margin-top:20px;padding-top:14px;border-top:1px dashed #e2ddd3;font-size:11px;color:#b3ab9e;">Talent Overseas</div>
+  `;
+  document.body.appendChild(card);
+
+  html2canvas(card, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+    document.body.removeChild(card);
+    canvas.toBlob(async (blob) => {
+      if(!blob){ alert('ছবি তৈরি করা যায়নি।'); return; }
+      const file = new File([blob], `${name}-tathya.png`, { type: 'image/png' });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        try{ await navigator.share({ files: [file], title: 'ভিসার তথ্য', text: name }); }
+        catch(e){ /* user cancelled */ }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = file.name; a.click();
+        URL.revokeObjectURL(url);
+        alert('ছবি ডাউনলোড হয়েছে, এখন যেকোনো জায়গায় শেয়ার করতে পারবেন।');
+      }
+    }, 'image/png');
+  }).catch(err => {
+    if(card.parentNode) document.body.removeChild(card);
+    alert('ছবি তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+  });
 }
 function sendWhatsAppUser(uid){
   const u = (window._usersCache || {})[uid] || {};
@@ -1344,7 +1380,7 @@ function renderVisaInfoList(){
   const groups = {};
   entries.forEach(([vid, v]) => {
     if(!groups[v.country]) groups[v.country] = [];
-    groups[v.country].push(v.name);
+    groups[v.country].push({ name: v.name, fee: v.fee || 0 });
   });
   const countryNames = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'bn'));
 
@@ -1356,7 +1392,7 @@ function renderVisaInfoList(){
     const total = countryUserIds.length;
     const active = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
     const departed = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage === 'DEPARTED').length;
-    const visaLine = groups[country].join(', ');
+    const visaLine = groups[country].map(v => v.fee ? `${v.name} (৳${v.fee.toLocaleString('bn-BD')})` : v.name).join(', ');
     const flag = COUNTRY_FLAGS[country] || '🌍';
     const shareText = `${flag} ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
     return `
@@ -1365,7 +1401,7 @@ function renderVisaInfoList(){
         <div class="vc-title">${flag} ${country}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:7px;">
-        ${groups[country].map(name => `<span class="visaChip">${name}</span>`).join('')}
+        ${groups[country].map(v => `<span class="visaChip">${v.name}${v.fee ? ` <b style="color:var(--navy);">৳${v.fee.toLocaleString('bn-BD')}</b>` : ''}</span>`).join('')}
       </div>
       <div class="visaStatRow">
         <div class="vsr-stats">
@@ -1373,10 +1409,19 @@ function renderVisaInfoList(){
           <span>চলমান প্রসেসিং <br><b style="color:var(--gold);">${active}</b></span>
           <span>রওনা সম্পন্ন <br><b style="color:var(--ok);">${departed}</b></span>
         </div>
-        <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='showVisaCharges(${JSON.stringify(country)}, ${JSON.stringify(groups[country])})'><i class="fas fa-tag"></i> ভিসার মূল্য</button>
+          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function showVisaCharges(country, visas){
+  const flag = COUNTRY_FLAGS[country] || '🌍';
+  const lines = visas.map(v => `${v.name}: ${v.fee ? '৳' + v.fee.toLocaleString('bn-BD') : 'মূল্য নির্ধারিত হয়নি'}`).join('\n');
+  alert(`${flag} ${country} — ভিসার মূল্য\n\n${lines}`);
 }
 
 function shareVisaInfo(text){
@@ -1446,12 +1491,16 @@ function addCustomField(){
 
   if(type === 'visa'){
     if(!country){ alert('ভিসার ধরন যোগ করতে একটা নির্দিষ্ট দেশ নির্বাচন করুন (সকল দেশের জন্য প্রযোজ্য দিয়ে হবে না)।'); return; }
-    const visaNames = document.getElementById('cfVisaText').value.split('\n').map(s => s.trim()).filter(Boolean);
-    if(!visaNames.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (প্রতি লাইনে একটা করে)।'); return; }
+    const visaLines = document.getElementById('cfVisaText').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if(!visaLines.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (প্রতি লাইনে একটা করে)।'); return; }
     const updates = {};
-    visaNames.forEach(name => {
+    visaLines.forEach(line => {
       const key = db.ref('visa_types').push().key;
-      updates[key] = { country, name, created_at: Date.now() };
+      const parts = line.split(/\s*-\s*/);
+      const name = parts[0].trim();
+      const feeRaw = parts.length > 1 ? parts.slice(1).join('-') : '';
+      const fee = feeRaw ? (parseInt(feeRaw.replace(/[^0-9]/g, '')) || 0) : 0;
+      updates[key] = { country, name, fee, created_at: Date.now() };
     });
     db.ref('visa_types').update(updates).then(() => {
       document.getElementById('cfVisaText').value = '';
