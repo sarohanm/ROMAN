@@ -19,6 +19,8 @@
 <!-- Chart.js for dashboard chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
 <style>
   :root{
@@ -183,6 +185,10 @@
   .accInfoItem .aii-val{font-size:12px;font-weight:600;color:#1c2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .financeGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
   .financeGrid input{width:100%;min-width:0;}
+  .accSectionTitle{font-size:12px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:6px;margin:4px 0 8px;}
+  .accSectionTitle i{color:var(--gold);width:14px;text-align:center;}
+  .accBody .accRow.noBorder{border-bottom:none;}
+  .noteBox{width:100%;min-height:64px;resize:vertical;font-family:inherit;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;}
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
   .chev-ico.open{transform:rotate(180deg);}
@@ -245,6 +251,7 @@
   <div class="top-nav">
     <div class="nav-brand"><i class="fas fa-plane-departure"></i> <span class="brand-text">Talent Overseas</span></div>
     <div class="nav-r">
+      <img id="navAvatar" style="display:none;width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);" alt="">
       <span class="roleTag" id="roleTag">Admin</span>
       <button class="logout-btn" onclick="logout()" title="লগআউট"><i class="fas fa-right-from-bracket"></i></button>
     </div>
@@ -310,12 +317,18 @@
       </div>
     </div>
 
-    <!-- JOURNEYS TAB -->
+    <!-- JOURNEYS TAB (জার্নি + ইউজার একটাই একত্রিত লিস্ট) -->
     <div class="panel" id="panel-journeys">
-      <div class="topbar"><h1>জার্নি</h1></div>
+      <div class="topbar">
+        <h1 style="margin:0;">জার্নি</h1>
+        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:14px;">
+          <i class="fas fa-magnifying-glass"></i>
+          <input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()">
+        </div>
+        <button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button>
+      </div>
       <div class="card">
         <div class="filterBar">
-          <div class="searchWrap"><i class="fas fa-magnifying-glass"></i><input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()"></div>
           <select id="jStageFilter" onchange="renderJourneys()">
             <option value="">সব স্টেজ</option>
           </select>
@@ -324,18 +337,18 @@
       </div>
     </div>
 
-    <!-- USERS TAB -->
-    <div class="panel" id="panel-users">
+    <!-- USERS TAB (এখন এজেন্ট ব্যবস্থাপনা) -->
+    <div class="panel admin-only" id="panel-users">
       <div class="topbar">
-        <h1 style="margin:0;">ইউজার</h1>
-        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:14px;">
+        <h1 style="margin:0;">এজেন্ট</h1>
+        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:0;">
           <i class="fas fa-magnifying-glass"></i>
-          <input type="text" id="uSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderUsers()">
+          <input type="text" id="agentSearch" placeholder="নাম বা ফোন দিয়ে খুঁজুন..." oninput="renderAgents()">
         </div>
-        <button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button>
       </div>
       <div class="card">
-        <div id="userRows"></div>
+        <p class="hint" style="margin-top:0;">এজেন্টরা বাইরে থেকে কাস্টমার নিয়ে আসেন। এখানে তাদের জন্য লগইন আইডি খুলে দিন — সেই আইডি দিয়ে তারা তথ্য দেখে কাস্টমার আকৃষ্ট করবেন।</p>
+        <div id="agentRows"></div>
       </div>
     </div>
 
@@ -441,6 +454,18 @@
         </div>
       </div>
 
+      <div class="card settingsCard" style="--ac:#1a9e5c">
+        <div class="settingsHead" style="--ic:rgba(26,158,92,.12);--ac:#1a9e5c" onclick="toggleSettingsPanel('agentAddPanel')">
+          <div class="sh-ico"><i class="fas fa-user-plus"></i></div>
+          <h3 style="flex:1;">নতুন এজেন্ট যোগ করুন</h3>
+          <span id="chev-agentAddPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+        </div>
+        <div id="agentAddPanel" style="display:none;">
+          <p class="hint" style="margin-top:0;">এজেন্টরা বাইরে থেকে কাস্টমার নিয়ে আসেন। এখানে তাদের জন্য লগইন আইডি খুলে দিন।</p>
+          <div style="margin-top:8px;"><button class="btn small" onclick="openAddAgentModal()"><i class="fas fa-plus" style="margin-right:6px;"></i>নতুন এজেন্ট যোগ করুন</button></div>
+        </div>
+      </div>
+
       <div class="card settingsCard" style="--ac:#dc3545">
         <div class="settingsHead" style="--ic:rgba(220,53,69,.1);--ac:#dc3545" onclick="toggleSettingsPanel('securityPanel')">
           <div class="sh-ico"><i class="fas fa-lock"></i></div>
@@ -491,27 +516,81 @@
     </div>
   </div>
 
-  <!-- ADD USER MODAL -->
+  <!-- ADD/EDIT USER MODAL -->
   <div class="modalOverlay" id="addUserModal">
     <div class="modalBox">
       <button class="close-x" onclick="closeAddUserModal()"><i class="fas fa-xmark"></i></button>
-      <h3 style="margin-top:0;">নতুন ইউজার যোগ করুন</h3>
-      <div class="formGrid">
-        <div class="flex" style="gap:6px;">
-          <select id="uCountry" style="flex:1;" onchange="renderCustomFieldInputs()">
-            <option value="">দেশ নির্বাচন করুন</option>
-          </select>
-          <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addUser()">যোগ করুন</button>
+      <h3 style="margin-top:0;" id="uModalTitle">নতুন ইউজার যোগ করুন</h3>
+
+      <button type="button" class="btn small gold" style="width:100%;margin-bottom:12px;" onclick="openMrzScanModal()"><i class="fas fa-camera"></i> পাসপোর্ট স্ক্যান করুন (MRZ)</button>
+
+      <div style="text-align:center;margin-bottom:10px;">
+        <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
+        <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)">
+        <div id="uPhotoPreviewWrap" style="display:none;margin-top:8px;">
+          <img id="uPhotoPreview" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
         </div>
       </div>
+
+      <div class="formGrid">
+        <select id="uCountry" onchange="renderCustomFieldInputs()">
+          <option value="">দেশ নির্বাচন করুন</option>
+        </select>
+        <select id="uAgentRef">
+          <option value="">এজেন্ট রেফারেন্স (সরাসরি/নেই)</option>
+        </select>
+      </div>
       <div id="customFieldsWrap"></div>
+      <div style="margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:4px;">নোট (ঐচ্ছিক)</label>
+        <textarea id="uNotes" class="noteBox" placeholder="এই ইউজার সম্পর্কে নোট লিখুন..."></textarea>
+      </div>
+      <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" id="uSubmitBtn" onclick="addUser()">যোগ করুন</button></div>
+    </div>
+  </div>
+
+  <!-- MRZ PASSPORT SCAN MODAL -->
+  <div class="modalOverlay" id="mrzScanModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeMrzScanModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">পাসপোর্ট স্ক্যান করুন (MRZ)</h3>
+      <p class="hint" style="margin-top:0;">পাসপোর্টের নিচের দুই লাইনের কোড (MRZ) ফ্রেমের ভেতর স্পষ্ট ও সোজাভাবে রাখুন, তারপর ক্যাপচার করুন।</p>
+      <video id="mrzVideo" autoplay muted playsinline style="width:100%;border-radius:8px;background:#000;"></video>
+      <canvas id="mrzCanvas" style="display:none;"></canvas>
+      <div id="mrzMsg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>
+      <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" onclick="captureMrz()"><i class="fas fa-camera"></i> ক্যাপচার ও স্ক্যান করুন</button></div>
+    </div>
+  </div>
+
+  <!-- ADD AGENT MODAL -->
+  <div class="modalOverlay" id="addAgentModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeAddAgentModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">নতুন এজেন্ট যোগ করুন</h3>
+      <p class="hint" style="margin-top:0;">এই ইমেইল-পাসওয়ার্ড দিয়েই এজেন্ট লগইন করবেন।</p>
+      <div class="formGrid">
+        <input id="agName" placeholder="এজেন্টের নাম">
+        <input id="agPhone" placeholder="ফোন নম্বর">
+        <input id="agEmail" type="email" placeholder="ইমেইল (লগইনের জন্য)">
+        <input id="agPass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ ডিজিট)">
+        <div>
+          <label class="hint" style="display:block;margin-bottom:4px;">এজেন্টের ছবি (ফেস লগইনের জন্য ব্যবহার হবে)</label>
+          <input type="file" id="agPhoto" accept="image/*" onchange="handleAgentPhotoSelect(event)">
+        </div>
+      </div>
+      <div id="agPhotoPreviewWrap" style="display:none;text-align:center;margin-bottom:10px;">
+        <img id="agPhotoPreview" style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+        <div class="hint" id="agPhotoFaceMsg" style="margin-top:6px;"></div>
+      </div>
+      <div id="agMsg" style="font-size:12px;margin-top:6px;"></div>
+      <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="addAgent()">যোগ করুন</button></div>
     </div>
   </div>
 
   <div class="bot-nav">
     <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')"><i class="fas fa-gauge-high"></i><span>ড্যাশবোর্ড</span></button>
     <button class="bn" data-tab="journeys" onclick="showTab('journeys')"><i class="fas fa-suitcase-rolling"></i><span>জার্নি</span></button>
-    <button class="bn" data-tab="users" onclick="showTab('users')"><i class="fas fa-users"></i><span>ইউজার</span></button>
+    <button class="bn admin-only" data-tab="users" onclick="showTab('users')"><i class="fas fa-users"></i><span>এজেন্ট</span></button>
     <button class="bn" data-tab="templates" onclick="showTab('templates')"><i class="fas fa-passport"></i><span>ভিসা তথ্য</span></button>
     <button class="bn" data-tab="logs" onclick="showTab('logs')"><i class="fas fa-bell"></i><span>লগ</span></button>
     <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')"><i class="fas fa-gear"></i><span>সেটিংস</span></button>
@@ -707,12 +786,18 @@ async function enterApp(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('roleTag').textContent = currentRole === 'admin' ? 'Admin' : 'Agent';
+  const navAvatarEl = document.getElementById('navAvatar');
+  db.ref('admins/' + pendingUid + '/photoBase64').once('value').then(s => {
+    if(s.exists()){ navAvatarEl.src = s.val(); navAvatarEl.style.display = 'inline-block'; }
+    else { navAvatarEl.style.display = 'none'; }
+  }).catch(() => { navAvatarEl.style.display = 'none'; });
   if(currentRole !== 'admin'){
     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
   }
   populateStageFilters();
   loadJourneys();
   loadUsers();
+  loadAgents();
   loadCountries();
   loadCustomFields();
   loadTemplates();
@@ -755,57 +840,76 @@ function showTab(name){
 function loadJourneys(){
   db.ref('journeys').on('value', snap => {
     journeysCache = snap.val() || {};
-    db.ref('users').once('value').then(uSnap => {
-      usersCache = uSnap.val() || {};
-      window._usersCache = usersCache;
-      renderJourneys();
-    });
+    renderJourneys();
   });
 }
 
 function renderJourneys(){
-  const journeys = journeysCache;
   const users = usersCache;
   renderVisaInfoList();
   const searchEl = document.getElementById('jSearch');
   const stageEl = document.getElementById('jStageFilter');
   const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
   const stageFilter = stageEl ? stageEl.value : '';
-  let entries = Object.entries(journeys);
-  if(stageFilter) entries = entries.filter(([jid, j]) => j.current_stage === stageFilter);
+  let entries = Object.entries(users);
+  if(stageFilter) entries = entries.filter(([uid, u]) => {
+    const j = getJourneyForUser(uid);
+    return j && j.current_stage === stageFilter;
+  });
   if(q){
-    entries = entries.filter(([jid, j]) => {
-      const u = users[j.user_id] || {};
+    entries = entries.filter(([uid, u]) => {
       const hay = (getUserName(u) + ' ' + getUserPhone(u) + ' ' + getUserPassport(u)).toLowerCase();
       return hay.includes(q);
     });
   }
   {
-      const rows = entries.map(([jid, j]) => {
-        const u = users[j.user_id] || {};
-        const nextStages = VALID_TRANSITIONS[j.current_stage] || [];
+      const rows = entries.map(([uid, u]) => {
+        const j = getJourneyForUser(uid);
+        const jid = j ? Object.entries(journeysCache).find(([id, jj]) => jj === j)[0] : null;
+        const nextStages = j ? (VALID_TRANSITIONS[j.current_stage] || []) : [];
         const options = nextStages.map(s => `<option value="${s}">${STAGE_LABEL[s]}</option>`).join('');
-        const stageLabel = STAGE_LABEL[j.current_stage] || j.current_stage;
         const initials = (getUserName(u) || '-').trim().charAt(0).toUpperCase() || '?';
+        const flag = COUNTRY_FLAGS[u.country] || '🌍';
+        const docStatus = u.doc_status && Object.keys(u.doc_status).length ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-';
+        const avatarHtml = u.photoBase64
+          ? `<img src="${u.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
+          : `<div class="avatarCircle">${initials}</div>`;
+        const agentName = u.agent_id && agentsCache[u.agent_id] ? agentsCache[u.agent_id].name : 'সরাসরি';
+        const customEntries = Object.entries(u.custom_data || {}).filter(([fid, val]) => val);
+        const customHtml = customEntries.length ? `
+            <div class="accSectionTitle"><i class="fas fa-list-ul"></i>কাস্টম তথ্য</div>
+            <div class="accInfoGrid">
+              ${customEntries.map(([fid, val]) => {
+                const label = (customFields[fid] && customFields[fid].label) || fid;
+                return `<div class="accInfoItem"><div class="aii-lbl">${label}</div><div class="aii-val" title="${val}">${val}</div></div>`;
+              }).join('')}
+            </div>` : '';
         return `
         <div class="accItem">
-          <div class="accHead" onclick="toggleAccItem('j-${jid}')">
-            <div class="avatarCircle">${initials}</div>
+          <div class="accHead" onclick="toggleAccItem('j-${uid}')">
+            ${avatarHtml}
             <div class="accTextWrap">
               <div class="accName">${getUserName(u)}</div>
-              <div class="accSub">${stagePillHtml(j.current_stage)}</div>
-              ${stageTrackHtml(j.current_stage)}
+              <div class="accSub">${flag} ${u.country || '-'}</div>
+              <div style="margin-top:6px;">${j ? stagePillHtml(j.current_stage) : '<span class="stagePill">শুরু হয়নি</span>'}</div>
+              ${j ? stageTrackHtml(j.current_stage) : ''}
             </div>
-            <span id="chev-j-${jid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+            <span id="chev-j-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
           </div>
-          <div class="accBody" id="acc-j-${jid}">
+          <div class="accBody" id="acc-j-${uid}">
+            <div class="accSectionTitle" style="margin-top:0;"><i class="fas fa-id-card"></i>মৌলিক তথ্য</div>
             <div class="accInfoGrid">
               <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>ফোন</div><div class="aii-val" title="${getUserPhone(u)}">${getUserPhone(u)}</div></div>
               <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-passport"></i>পাসপোর্ট</div><div class="aii-val" title="${getUserPassport(u)}">${getUserPassport(u)}</div></div>
-              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-plane"></i>ফ্লাইট</div><div class="aii-val" title="${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div></div>
+              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-user-tie"></i>এজেন্ট রেফারেন্স</div><div class="aii-val" title="${agentName}">${agentName}</div></div>
+              ${j ? `<div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-plane"></i>ফ্লাইট</div><div class="aii-val" title="${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div></div>` : ''}
             </div>
+            ${customHtml}
+            <div class="accSectionTitle"><i class="fas fa-folder-open"></i>ডকুমেন্ট স্ট্যাটাস</div>
+            <div class="accRow noBorder">${docStatus}</div>
+            ${j ? `
+            <div class="accSectionTitle"><i class="fas fa-sack-dollar"></i>আয়/খরচ (৳)</div>
             <div class="accRow">
-              <div class="accLabel">আয়/খরচ (৳)</div>
               <div class="financeGrid">
                 <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}">
                 <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}">
@@ -815,24 +919,33 @@ function renderJourneys(){
               <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
             </div>
             ${renderPaymentSection(jid, j)}
+            <div class="accSectionTitle"><i class="fas fa-route"></i>পরবর্তী স্টেজে যান</div>
             ${nextStages.length ? `
             <div class="accRow">
-              <div class="accLabel">পরবর্তী স্টেজে যান</div>
-              <div class="flex" style="margin-top:4px;gap:6px;">
+              <div class="flex" style="gap:6px;">
                 <select id="next-${jid}" style="flex:1;">${options}</select>
                 <button class="btn small" style="width:auto;flex-shrink:0;" onclick="advanceStage('${jid}')">আপডেট</button>
               </div>
-            </div>` : `<div class="accRow"><div class="accLabel">পরবর্তী স্টেজে যান</div><span class="hint">শেষ স্টেজ</span></div>`}
+            </div>` : `<div class="accRow"><span class="hint">শেষ স্টেজ</span></div>`}
+            ` : ''}
+            <div class="accSectionTitle"><i class="fas fa-note-sticky"></i>নোট</div>
+            <div class="accRow">
+              <textarea class="noteBox" id="note-${uid}" placeholder="এই ইউজার সম্পর্কে নোট লিখুন...">${u.notes || ''}</textarea>
+              <button class="btn small" onclick="saveUserNote('${uid}')" style="width:auto;margin-top:6px;">নোট সেভ করুন</button>
+            </div>
             <div class="accActions">
-              <button class="btn small" onclick="shareUserProgress('${j.user_id}')">শেয়ার করুন</button>
+              <button class="btn small" onclick="viewUserDetails('${uid}')"><i class="fas fa-circle-info"></i> বিস্তারিত</button>
+              <button class="btn small" onclick="openEditUserModal('${uid}')"><i class="fas fa-pen"></i> এডিট</button>
+              <button class="btn small" onclick="shareUserProgress('${uid}')"><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+              <button class="btn small" onclick="generateContractPdf('${uid}')"><i class="fas fa-file-pdf"></i> চুক্তিনামা PDF</button>
+              <button class="btn small danger" onclick="deleteUser('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
             </div>
           </div>
         </div>`;
       }).join('');
-      const emptyMsg = (q || stageFilter) ? 'ফিল্টারে কোনো জার্নি পাওয়া যায়নি' : 'কোনো জার্নি নেই';
+      const emptyMsg = (q || stageFilter) ? 'ফিল্টারে কোনো ইউজার পাওয়া যায়নি' : 'কোনো ইউজার নেই';
       document.getElementById('journeyRows').innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
   }
-  if(document.getElementById('userRows')) renderUsers();
 }
 
 async function advanceStage(journeyId){
@@ -968,9 +1081,22 @@ function addUser(){
     const el = document.getElementById('cf-' + fid);
     if(el && el.value) custom_data[fid] = el.value;
   });
+  const agent_id = document.getElementById('uAgentRef').value || null;
+  const notes = document.getElementById('uNotes').value.trim();
+
+  if(editingUserUid){
+    const updates = { country, custom_data, agent_id, notes };
+    if(uPhotoBase64) updates.photoBase64 = uPhotoBase64;
+    db.ref('users/' + editingUserUid).update(updates)
+      .then(() => { closeAddUserModal(); alert('তথ্য সফলভাবে পরিবর্তন হয়েছে!'); })
+      .catch(err => { alert('পরিবর্তন সেভ করতে ব্যর্থ: ' + err.message); console.error('editUser error:', err); });
+    return;
+  }
 
   const userRef = db.ref('users').push();
-  userRef.set({ country, doc_status: {}, custom_data, created_at: Date.now() })
+  const newUser = { country, doc_status: {}, custom_data, agent_id, notes, created_at: Date.now() };
+  if(uPhotoBase64) newUser.photoBase64 = uPhotoBase64;
+  userRef.set(newUser)
     .then(() => {
       db.ref('journeys').push({
         user_id: userRef.key, current_stage: 'DOC_COLLECTED', updated_at: Date.now(),
@@ -997,7 +1123,7 @@ function loadUsers(){
     window._usersCache = usersCache;
     renderVisaInfoList();
     populateCountryFilter(usersCache);
-    renderUsers();
+    renderJourneys();
   });
 }
 
@@ -1010,57 +1136,6 @@ function populateCountryFilter(users){
   sel.value = countries.includes(current) ? current : '';
 }
 
-function renderUsers(){
-  const users = usersCache;
-  const searchEl = document.getElementById('uSearch');
-  const countryEl = document.getElementById('uCountryFilter');
-  const stageEl = document.getElementById('uStageFilter');
-  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
-  const countryFilter = countryEl ? countryEl.value : '';
-  const stageFilter = stageEl ? stageEl.value : '';
-  let entries = Object.entries(users);
-  if(countryFilter) entries = entries.filter(([uid, u]) => u.country === countryFilter);
-  if(stageFilter) entries = entries.filter(([uid, u]) => {
-    const j = getJourneyForUser(uid);
-    return j && j.current_stage === stageFilter;
-  });
-  if(q){
-    entries = entries.filter(([uid, u]) => {
-      const hay = (getUserName(u) + ' ' + getUserPhone(u) + ' ' + getUserPassport(u)).toLowerCase();
-      return hay.includes(q);
-    });
-  }
-  const rows = entries.map(([uid, u]) => {
-    const j = getJourneyForUser(uid);
-    const initials = (getUserName(u) || '-').trim().charAt(0).toUpperCase() || '?';
-    const flag = COUNTRY_FLAGS[u.country] || '🌍';
-    return `
-    <div class="accItem">
-      <div class="accHead" onclick="toggleAccItem('u-${uid}')">
-        <div class="avatarCircle">${initials}</div>
-        <div class="accTextWrap">
-          <div class="accName">${getUserName(u)}</div>
-          <div class="accSub">${flag} ${u.country || '-'}</div>
-          <div style="margin-top:6px;">${j ? stagePillHtml(j.current_stage) : '<span class="stagePill">শুরু হয়নি</span>'}</div>
-        </div>
-        <span id="chev-u-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
-      </div>
-      <div class="accBody" id="acc-u-${uid}">
-        <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${getUserPhone(u)}</div>
-        <div class="accRow"><div class="accLabel"><i class="fas fa-earth-asia" style="margin-right:4px;"></i>দেশ</div>${flag} ${u.country || '-'}</div>
-        <div class="accRow"><div class="accLabel"><i class="fas fa-passport" style="margin-right:4px;"></i>পাসপোর্ট</div>${getUserPassport(u)}</div>
-        <div class="accRow"><div class="accLabel"><i class="fas fa-folder-open" style="margin-right:4px;"></i>ডকুমেন্ট স্ট্যাটাস</div>${u.doc_status && Object.keys(u.doc_status).length ? Object.entries(u.doc_status).map(([k,v])=>k+': '+v).join(', ') : '-'}</div>
-        <div class="accActions">
-          <button class="btn small" onclick="viewUserDetails('${uid}')"><i class="fas fa-circle-info"></i> বিস্তারিত</button>
-          <button class="btn small" onclick="shareUserProgress('${uid}')"><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
-          <button class="btn small danger" onclick="deleteUser('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  const emptyMsg = (q || countryFilter || stageFilter) ? 'ফিল্টারে কোনো ইউজার পাওয়া যায়নি' : 'কোনো ইউজার নেই';
-  document.getElementById('userRows').innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
-}
 function toggleAccItem(id){
   const el = document.getElementById('acc-' + id);
   const chev = document.getElementById('chev-' + id);
@@ -1165,6 +1240,247 @@ function deleteUser(uid){
       alert('ডিলিট করতে ব্যর্থ: ' + err.message);
       console.error('deleteUser error:', err);
     });
+}
+
+function saveUserNote(uid){
+  const el = document.getElementById('note-' + uid);
+  if(!el) return;
+  db.ref('users/' + uid + '/notes').set(el.value.trim())
+    .then(() => alert('নোট সেভ হয়েছে।'))
+    .catch(err => { alert('নোট সেভ করতে ব্যর্থ: ' + err.message); console.error('saveUserNote error:', err); });
+}
+
+async function generateContractPdf(uid){
+  const u = (window._usersCache || {})[uid] || {};
+  const j = getJourneyForUser(uid);
+  const name = getUserName(u);
+  const phone = getUserPhone(u);
+  const passport = getUserPassport(u);
+  const country = u.country || '-';
+  const fee = j ? (j.agency_fee || 0) : 0;
+  const today = new Date().toLocaleDateString('bn-BD');
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;padding:50px;background:#fff;font-family:"Hind Siliguri","Noto Sans Bengali",sans-serif;color:#1a2233;line-height:1.9;';
+  wrap.innerHTML = `
+    <div style="text-align:center;margin-bottom:26px;">
+      <div style="font-size:24px;font-weight:800;color:#d4922a;">Talent Overseas</div>
+      <div style="font-size:18px;font-weight:700;margin-top:10px;">সেবা চুক্তিনামা</div>
+      <div style="font-size:13px;color:#8a93a3;">তারিখ: ${today}</div>
+    </div>
+    <p>এই চুক্তিটি Talent Overseas (এজেন্সি) এবং নিম্নস্বাক্ষরকারী গ্রাহকের মধ্যে সম্পাদিত হলো, যার শর্তাবলী নিম্নরূপ:</p>
+    <table style="width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;">
+      <tr><td style="padding:6px 0;color:#8a93a3;width:180px;">গ্রাহকের নাম</td><td style="padding:6px 0;font-weight:700;">${name}</td></tr>
+      <tr><td style="padding:6px 0;color:#8a93a3;">ফোন নম্বর</td><td style="padding:6px 0;">${phone}</td></tr>
+      <tr><td style="padding:6px 0;color:#8a93a3;">পাসপোর্ট নম্বর</td><td style="padding:6px 0;">${passport}</td></tr>
+      <tr><td style="padding:6px 0;color:#8a93a3;">কর্মস্থল দেশ</td><td style="padding:6px 0;">${country}</td></tr>
+      <tr><td style="padding:6px 0;color:#8a93a3;">মোট এজেন্সি ফি</td><td style="padding:6px 0;font-weight:700;">৳${fee}</td></tr>
+    </table>
+    <div style="font-size:15px;font-weight:700;margin-top:10px;">শর্তাবলী:</div>
+    <ol style="font-size:13.5px;padding-left:20px;">
+      <li>এজেন্সি গ্রাহকের পাসপোর্ট, ভিসা, মেডিকেল ও ফ্লাইট সংক্রান্ত সমস্ত প্রক্রিয়া সম্পন্ন করতে সহায়তা করবে।</li>
+      <li>উপরে উল্লেখিত মোট ফি গ্রাহককে সম্মত কিস্তি অনুযায়ী পরিশোধ করতে হবে।</li>
+      <li>ভিসা প্রত্যাখ্যাত হলে অফেরতযোগ্য খরচ বাদে বাকি অর্থ ফেরতযোগ্য থাকবে, প্রযোজ্য নীতি অনুযায়ী।</li>
+      <li>গ্রাহকের দেওয়া সকল তথ্য ও কাগজপত্র সঠিক ও প্রকৃত বলে গণ্য হবে।</li>
+      <li>উভয় পক্ষ এই চুক্তির শর্তাবলীতে সম্মত থেকে স্বাক্ষর করছেন।</li>
+    </ol>
+    <div style="display:flex;justify-content:space-between;margin-top:60px;font-size:13px;">
+      <div style="text-align:center;width:220px;"><div style="border-top:1px solid #444;padding-top:6px;">গ্রাহকের স্বাক্ষর</div></div>
+      <div style="text-align:center;width:220px;"><div style="border-top:1px solid #444;padding-top:6px;">এজেন্সির পক্ষে স্বাক্ষর</div></div>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+  try{
+    const canvas = await html2canvas(wrap, { scale: 2, backgroundColor: '#ffffff' });
+    document.body.removeChild(wrap);
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgWidth = pageWidth - 60;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    pdf.addImage(imgData, 'PNG', 30, 30, imgWidth, imgHeight);
+    pdf.save(`${name}-চুক্তিনামা.pdf`);
+  }catch(err){
+    if(wrap.parentNode) document.body.removeChild(wrap);
+    alert('চুক্তিনামা তৈরি করতে সমস্যা হয়েছে: ' + err.message);
+  }
+}
+
+/* ================= AGENTS =================
+   এজেন্টরা বাইরে থেকে কাস্টমার ধরে আনেন। তাদের জন্য এখান থেকে লগইন আইডি (Firebase Auth)
+   খুলে দেওয়া হয় এবং প্রোফাইল 'admins/{uid}' নোডে role:'agent' সহ সেভ করা হয়, যাতে বর্তমান
+   লগইন সিস্টেম (admins/{uid}/role) স্বয়ংক্রিয়ভাবে তাদের Agent হিসেবে চিনতে পারে।
+*/
+function getSecondaryAuth(){
+  // মূল admin সেশন থেকে সাইন-আউট না করেই নতুন এজেন্ট অ্যাকাউন্ট তৈরি করার জন্য
+  // আলাদা একটা সেকেন্ডারি Firebase app instance ব্যবহার করা হচ্ছে।
+  let secApp = firebase.apps.find(a => a.name === 'Secondary');
+  if(!secApp){ secApp = firebase.initializeApp(firebaseConfig, 'Secondary'); }
+  return secApp.auth();
+}
+
+function loadAgents(){
+  db.ref('admins').on('value', snap => {
+    const all = snap.val() || {};
+    agentsCache = {};
+    Object.entries(all).forEach(([uid, a]) => {
+      if(a && a.role === 'agent') agentsCache[uid] = a;
+    });
+    renderAgents();
+    renderJourneys();
+  });
+}
+
+function renderAgents(){
+  const searchEl = document.getElementById('agentSearch');
+  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  let entries = Object.entries(agentsCache);
+  if(q){
+    entries = entries.filter(([uid, a]) => ((a.name||'') + ' ' + (a.phone||'') + ' ' + (a.email||'')).toLowerCase().includes(q));
+  }
+  const rows = entries.map(([uid, a]) => {
+    const initials = (a.name || '-').trim().charAt(0).toUpperCase() || '?';
+    const active = a.active !== false;
+    const avatarHtml = a.photoBase64
+      ? `<img src="${a.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
+      : `<div class="avatarCircle">${initials}</div>`;
+    return `
+    <div class="accItem">
+      <div class="accHead" onclick="toggleAccItem('ag-${uid}')">
+        ${avatarHtml}
+        <div class="accTextWrap">
+          <div class="accName">${a.name || '-'}</div>
+          <div class="accSub">${a.phone || '-'}</div>
+          <div style="margin-top:6px;"><span class="stagePill" style="${active ? '' : 'opacity:.55;'}">${active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span></div>
+        </div>
+        <span id="chev-ag-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+      </div>
+      <div class="accBody" id="acc-ag-${uid}">
+        <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${a.phone || '-'}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-envelope" style="margin-right:4px;"></i>ইমেইল (লগইন)</div>${a.email || '-'}</div>
+        <div class="accRow"><div class="accLabel"><i class="fas fa-calendar" style="margin-right:4px;"></i>যোগ হয়েছে</div>${a.created_at ? new Date(a.created_at).toLocaleDateString('bn-BD') : '-'}</div>
+        <div class="accActions">
+          <button class="btn small" onclick="toggleAgentActive('${uid}')"><i class="fas fa-power-off"></i> ${active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}</button>
+          <button class="btn small danger" onclick="deleteAgent('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const emptyMsg = q ? 'ফিল্টারে কোনো এজেন্ট পাওয়া যায়নি' : 'কোনো এজেন্ট নেই';
+  const el = document.getElementById('agentRows');
+  if(el) el.innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
+}
+
+function openAddAgentModal(){
+  document.getElementById('agMsg').textContent = '';
+  document.getElementById('addAgentModal').classList.add('active');
+}
+function closeAddAgentModal(){
+  document.getElementById('addAgentModal').classList.remove('active');
+  ['agName','agPhone','agEmail','agPass','agPhoto'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('agPhotoPreviewWrap').style.display = 'none';
+  document.getElementById('agPhotoFaceMsg').textContent = '';
+  agPhotoBase64 = null;
+  agPhotoDescriptor = null;
+}
+
+let agPhotoBase64 = null;
+let agPhotoDescriptor = null;
+
+function handleAgentPhotoSelect(e){
+  const file = e.target.files[0];
+  const faceMsgEl = document.getElementById('agPhotoFaceMsg');
+  const previewWrap = document.getElementById('agPhotoPreviewWrap');
+  agPhotoBase64 = null;
+  agPhotoDescriptor = null;
+  if(!file){ previewWrap.style.display = 'none'; return; }
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = async () => {
+      // ছবি ছোট করে base64 আকারে সেভ করার জন্য canvas ব্যবহার (মার্কেটপ্লেসের প্যাটার্নের মতো)
+      const maxDim = 400;
+      let w = img.width, h = img.height;
+      if(w > maxDim || h > maxDim){
+        if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      agPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('agPhotoPreview').src = agPhotoBase64;
+      previewWrap.style.display = 'block';
+
+      faceMsgEl.style.color = '';
+      faceMsgEl.textContent = 'ছবিতে মুখ শনাক্ত করা হচ্ছে...';
+      try{
+        await loadModels();
+        const detection = await faceapi.detectSingleFace(canvas, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks().withFaceDescriptor();
+        if(detection){
+          agPhotoDescriptor = Array.from(detection.descriptor);
+          faceMsgEl.style.color = 'var(--ok)';
+          faceMsgEl.textContent = 'মুখ শনাক্ত হয়েছে — এই ছবি দিয়েই এজেন্ট ফেস লগইন করতে পারবেন।';
+        } else {
+          faceMsgEl.style.color = 'var(--warn)';
+          faceMsgEl.textContent = 'ছবিতে মুখ শনাক্ত করা যায়নি। ছবি সেভ হবে, তবে এজেন্টকে প্রথমবার লগইনের সময় ক্যামেরায় ফেস এনরোল করতে হবে।';
+        }
+      }catch(err){
+        faceMsgEl.style.color = 'var(--warn)';
+        faceMsgEl.textContent = 'মুখ শনাক্তকরণে সমস্যা হয়েছে। ছবি সেভ হবে তবে ফেস লগইন এনরোল হয়নি।';
+        console.error('agent photo face detect error:', err);
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function addAgent(){
+  const name = document.getElementById('agName').value.trim();
+  const phone = document.getElementById('agPhone').value.trim();
+  const email = document.getElementById('agEmail').value.trim();
+  const pass = document.getElementById('agPass').value;
+  const msg = document.getElementById('agMsg');
+  msg.style.color = '';
+  if(!name || !phone || !email || !pass){ msg.style.color = 'var(--fail)'; msg.textContent = 'সব ঘর পূরণ করুন।'; return; }
+  if(pass.length < 6){ msg.style.color = 'var(--fail)'; msg.textContent = 'পাসওয়ার্ড কমপক্ষে ৬ ডিজিট হতে হবে।'; return; }
+
+  msg.style.color = '';
+  msg.textContent = 'তৈরি হচ্ছে...';
+  try{
+    const secAuth = getSecondaryAuth();
+    const cred = await secAuth.createUserWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+    const agentData = { role: 'agent', name, phone, email, active: true, created_at: Date.now() };
+    if(agPhotoBase64) agentData.photoBase64 = agPhotoBase64;
+    if(agPhotoDescriptor) agentData.faceDescriptor = agPhotoDescriptor;
+    await db.ref('admins/' + uid).set(agentData);
+    await secAuth.signOut();
+    msg.style.color = 'var(--ok)';
+    msg.textContent = 'এজেন্ট সফলভাবে যোগ হয়েছে!';
+    setTimeout(closeAddAgentModal, 800);
+  }catch(err){
+    msg.style.color = 'var(--fail)';
+    msg.textContent = 'এজেন্ট যোগ করতে ব্যর্থ: ' + err.message;
+    console.error('addAgent error:', err);
+  }
+}
+
+function toggleAgentActive(uid){
+  const a = agentsCache[uid] || {};
+  const active = a.active !== false;
+  db.ref('admins/' + uid + '/active').set(!active)
+    .catch(err => { alert('আপডেট করতে ব্যর্থ: ' + err.message); console.error('toggleAgentActive error:', err); });
+}
+
+function deleteAgent(uid){
+  if(!confirm('নিশ্চিত মুছবেন? (মনে রাখবেন, শুধু প্রোফাইল মুছবে — লগইন অ্যাকাউন্ট সম্পূর্ণ মুছতে হলে Firebase Console থেকে মুছতে হবে।)')) return;
+  db.ref('admins/' + uid).remove()
+    .catch(err => { alert('ডিলিট করতে ব্যর্থ: ' + err.message); console.error('deleteAgent error:', err); });
 }
 
 /* ================= COUNTRIES ================= */
@@ -1368,6 +1684,7 @@ function deleteCountry(id, name){
 let visaTypes = {};
 let journeysCache = {};
 let usersCache = {};
+let agentsCache = {};
 
 function loadVisaTypes(){
   db.ref('visa_types').on('value', snap => {
@@ -1441,7 +1758,10 @@ function renderVisaInfoList(){
           <span>চলমান প্রসেসিং <br><b style="color:var(--gold);">${active}</b></span>
           <span>রওনা সম্পন্ন <br><b style="color:var(--ok);">${departed}</b></span>
         </div>
-        <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-paper-plane"></i> শেয়ার করুন</button>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='showVisaCharges(${JSON.stringify(country)}, ${JSON.stringify(groups[country])})'><i class="fas fa-tag"></i> ভিসার মূল্য</button>
+          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1497,11 +1817,191 @@ function loadCustomFields(){
   });
 }
 
+let editingUserUid = null;
+let uPhotoBase64 = null;
+
+function populateAgentRefSelect(selectedAgentId){
+  const sel = document.getElementById('uAgentRef');
+  if(!sel) return;
+  const opts = Object.entries(agentsCache).map(([uid, a]) =>
+    `<option value="${uid}" ${uid === selectedAgentId ? 'selected' : ''}>${a.name || '-'}</option>`).join('');
+  sel.innerHTML = '<option value="">এজেন্ট রেফারেন্স (সরাসরি/নেই)</option>' + opts;
+}
+
 function openAddUserModal(){
+  editingUserUid = null;
+  uPhotoBase64 = null;
+  document.getElementById('uModalTitle').textContent = 'নতুন ইউজার যোগ করুন';
+  document.getElementById('uSubmitBtn').textContent = 'যোগ করুন';
+  document.getElementById('uCountry').value = '';
+  document.getElementById('uNotes').value = '';
+  document.getElementById('uPhoto').value = '';
+  document.getElementById('uPhotoPreviewWrap').style.display = 'none';
+  populateAgentRefSelect('');
+  renderCustomFieldInputs();
   document.getElementById('addUserModal').classList.add('active');
 }
+
+function openEditUserModal(uid){
+  editingUserUid = uid;
+  const u = (window._usersCache || {})[uid] || {};
+  uPhotoBase64 = u.photoBase64 || null;
+  document.getElementById('uModalTitle').textContent = 'ইউজারের তথ্য এডিট করুন';
+  document.getElementById('uSubmitBtn').textContent = 'পরিবর্তন সংরক্ষণ করুন';
+  document.getElementById('uCountry').value = u.country || '';
+  document.getElementById('uNotes').value = u.notes || '';
+  document.getElementById('uPhoto').value = '';
+  if(uPhotoBase64){
+    document.getElementById('uPhotoPreview').src = uPhotoBase64;
+    document.getElementById('uPhotoPreviewWrap').style.display = 'block';
+  } else {
+    document.getElementById('uPhotoPreviewWrap').style.display = 'none';
+  }
+  populateAgentRefSelect(u.agent_id || '');
+  renderCustomFieldInputs(u.custom_data || {});
+  document.getElementById('addUserModal').classList.add('active');
+}
+
 function closeAddUserModal(){
   document.getElementById('addUserModal').classList.remove('active');
+  editingUserUid = null;
+  uPhotoBase64 = null;
+}
+
+function handleUserPhotoSelect(e){
+  const file = e.target.files[0];
+  const previewWrap = document.getElementById('uPhotoPreviewWrap');
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 400;
+      let w = img.width, h = img.height;
+      if(w > maxDim || h > maxDim){
+        if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      uPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('uPhotoPreview').src = uPhotoBase64;
+      previewWrap.style.display = 'block';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ================= MRZ PASSPORT SCANNER ================= */
+function openMrzScanModal(){
+  document.getElementById('mrzScanModal').classList.add('active');
+  const msg = document.getElementById('mrzMsg');
+  msg.style.color = '';
+  msg.textContent = '';
+  const video = document.getElementById('mrzVideo');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 } })
+    .then(stream => { video.srcObject = stream; })
+    .catch(() => { msg.style.color = 'var(--fail)'; msg.textContent = 'ক্যামেরা এক্সেস দিতে হবে।'; });
+}
+function closeMrzScanModal(){
+  const video = document.getElementById('mrzVideo');
+  if(video && video.srcObject){ video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+  document.getElementById('mrzScanModal').classList.remove('active');
+}
+
+async function captureMrz(){
+  const video = document.getElementById('mrzVideo');
+  const canvas = document.getElementById('mrzCanvas');
+  const msg = document.getElementById('mrzMsg');
+  if(!video.videoWidth){ msg.style.color = 'var(--fail)'; msg.textContent = 'ক্যামেরা এখনো প্রস্তুত হয়নি, একটু অপেক্ষা করুন।'; return; }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  msg.style.color = '';
+  msg.textContent = 'স্ক্যান করা হচ্ছে, একটু অপেক্ষা করুন...';
+  try{
+    if(!window.Tesseract) throw new Error('OCR লাইব্রেরি লোড হয়নি, ইন্টারনেট সংযোগ চেক করুন।');
+    const { data } = await Tesseract.recognize(canvas, 'eng', {
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'
+    });
+    const parsed = parseMrzText(data.text || '');
+    if(!parsed){
+      msg.style.color = 'var(--fail)';
+      msg.textContent = 'MRZ পড়া যায়নি। আরেকটু কাছ থেকে, ভালো আলোতে ও সোজা করে চেষ্টা করুন।';
+      return;
+    }
+    applyMrzToForm(parsed);
+    msg.style.color = 'var(--ok)';
+    msg.textContent = 'স্ক্যান সফল হয়েছে! তথ্য ফর্মে বসানো হয়েছে, একবার চেক করে নিন।';
+    setTimeout(closeMrzScanModal, 1000);
+  }catch(e){
+    msg.style.color = 'var(--fail)';
+    msg.textContent = 'সমস্যা হয়েছে: ' + e.message;
+    console.error('MRZ scan error:', e);
+  }
+}
+
+function cleanMrzLine(line){
+  return line.toUpperCase().replace(/[^A-Z0-9<]/g, '');
+}
+
+function parseMrzText(rawText){
+  const lines = rawText.split('\n').map(cleanMrzLine).filter(l => l.length >= 30);
+  if(lines.length < 2) return null;
+  const candidates = lines.slice().sort((a,b) => b.length - a.length).slice(0,2);
+  let line1 = candidates.find(l => l.startsWith('P')) || candidates[0];
+  let line2 = candidates.find(l => l !== line1) || candidates[1];
+  line1 = (line1 + '<'.repeat(44)).slice(0,44);
+  line2 = (line2 + '<'.repeat(44)).slice(0,44);
+
+  const namesPart = line1.slice(5);
+  const [surnameRaw, givenRaw = ''] = namesPart.split('<<');
+  const surname = (surnameRaw || '').replace(/</g, ' ').trim();
+  const given = givenRaw.replace(/</g, ' ').trim();
+  const fullName = [given, surname].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+
+  const passportNo = line2.slice(0,9).replace(/</g, '').trim();
+  const nationality = line2.slice(10,13).replace(/</g, '').trim();
+  const dobRaw = line2.slice(13,19);
+  const sexRaw = line2.slice(20,21);
+  const expRaw = line2.slice(21,27);
+
+  function toDate(yymmdd){
+    if(!/^\d{6}$/.test(yymmdd)) return '';
+    const yy = parseInt(yymmdd.slice(0,2), 10);
+    const mm = yymmdd.slice(2,4);
+    const dd = yymmdd.slice(4,6);
+    const currentYY = new Date().getFullYear() % 100;
+    const century = (yy > currentYY + 10) ? 1900 : 2000;
+    return `${century + yy}-${mm}-${dd}`;
+  }
+
+  const dob = toDate(dobRaw);
+  const expiry = toDate(expRaw);
+  const sex = sexRaw === 'F' ? 'নারী' : (sexRaw === 'M' ? 'পুরুষ' : '');
+
+  if(!passportNo && !fullName) return null;
+  return { fullName, passportNo, nationality, dob, sex, expiry };
+}
+
+function applyMrzToForm(parsed){
+  const setByKeyword = (keywords, value) => {
+    if(!value) return;
+    Object.entries(customFields).forEach(([fid, f]) => {
+      if(f && f.label && keywords.some(k => f.label.toLowerCase().includes(k))){
+        const el = document.getElementById('cf-' + fid);
+        if(el) el.value = value;
+      }
+    });
+  };
+  setByKeyword(['নাম','name'], parsed.fullName);
+  setByKeyword(['পাসপোর্ট','passport'], parsed.passportNo);
+  setByKeyword(['জন্ম','dob','birth'], parsed.dob);
+  setByKeyword(['মেয়াদ','expiry','expire'], parsed.expiry);
+  setByKeyword(['জাতীয়তা','nationality'], parsed.nationality);
+  setByKeyword(['লিঙ্গ','gender','sex'], parsed.sex);
 }
 function toggleCfOptions(){
   const type = document.getElementById('cfType').value;
@@ -1564,21 +2064,23 @@ function deleteCustomField(fid){
 
 const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার', date:'ডেট', dropdown:'ড্রপডাউন', description:'ডিসক্রিপশন', visa:'ভিসা ব্যবস্থাপনা' };
 
-function renderCustomFieldInputs(){
+function renderCustomFieldInputs(prefill){
+  prefill = prefill || {};
   const wrap = document.getElementById('customFieldsWrap');
   const selectedCountry = (document.getElementById('uCountry') || {}).value || '';
   const entries = Object.entries(customFields).filter(([fid, f]) => !f.country || f.country === selectedCountry);
   if(!entries.length){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="formGrid">' +
     entries.map(([fid, f]) => {
+      const val = prefill[fid] || '';
       if(f.type === 'dropdown'){
-        const opts = (f.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
+        const opts = (f.options || []).map(o => `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('');
         return `<select id="cf-${fid}"><option value="">${f.label}</option>${opts}</select>`;
       }
       if(f.type === 'description'){
-        return `<textarea id="cf-${fid}" rows="2" placeholder="${f.label}" style="width:100%;"></textarea>`;
+        return `<textarea id="cf-${fid}" rows="2" placeholder="${f.label}" style="width:100%;">${val}</textarea>`;
       }
-      return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}">`;
+      return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}" value="${val}">`;
     }).join('') + '</div>';
 }
 
