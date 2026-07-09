@@ -522,7 +522,10 @@
       <button class="close-x" onclick="closeAddUserModal()"><i class="fas fa-xmark"></i></button>
       <h3 style="margin-top:0;" id="uModalTitle">নতুন ইউজার যোগ করুন</h3>
 
-      <button type="button" class="btn small gold" style="width:100%;margin-bottom:12px;" onclick="openMrzScanModal()"><i class="fas fa-camera"></i> পাসপোর্ট স্ক্যান করুন (MRZ)</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button type="button" class="btn small gold" style="flex:1;" onclick="openScanModal('passport')"><i class="fas fa-camera"></i> পাসপোর্ট স্ক্যান (MRZ)</button>
+        <button type="button" class="btn small gold" style="flex:1;" onclick="openScanModal('nid')"><i class="fas fa-camera"></i> এনআইডি স্ক্যান করুন</button>
+      </div>
 
       <div style="text-align:center;margin-bottom:10px;">
         <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
@@ -549,16 +552,19 @@
     </div>
   </div>
 
-  <!-- MRZ PASSPORT SCAN MODAL -->
+  <!-- DOCUMENT SCAN MODAL (passport MRZ or NID) -->
   <div class="modalOverlay" id="mrzScanModal">
     <div class="modalBox">
-      <button class="close-x" onclick="closeMrzScanModal()"><i class="fas fa-xmark"></i></button>
-      <h3 style="margin-top:0;">পাসপোর্ট স্ক্যান করুন (MRZ)</h3>
-      <p class="hint" style="margin-top:0;">পাসপোর্টের নিচের দুই লাইনের কোড (MRZ) ফ্রেমের ভেতর স্পষ্ট ও সোজাভাবে রাখুন, তারপর ক্যাপচার করুন।</p>
-      <video id="mrzVideo" autoplay muted playsinline style="width:100%;border-radius:8px;background:#000;"></video>
+      <button class="close-x" onclick="closeScanModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;" id="scanModalTitle">পাসপোর্ট স্ক্যান করুন (MRZ)</h3>
+      <p class="hint" style="margin-top:0;" id="scanModalHint">পাসপোর্টের নিচের দুই লাইনের কোড (MRZ) নিচের বক্সের ভেতর স্পষ্ট ও সোজাভাবে রাখুন, তারপর ক্যাপচার করুন।</p>
+      <div style="position:relative;">
+        <video id="mrzVideo" autoplay muted playsinline style="width:100%;border-radius:8px;background:#000;"></video>
+        <div id="scanGuideBox" style="position:absolute;left:5%;right:5%;bottom:8%;height:22%;border:2px dashed #e0a530;border-radius:6px;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.35);"></div>
+      </div>
       <canvas id="mrzCanvas" style="display:none;"></canvas>
       <div id="mrzMsg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>
-      <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" onclick="captureMrz()"><i class="fas fa-camera"></i> ক্যাপচার ও স্ক্যান করুন</button></div>
+      <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" onclick="captureScan()"><i class="fas fa-camera"></i> ক্যাপচার ও স্ক্যান করুন</button></div>
     </div>
   </div>
 
@@ -1894,57 +1900,171 @@ function handleUserPhotoSelect(e){
   reader.readAsDataURL(file);
 }
 
-/* ================= MRZ PASSPORT SCANNER ================= */
-function openMrzScanModal(){
+/* ================= DOCUMENT SCANNER (Passport MRZ + NID) ================= */
+let currentScanMode = 'passport';
+
+function openScanModal(mode){
+  currentScanMode = mode === 'nid' ? 'nid' : 'passport';
   document.getElementById('mrzScanModal').classList.add('active');
   const msg = document.getElementById('mrzMsg');
   msg.style.color = '';
   msg.textContent = '';
+  const guide = document.getElementById('scanGuideBox');
+  if(currentScanMode === 'nid'){
+    document.getElementById('scanModalTitle').textContent = 'এনআইডি স্ক্যান করুন';
+    document.getElementById('scanModalHint').textContent = 'এনআইডি কার্ডের পুরো অংশ নিচের বক্সের ভেতর স্পষ্ট, সোজা ও ভালো আলোতে রাখুন, তারপর ক্যাপচার করুন। কার্ডে যেন কোনো প্রতিফলন (glare) না থাকে।';
+    guide.style.left = '4%'; guide.style.right = '4%'; guide.style.top = '18%'; guide.style.bottom = '18%'; guide.style.height = 'auto';
+  } else {
+    document.getElementById('scanModalTitle').textContent = 'পাসপোর্ট স্ক্যান করুন (MRZ)';
+    document.getElementById('scanModalHint').textContent = 'পাসপোর্টের নিচের দুই লাইনের কোড (MRZ) নিচের বক্সের ভেতর স্পষ্ট ও সোজাভাবে রাখুন, তারপর ক্যাপচার করুন।';
+    guide.style.left = '5%'; guide.style.right = '5%'; guide.style.top = ''; guide.style.bottom = '8%'; guide.style.height = '22%';
+  }
   const video = document.getElementById('mrzVideo');
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 } })
     .then(stream => { video.srcObject = stream; })
     .catch(() => { msg.style.color = 'var(--fail)'; msg.textContent = 'ক্যামেরা এক্সেস দিতে হবে।'; });
 }
-function closeMrzScanModal(){
+function closeScanModal(){
   const video = document.getElementById('mrzVideo');
   if(video && video.srcObject){ video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
   document.getElementById('mrzScanModal').classList.remove('active');
 }
 
-async function captureMrz(){
+// Convert canvas to grayscale; either hard-binarize (best for the crisp MRZ strip)
+// or apply a softer contrast stretch (best for NID cards with photos/colour patterns).
+function enhanceCanvas(canvas, { binarize = false, contrast = 1.35 } = {}){
+  const ctx = canvas.getContext('2d');
+  const { width: w, height: h } = canvas;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const d = imgData.data;
+  if(binarize){
+    const gray = new Float32Array(w * h);
+    let sum = 0;
+    for(let i = 0, p = 0; i < d.length; i += 4, p++){
+      const g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      gray[p] = g; sum += g;
+    }
+    const mean = sum / gray.length;
+    const threshold = mean * 0.88;
+    for(let i = 0, p = 0; i < d.length; i += 4, p++){
+      const v = gray[p] > threshold ? 255 : 0;
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+  } else {
+    for(let i = 0; i < d.length; i += 4){
+      let g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      g = (g - 128) * contrast + 128;
+      g = Math.max(0, Math.min(255, g));
+      d[i] = d[i+1] = d[i+2] = g;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
+// Crop a region (fractions 0-1 of the source) into a new, upscaled canvas — improves
+// OCR accuracy a lot versus feeding Tesseract the whole, mostly-irrelevant frame.
+function cropCanvas(srcCanvas, { xFrac, yFrac, wFrac, hFrac, scale = 1 }){
+  const sx = Math.round(srcCanvas.width * xFrac);
+  const sy = Math.round(srcCanvas.height * yFrac);
+  const sw = Math.round(srcCanvas.width * wFrac);
+  const sh = Math.round(srcCanvas.height * hFrac);
+  const out = document.createElement('canvas');
+  out.width = Math.round(sw * scale);
+  out.height = Math.round(sh * scale);
+  const ctx = out.getContext('2d');
+  ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, out.width, out.height);
+  return out;
+}
+
+async function captureScan(){
   const video = document.getElementById('mrzVideo');
-  const canvas = document.getElementById('mrzCanvas');
+  const fullCanvas = document.getElementById('mrzCanvas');
   const msg = document.getElementById('mrzMsg');
   if(!video.videoWidth){ msg.style.color = 'var(--fail)'; msg.textContent = 'ক্যামেরা এখনো প্রস্তুত হয়নি, একটু অপেক্ষা করুন।'; return; }
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
+  fullCanvas.width = video.videoWidth;
+  fullCanvas.height = video.videoHeight;
+  fullCanvas.getContext('2d').drawImage(video, 0, 0);
   msg.style.color = '';
   msg.textContent = 'স্ক্যান করা হচ্ছে, একটু অপেক্ষা করুন...';
   try{
     if(!window.Tesseract) throw new Error('OCR লাইব্রেরি লোড হয়নি, ইন্টারনেট সংযোগ চেক করুন।');
-    const { data } = await Tesseract.recognize(canvas, 'eng', {
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'
-    });
-    const parsed = parseMrzText(data.text || '');
-    if(!parsed){
-      msg.style.color = 'var(--fail)';
-      msg.textContent = 'MRZ পড়া যায়নি। আরেকটু কাছ থেকে, ভালো আলোতে ও সোজা করে চেষ্টা করুন।';
-      return;
+
+    if(currentScanMode === 'passport'){
+      // Crop to the guide-box strip (bottom ~22%) and upscale 2x — the MRZ strip is
+      // small in the full frame, so this is what actually fixed most misreads.
+      const cropped = cropCanvas(fullCanvas, { xFrac: 0.05, yFrac: 0.70, wFrac: 0.90, hFrac: 0.22, scale: 2 });
+      enhanceCanvas(cropped, { binarize: true });
+      const { data } = await Tesseract.recognize(cropped, 'eng', {
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+        tessedit_pageseg_mode: '6'
+      });
+      const parsed = parseMrzText(data.text || '');
+      if(!parsed){
+        msg.style.color = 'var(--fail)';
+        msg.textContent = 'MRZ পড়া যায়নি। বক্সের ভেতর MRZ ঠিকভাবে রেখে, আরেকটু কাছ থেকে ও ভালো আলোতে চেষ্টা করুন।';
+        return;
+      }
+      applyScanToForm(parsed);
+      if(parsed.uncertainFields.length){
+        msg.style.color = 'var(--warn)';
+        msg.textContent = 'তথ্য বসানো হয়েছে, কিন্তু ' + parsed.uncertainFields.join(', ') + ' এর নির্ভুলতা নিশ্চিত হয়নি — একবার মিলিয়ে দেখুন।';
+      } else {
+        msg.style.color = 'var(--ok)';
+        msg.textContent = 'স্ক্যান সফল হয়েছে! তথ্য ফর্মে বসানো হয়েছে, একবার চেক করে নিন।';
+        setTimeout(closeScanModal, 1200);
+      }
+    } else {
+      // NID: capture the guide-box area (most of the frame) at full resolution and
+      // use a softer contrast enhancement (hard binarizing wrecks NID card backgrounds).
+      const cropped = cropCanvas(fullCanvas, { xFrac: 0.04, yFrac: 0.18, wFrac: 0.92, hFrac: 0.64, scale: 1.5 });
+      enhanceCanvas(cropped, { binarize: false, contrast: 1.45 });
+      const { data } = await Tesseract.recognize(cropped, 'eng+ben', {
+        tessedit_pageseg_mode: '6'
+      });
+      const parsed = parseNidText(data.text || '');
+      if(!parsed || (!parsed.nidNo && !parsed.fullName)){
+        msg.style.color = 'var(--fail)';
+        msg.textContent = 'এনআইডি পড়া যায়নি। কার্ডটা বক্সের ভেতর সোজা করে, প্রতিফলন (glare) এড়িয়ে আরেকটু কাছ থেকে চেষ্টা করুন।';
+        return;
+      }
+      applyScanToForm(parsed);
+      msg.style.color = parsed.uncertainFields.length ? 'var(--warn)' : 'var(--ok)';
+      msg.textContent = parsed.uncertainFields.length
+        ? 'তথ্য বসানো হয়েছে, কিন্তু কিছু তথ্য (' + parsed.uncertainFields.join(', ') + ') নিশ্চিত নয় — মিলিয়ে দেখুন। এনআইডি স্ক্যান পাসপোর্ট MRZ-এর মতো নির্ভুল না-ও হতে পারে, ম্যানুয়ালি একবার চেক করে নেওয়া ভালো।'
+        : 'স্ক্যান হয়েছে। তথ্য ফর্মে বসানো হয়েছে, একবার চেক করে নিন (এনআইডি স্ক্যান পাসপোর্টের মতো নির্ভুল না, তাই যাচাই জরুরি)।';
     }
-    applyMrzToForm(parsed);
-    msg.style.color = 'var(--ok)';
-    msg.textContent = 'স্ক্যান সফল হয়েছে! তথ্য ফর্মে বসানো হয়েছে, একবার চেক করে নিন।';
-    setTimeout(closeMrzScanModal, 1000);
   }catch(e){
     msg.style.color = 'var(--fail)';
     msg.textContent = 'সমস্যা হয়েছে: ' + e.message;
-    console.error('MRZ scan error:', e);
+    console.error('Scan error:', e);
   }
 }
 
 function cleanMrzLine(line){
   return line.toUpperCase().replace(/[^A-Z0-9<]/g, '');
+}
+
+// Fix the handful of characters Tesseract most commonly confuses inside strictly-numeric
+// MRZ fields (dates, check digits) — narrowing the whitelist to A-Z0-9< already helps,
+// this pushes accuracy further without needing a second OCR pass.
+function digitsOnlyFix(str){
+  const map = { O:'0', Q:'0', D:'0', I:'1', L:'1', Z:'2', S:'5', B:'8', G:'6', A:'4' };
+  return str.split('').map(c => map[c] !== undefined ? map[c] : c).join('');
+}
+
+// Standard ICAO 7-3-1 weighted check digit used throughout MRZ lines.
+function mrzCheckDigit(str){
+  const weights = [7, 3, 1];
+  const val = c => {
+    if(c === '<') return 0;
+    if(/[0-9]/.test(c)) return parseInt(c, 10);
+    if(/[A-Z]/.test(c)) return c.charCodeAt(0) - 55; // A=10..Z=35
+    return 0;
+  };
+  let sum = 0;
+  for(let i = 0; i < str.length; i++) sum += val(str[i]) * weights[i % 3];
+  return String(sum % 10);
 }
 
 function parseMrzText(rawText){
@@ -1963,10 +2083,13 @@ function parseMrzText(rawText){
   const fullName = [given, surname].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
 
   const passportNo = line2.slice(0,9).replace(/</g, '').trim();
+  const passportNoCheck = line2.slice(9,10);
   const nationality = line2.slice(10,13).replace(/</g, '').trim();
-  const dobRaw = line2.slice(13,19);
+  const dobRaw = digitsOnlyFix(line2.slice(13,19));
+  const dobCheck = line2.slice(19,20);
   const sexRaw = line2.slice(20,21);
-  const expRaw = line2.slice(21,27);
+  const expRaw = digitsOnlyFix(line2.slice(21,27));
+  const expCheck = line2.slice(27,28);
 
   function toDate(yymmdd){
     if(!/^\d{6}$/.test(yymmdd)) return '';
@@ -1983,10 +2106,67 @@ function parseMrzText(rawText){
   const sex = sexRaw === 'F' ? 'নারী' : (sexRaw === 'M' ? 'পুরুষ' : '');
 
   if(!passportNo && !fullName) return null;
-  return { fullName, passportNo, nationality, dob, sex, expiry };
+
+  // Verify what we can against the MRZ's own check digits, so the user is only warned
+  // when something is actually likely wrong, instead of silently trusting bad OCR.
+  const uncertainFields = [];
+  if(/^\d{6}$/.test(dobRaw) && /^\d$/.test(dobCheck) && mrzCheckDigit(dobRaw) !== dobCheck) uncertainFields.push('জন্ম তারিখ');
+  if(/^\d{6}$/.test(expRaw) && /^\d$/.test(expCheck) && mrzCheckDigit(expRaw) !== expCheck) uncertainFields.push('মেয়াদ উত্তীর্ণের তারিখ');
+  if(passportNo && /^\d$/.test(passportNoCheck) && mrzCheckDigit(line2.slice(0,9)) !== passportNoCheck) uncertainFields.push('পাসপোর্ট নম্বর');
+
+  return { type: 'passport', fullName, passportNo, nationality, dob, sex, expiry, uncertainFields };
 }
 
-function applyMrzToForm(parsed){
+// NID cards have no fixed-width machine-readable zone, so this is heuristic regex
+// extraction over free OCR text rather than a strict format parse like MRZ.
+function parseNidText(rawText){
+  const text = (rawText || '').replace(/\r/g, '');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const uncertainFields = [];
+
+  // NID number: Bangladesh NIDs are 10, 13 or 17 digits. Prefer a digit run near an
+  // "NID/ID NO" label; otherwise take the longest digit run matching a known length.
+  let nidNo = '';
+  const idLabelLine = lines.find(l => /\b(NID|ID\s*NO|N\.I\.D)\b/i.test(l));
+  const digitRuns = (idLabelLine ? [idLabelLine, ...lines] : lines)
+    .join(' ').match(/\d[\d\s]{8,}\d/g) || [];
+  const cleanedRuns = digitRuns.map(r => r.replace(/\s+/g, '')).filter(r => r.length >= 9);
+  const preferredLen = cleanedRuns.find(r => [10,13,17].includes(r.length));
+  nidNo = preferredLen || (cleanedRuns.sort((a,b) => b.length - a.length)[0] || '');
+  if(nidNo && ![10,13,17].includes(nidNo.length)) uncertainFields.push('এনআইডি নম্বর');
+
+  // Date of birth: printed in English on Bangladeshi NIDs, various separators/formats.
+  let dob = '';
+  const dobLine = lines.find(l => /date of birth|d\.?\s*o\.?\s*b/i.test(l)) || text;
+  const dateMatch = dobLine.match(/(\d{1,2})[\s\/\-.]([A-Za-z]{3,9}|\d{1,2})[\s\/\-.](\d{4})/);
+  if(dateMatch){
+    const [, dd, monRaw, yyyy] = dateMatch;
+    const months = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+    const mm = /^\d+$/.test(monRaw) ? monRaw.padStart(2,'0') : (months[monRaw.slice(0,3).toLowerCase()] || '');
+    if(mm) dob = `${yyyy}-${mm}-${dd.padStart(2,'0')}`;
+  }
+  if(!dob) uncertainFields.push('জন্ম তারিখ');
+
+  // Name: look for an explicit "Name" label first; fall back to the first plausible
+  // alphabetic line that isn't itself a label (Father/Mother/Address/etc.).
+  let fullName = '';
+  const nameLineIdx = lines.findIndex(l => /^name\s*[:\-]?/i.test(l) || /^নাম\s*[:\-]?/.test(l));
+  if(nameLineIdx !== -1){
+    const sameLine = lines[nameLineIdx].replace(/^(name|নাম)\s*[:\-]?/i, '').trim();
+    fullName = sameLine || (lines[nameLineIdx + 1] || '').trim();
+  }
+  if(!fullName){
+    const skipLabels = /father|mother|address|date of birth|nid|government|republic|bangladesh|blood/i;
+    fullName = lines.find(l => /^[A-Za-z\u0980-\u09FF\s.]{3,}$/.test(l) && !skipLabels.test(l)) || '';
+  }
+  fullName = fullName.replace(/\s+/g, ' ').trim();
+  if(!fullName) uncertainFields.push('নাম');
+
+  if(!nidNo && !fullName) return null;
+  return { type: 'nid', fullName, nidNo, dob, uncertainFields };
+}
+
+function applyScanToForm(parsed){
   const setByKeyword = (keywords, value) => {
     if(!value) return;
     Object.entries(customFields).forEach(([fid, f]) => {
@@ -1997,11 +2177,15 @@ function applyMrzToForm(parsed){
     });
   };
   setByKeyword(['নাম','name'], parsed.fullName);
-  setByKeyword(['পাসপোর্ট','passport'], parsed.passportNo);
   setByKeyword(['জন্ম','dob','birth'], parsed.dob);
-  setByKeyword(['মেয়াদ','expiry','expire'], parsed.expiry);
-  setByKeyword(['জাতীয়তা','nationality'], parsed.nationality);
-  setByKeyword(['লিঙ্গ','gender','sex'], parsed.sex);
+  if(parsed.type === 'passport'){
+    setByKeyword(['পাসপোর্ট','passport'], parsed.passportNo);
+    setByKeyword(['মেয়াদ','expiry','expire'], parsed.expiry);
+    setByKeyword(['জাতীয়তা','nationality'], parsed.nationality);
+    setByKeyword(['লিঙ্গ','gender','sex'], parsed.sex);
+  } else {
+    setByKeyword(['nid','এনআইডি','জাতীয়'], parsed.nidNo);
+  }
 }
 function toggleCfOptions(){
   const type = document.getElementById('cfType').value;
