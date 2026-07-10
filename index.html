@@ -9,6 +9,11 @@
   integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
   crossorigin="anonymous" referrerpolicy="no-referrer">
 
+<!-- Real Bengali font (regular+bold) so bold text doesn't get browser faux-bold, which mangles conjuncts/matras -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -29,7 +34,7 @@
     --gold-grad:linear-gradient(135deg,#f6d998,#e0a530 45%,#a8710f);
   }
   *{box-sizing:border-box;}
-  body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#1c2733;}
+  body{margin:0;font-family:'Hind Siliguri','Noto Sans Bengali','Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:#1c2733;}
   #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 15% 15%,rgba(37,99,235,.35),transparent 45%),linear-gradient(135deg,var(--navy),var(--navy2));}
   .loginBox{background:#fff;padding:36px;border-radius:14px;width:340px;box-shadow:0 24px 60px rgba(20,24,32,.4);}
   .loginBox h1{font-size:18px;margin:0 0 4px;color:var(--navy);}
@@ -82,7 +87,13 @@
     .card td[data-label]:not([data-label=""])::before{content:attr(data-label);display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
     .main{overflow-x:hidden;}
   }
-  select,input,textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+  select,input,textarea{padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;}
+  .hlWrap{position:relative;}
+  .hlWrap textarea{position:relative;z-index:1;background:transparent;color:transparent;caret-color:#1c2733;line-height:1.4;letter-spacing:normal;}
+  .hlWrap.composing textarea{color:#1c2733;}
+  .hlWrap.composing .hlBackdrop{opacity:0;}
+  .hlBackdrop{position:absolute;top:0;left:0;right:0;bottom:0;z-index:0;margin:0;padding:7px 9px;border:1px solid transparent;border-radius:6px;font-family:inherit;font-size:13px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;overflow:hidden;pointer-events:none;color:#1c2733;background:#fff;box-sizing:border-box;}
+  .hlBackdrop .hlKey{color:var(--gold);}
   .stagePill{padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:700;color:#fff;background:var(--navy2);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
   .stagePill i{font-size:9px;}
   .stagePill.st-doc{background:rgba(91,107,122,.14);color:#5b6b7a;}
@@ -122,11 +133,21 @@
   .visaCard:last-child{margin-bottom:0;}
   .visaCard .vc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;}
   .visaCard .vc-title{font-weight:800;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:7px;}
-  .vc-price{background:var(--gold-grad);color:#3a2a05;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;margin-left:auto;}
+  .vc-price{background:none;color:var(--navy);font-size:12px;font-weight:800;padding:0;margin-left:auto;display:inline-flex;align-items:center;gap:5px;}
+  .vc-price i{color:var(--gold-dark, #b8860b);}
   .visaChip{background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11.5px;font-weight:600;color:#3b4552;}
-  .visaStatRow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
-  .visaStatRow .vsr-stats{display:flex;gap:18px;}
-  .visaStatRow b{color:var(--navy);font-size:14px;}
+  .visaChip .chipKey{color:#a8710f;font-weight:800;}
+  .visaDetailLines{display:flex;flex-direction:column;gap:5px;margin-top:2px;}
+  .visaDetailLine{font-size:13px;font-weight:600;color:#3b4552;line-height:1.4;}
+  .visaDetailLine .chipKey{color:#a8710f;font-weight:800;}
+  .visaStatRow{display:flex;flex-wrap:nowrap;justify-content:flex-start;align-items:center;gap:14px;font-size:11px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+  .visaStatRow .vsr-stats{display:flex;gap:14px;flex-shrink:1;min-width:0;}
+  .visaStatRow .vsr-stats span{white-space:nowrap;}
+  .visaStatRow b{color:var(--navy);font-size:13px;}
+  .visaStatRow .vsr-actions{display:flex;gap:14px;flex-shrink:0;}
+  .visaStatRow .vsr-actions .icon-btn{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:4px;border:none;background:none;color:var(--navy2);font-size:14px;cursor:pointer;flex-shrink:0;padding:2px;}
+  .visaStatRow .vsr-actions .icon-btn span{font-size:10px;font-weight:600;white-space:nowrap;}
+  .visaStatRow .vsr-actions .icon-btn.gold{color:var(--gold);}
   /* Detail modal list */
   .detailRow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .detailRow:last-child{border-bottom:none;}
@@ -165,7 +186,11 @@
   .modalBox{position:relative;}
   .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
   .fieldRow .fr-meta{color:#8896ab;font-size:11px;}
-  .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12px;font-weight:700;}
+  .fieldRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:13px;padding:4px 6px;}
+  .visaSubRow{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px dashed var(--border);font-size:12px;}
+  .visaSubRow:last-child{border-bottom:none;}
+  .visaSubRow .del{color:var(--fail);cursor:pointer;background:none;border:none;font-size:12.5px;padding:3px 6px;}
+  .visaSubRow .edit{color:var(--teal);cursor:pointer;background:none;border:none;font-size:12.5px;padding:3px 6px;}
   .filterBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
   .filterBar input[type="text"]{flex:1 1 100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;}
   .filterBar select{flex:1;min-width:110px;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;}
@@ -192,12 +217,12 @@
   .card-hd{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
   .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
   .chev-ico.open{transform:rotate(180deg);}
-  .settingsHead{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;transition:opacity .15s;}
+  .settingsHead{display:flex;align-items:center;gap:12px;cursor:pointer;padding:4px 0;transition:opacity .15s;min-height:38px;}
   .settingsHead:active{opacity:.65;}
   .settingsHead .sh-ico{width:38px;height:38px;border-radius:11px;background:var(--ic,rgba(212,146,42,.12));color:var(--ac,var(--gold));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
   .settingsHead h3{margin:0;font-size:14px;color:var(--navy);}
   .settingsHead .chev-ico{color:var(--gold);font-size:13px;}
-  .settingsCard{position:relative;overflow:hidden;}
+  .settingsCard{position:relative;overflow:hidden;clip-path:inset(0 round 12px);}
   .settingsCard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--gold));}
   .chart-wrap{height:150px;position:relative;}
   .dash-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:8px;}
@@ -321,18 +346,12 @@
     <div class="panel" id="panel-journeys">
       <div class="topbar">
         <h1 style="margin:0;">জার্নি</h1>
-        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:14px;">
+        <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:0;">
           <i class="fas fa-magnifying-glass"></i>
           <input type="text" id="jSearch" placeholder="নাম, ফোন বা পাসপোর্ট দিয়ে খুঁজুন..." oninput="renderJourneys()">
         </div>
-        <button class="plus-btn" onclick="openAddUserModal()" title="নতুন ইউজার যোগ করুন"><i class="fas fa-plus"></i></button>
       </div>
       <div class="card">
-        <div class="filterBar">
-          <select id="jStageFilter" onchange="renderJourneys()">
-            <option value="">সব স্টেজ</option>
-          </select>
-        </div>
         <div id="journeyRows"></div>
       </div>
     </div>
@@ -381,75 +400,16 @@
     <!-- SETTINGS TAB -->
     <div class="panel admin-only" id="panel-settings">
       <div class="topbar"><h1>সেটিংস</h1></div>
-      <div class="card settingsCard" style="--ac:#d4922a">
-        <div class="settingsHead" style="--ic:rgba(212,146,42,.12);--ac:#d4922a" onclick="toggleSettingsPanel('templatePanel')">
-          <div class="sh-ico"><i class="fas fa-file-lines"></i></div>
-          <h3 style="flex:1;">টেমপ্লেট তৈরি/সম্পাদনা করুন</h3>
-          <span id="chev-templatePanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
-        </div>
-        <div id="templatePanel" style="display:none;">
-          <p class="hint">প্লেসহোল্ডার ব্যবহার করুন: {{name}}, {{stage}}, {{flight_no}}, {{hours_left}}</p>
-          <div class="formGrid">
-            <input id="tKey" placeholder="Template Key (যেমন: visa_approved)">
-            <select id="tChannel">
-              <option value="whatsapp">WhatsApp</option>
-              <option value="sms">SMS</option>
-              <option value="email">Email</option>
-            </select>
-          </div>
-          <textarea id="tBody" rows="3" style="width:100%;" placeholder="প্রিয় {{name}}, আপনার ভিসা অনুমোদিত হয়েছে..."></textarea>
-          <div style="margin-top:8px;"><button class="btn small" onclick="saveTemplate()">সেভ করুন</button></div>
-          <table style="margin-top:12px;">
-            <thead><tr><th>Key</th><th>Channel</th><th>Body</th><th></th></tr></thead>
-            <tbody id="templateRows"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card settingsCard" style="--ac:#2563eb">
-        <div class="settingsHead" style="--ic:rgba(37,99,235,.12);--ac:#2563eb" onclick="toggleSettingsPanel('webhookPanel')">
-          <div class="sh-ico"><i class="fab fa-whatsapp"></i></div>
-          <h3 style="flex:1;">নোটিফিকেশন ওয়েবহুক (WhatsApp/SMS)</h3>
-          <span id="chev-webhookPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
-        </div>
-        <div id="webhookPanel" style="display:none;">
-          <p class="hint">নিরাপত্তার জন্য WhatsApp/SMS API সিক্রেট কী কখনো এই HTML ফাইলে রাখা হয় না। এখানে একটা Cloud Function / Make.com webhook URL দিন যা সেই সিক্রেট নিরাপদে সার্ভার সাইডে রাখে।</p>
-          <input id="waWebhook" placeholder="WhatsApp send webhook URL" style="width:100%;margin-bottom:8px;">
-          <input id="smsWebhook" placeholder="SMS send webhook URL" style="width:100%;margin-bottom:8px;">
-          <input id="aviationKey" placeholder="AviationStack API key" style="width:100%;margin-bottom:8px;">
-          <button class="btn small" onclick="saveSettings()">সেভ করুন</button>
-        </div>
-      </div>
       <div class="card settingsCard" style="--ac:#2a3245">
-        <div class="settingsHead" style="--ic:rgba(42,50,69,.1);--ac:#2a3245" onclick="toggleSettingsCountryPanel()">
-          <div class="sh-ico"><i class="fas fa-globe"></i></div>
-          <h3 style="flex:1;">দেশ ব্যবস্থাপনা ও কাস্টম ফিল্ড</h3>
+        <div class="settingsHead" style="--ic:rgba(42,50,69,.1);--ac:#2a3245" onclick="toggleSettingsPanel('settingsCountryPanel')">
+          <div class="sh-ico"><i class="fas fa-passport"></i></div>
+          <h3 style="flex:1;">ভিসা ব্যবস্থাপনা</h3>
+          <span id="addBtn-settingsCountryPanel" class="addFieldBtn" title="নতুন ভিসা যোগ করুন" onclick="event.stopPropagation(); openCfFormModal()" style="width:26px;height:26px;border-radius:50%;background:rgba(37,99,235,.12);color:#2563eb;display:none;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:8px;"><i class="fas fa-plus"></i></span>
           <span id="chev-settingsCountryPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="settingsCountryPanel" style="display:none;">
           <div id="countryListPanel">
             <div id="countryList" style="margin:12px 0;"></div>
-          </div>
-
-          <div class="formGrid" style="margin-top:12px;">
-            <select id="cfType" onchange="toggleCfOptions()">
-              <option value="text">টেক্সট</option>
-              <option value="number">নাম্বার</option>
-              <option value="date">ডেট</option>
-              <option value="dropdown">ড্রপডাউন</option>
-              <option value="description">ডিসক্রিপশন</option>
-              <option value="visa">ভিসা ব্যবস্থাপনা</option>
-            </select>
-            <select id="cfCountry" onchange="handleCfCountryChange(this)">
-              <option value="">সকল দেশের জন্য প্রযোজ্য</option>
-              <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
-            </select>
-            <div class="flex" id="cfLabelRow" style="gap:6px;">
-              <input id="cfLabel" placeholder="ফিল্ডের নাম (যেমন: স্পন্সর আইডি)" style="flex:1;">
-              <button type="button" class="btn small" style="width:auto;flex-shrink:0;" onclick="addCustomField()">ফিল্ড যোগ করুন</button>
-            </div>
-            <input id="cfOptions" placeholder="অপশনসমূহ, কমা দিয়ে আলাদা (যেমন: সৌদি, দুবাই, কাতার)" style="display:none;">
-            <textarea id="cfVisaText" rows="4" style="display:none;width:100%;" placeholder="প্রতি লাইনে একটা ভিসার ধরন লিখুন, চার্জ যোগ করতে ড্যাশ দিন (যেমন: ওয়ার্ক ভিসা - 50000)"></textarea>
-            <button type="button" class="btn small" id="cfVisaAddBtn" style="display:none;" onclick="addCustomField()">ভিসা যোগ করুন</button>
           </div>
         </div>
       </div>
@@ -522,28 +482,46 @@
       <button class="close-x" onclick="closeAddUserModal()"><i class="fas fa-xmark"></i></button>
       <h3 style="margin-top:0;" id="uModalTitle">নতুন ইউজার যোগ করুন</h3>
 
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;" id="uScanButtonsWrap">
         <button type="button" class="btn small gold" style="flex:1;" onclick="openScanModal('passport')"><i class="fas fa-camera"></i> পাসপোর্ট স্ক্যান (MRZ)</button>
         <button type="button" class="btn small gold" style="flex:1;" onclick="openScanModal('nid')"><i class="fas fa-camera"></i> এনআইডি স্ক্যান করুন</button>
       </div>
 
       <div style="text-align:center;margin-bottom:10px;">
         <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
-        <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)">
-        <div id="uPhotoPreviewWrap" style="display:none;margin-top:8px;">
-          <img id="uPhotoPreview" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+        <div id="uPhotoCircle" onclick="document.getElementById('uPhoto').click()" style="width:76px;height:76px;border-radius:50%;margin:0 auto;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+          <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
+          <img id="uPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
         </div>
+        <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)" style="display:none;">
       </div>
 
-      <div class="formGrid">
-        <select id="uCountry" onchange="renderCustomFieldInputs()">
+      <div class="formGrid" id="uFormGrid">
+        <select id="uCountry" onchange="handleUCountryChange()">
           <option value="">দেশ নির্বাচন করুন</option>
         </select>
         <select id="uAgentRef">
           <option value="">এজেন্ট রেফারেন্স (সরাসরি/নেই)</option>
         </select>
       </div>
+      <div id="uVisaTypeWrap" style="display:none;margin-top:8px;">
+        <select id="uVisaType" onchange="renderCustomFieldInputs()">
+          <option value="">ভিসার ধরন নির্বাচন করুন (ঐচ্ছিক)</option>
+        </select>
+      </div>
       <div id="customFieldsWrap"></div>
+      <div id="uDocumentsWrap" style="display:none;margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:6px;">ডকুমেন্ট (ঐচ্ছিক) — মেয়াদ দিলে অটো এক্সপায়ারি রিমাইন্ডার পাবেন</label>
+        <div id="uDocumentsList"></div>
+        <button type="button" class="btn small gold" style="width:auto;margin-top:2px;" onclick="addUDocumentRow()"><i class="fas fa-plus"></i> ডকুমেন্ট যোগ করুন</button>
+      </div>
+      <div id="uDepositWrap" style="display:none;margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:4px;">প্রাথমিক জমা / অগ্রিম টাকা (৳) (ঐচ্ছিক)</label>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
+          <input type="number" id="uDepositAmt" placeholder="যেমন: ৫০০০" style="width:100%;box-sizing:border-box;">
+          <input type="text" id="uDepositNote" placeholder="নোট (ঐচ্ছিক)" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
       <div style="margin-top:10px;">
         <label class="hint" style="display:block;margin-bottom:4px;">নোট (ঐচ্ছিক)</label>
         <textarea id="uNotes" class="noteBox" placeholder="এই ইউজার সম্পর্কে নোট লিখুন..."></textarea>
@@ -590,6 +568,58 @@
       </div>
       <div id="agMsg" style="font-size:12px;margin-top:6px;"></div>
       <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="addAgent()">যোগ করুন</button></div>
+    </div>
+  </div>
+
+  <!-- EDIT VISA TYPE MODAL -->
+  <div class="modalOverlay" id="visaEditModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeVisaEditModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">ভিসা এডিট করুন</h3>
+      <div class="formGrid">
+        <input id="veName" placeholder="ভিসার নাম (যেমন: ওয়ার্ক ভিসা)">
+        <input id="veFee" type="number" placeholder="ভিসার মূল্য (৳)">
+        <input id="veQuota" type="number" placeholder="মোট ভিসা সংখ্যা (কোটা)">
+      </div>
+      <div style="margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:4px;">অতিরিক্ত বিস্তারিত তথ্য (ঐচ্ছিক, প্রতি লাইনে একটা, যেমন: কোম্পানি: সিডার গ্রুপ)</label>
+        <div class="hlWrap">
+          <div id="veDetailsHl" class="hlBackdrop"></div>
+          <textarea id="veDetails" rows="5" style="width:100%;" placeholder="কোম্পানি: সিডার গ্রুপ&#10;মাসিক বেতন: 2000 রিয়াল&#10;দৈনিক ডিউটি: ৮ ঘন্টা প্লাস কভার টাইম"></textarea>
+        </div>
+      </div>
+      <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" onclick="saveVisaEdit()">সেভ করুন</button></div>
+    </div>
+  </div>
+
+  <!-- ADD COUNTRY / CUSTOM FIELD / VISA MODAL -->
+  <div class="modalOverlay" id="cfFormModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeCfFormModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">নতুন ভিসা যোগ করুন</h3>
+      <div id="cfFormPanel" class="formGrid" style="margin-top:12px;">
+        <select id="cfType" style="display:none;">
+          <option value="visa">ভিসা ব্যবস্থাপনা</option>
+        </select>
+        <select id="cfCountry" onchange="handleCfCountryChange(this)">
+          <option value="">দেশ নির্বাচন করুন</option>
+          <option value="__add__">নতুন দেশ যোগ করুন  ➕</option>
+        </select>
+        <select id="cfVisaSelect" style="display:none;">
+          <option value="">এই দেশের সকল ভিসার জন্য</option>
+        </select>
+        <input id="cfOptions" style="display:none;">
+        <input id="cfVisaName" value="ওয়ার্কার ভিসা" style="display:none;">
+        <div class="flex" id="cfVisaFeeQuotaRow" style="gap:8px;display:none;">
+          <input id="cfVisaFee" type="number" placeholder="ভিসার মূল্য (৳)" style="flex:1;">
+          <input id="cfVisaQuota" type="number" placeholder="টোটাল ভিসা সংখ্যা (কোটা)" style="flex:1;">
+        </div>
+        <div class="hlWrap" id="cfVisaDetailsWrap" style="display:none;">
+          <div id="cfVisaDetailsHl" class="hlBackdrop"></div>
+          <textarea id="cfVisaDetails" rows="4" style="width:100%;resize:none;overflow:hidden;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="অতিরিক্ত বিস্তারিত তথ্য (ঐচ্ছিক, প্রতি লাইনে একটা, যেমন: কোম্পানি: সিডার গ্রুপ)"></textarea>
+        </div>
+        <button type="button" class="btn small" id="cfVisaAddBtn" style="display:none;" onclick="addCustomField()">ভিসা যোগ করুন</button>
+      </div>
     </div>
   </div>
 
@@ -806,7 +836,7 @@ async function enterApp(){
   loadAgents();
   loadCountries();
   loadCustomFields();
-  loadTemplates();
+
   loadVisaTypes();
   loadLogs();
   loadDashboard();
@@ -814,9 +844,7 @@ async function enterApp(){
 
 function populateStageFilters(){
   const opts = Object.entries(STAGE_LABEL).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
-  const jSel = document.getElementById('jStageFilter');
   const uSel = document.getElementById('uStageFilter');
-  if(jSel) jSel.insertAdjacentHTML('beforeend', opts);
   if(uSel) uSel.insertAdjacentHTML('beforeend', opts);
 }
 
@@ -854,14 +882,8 @@ function renderJourneys(){
   const users = usersCache;
   renderVisaInfoList();
   const searchEl = document.getElementById('jSearch');
-  const stageEl = document.getElementById('jStageFilter');
   const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
-  const stageFilter = stageEl ? stageEl.value : '';
   let entries = Object.entries(users);
-  if(stageFilter) entries = entries.filter(([uid, u]) => {
-    const j = getJourneyForUser(uid);
-    return j && j.current_stage === stageFilter;
-  });
   if(q){
     entries = entries.filter(([uid, u]) => {
       const hay = (getUserName(u) + ' ' + getUserPhone(u) + ' ' + getUserPassport(u)).toLowerCase();
@@ -949,7 +971,7 @@ function renderJourneys(){
           </div>
         </div>`;
       }).join('');
-      const emptyMsg = (q || stageFilter) ? 'ফিল্টারে কোনো ইউজার পাওয়া যায়নি' : 'কোনো ইউজার নেই';
+      const emptyMsg = q ? 'ফিল্টারে কোনো ইউজার পাওয়া যায়নি' : 'কোনো ইউজার নেই';
       document.getElementById('journeyRows').innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
   }
 }
@@ -1081,6 +1103,7 @@ function getUserPassport(u){ return getUserField(u, 'passport_no', ['পাস�
 function addUser(){
   const country = document.getElementById('uCountry').value;
   if(!country){ alert('দেশ নির্বাচন করুন'); return; }
+  const visa_type_id = document.getElementById('uVisaType').value || null;
 
   const custom_data = {};
   Object.entries(customFields).forEach(([fid, f]) => {
@@ -1091,7 +1114,7 @@ function addUser(){
   const notes = document.getElementById('uNotes').value.trim();
 
   if(editingUserUid){
-    const updates = { country, custom_data, agent_id, notes };
+    const updates = { country, visa_type_id, custom_data, agent_id, notes };
     if(uPhotoBase64) updates.photoBase64 = uPhotoBase64;
     db.ref('users/' + editingUserUid).update(updates)
       .then(() => { closeAddUserModal(); alert('তথ্য সফলভাবে পরিবর্তন হয়েছে!'); })
@@ -1100,20 +1123,37 @@ function addUser(){
   }
 
   const userRef = db.ref('users').push();
-  const newUser = { country, doc_status: {}, custom_data, agent_id, notes, created_at: Date.now() };
+  const newUser = { country, visa_type_id, doc_status: {}, custom_data, agent_id, notes, created_at: Date.now() };
   if(uPhotoBase64) newUser.photoBase64 = uPhotoBase64;
+  const documents = {};
+  uDocuments.forEach((d, i) => {
+    const files = (d.files || []).filter(p => p.fileBase64);
+    if(d.name || files.length || d.expiry){
+      documents['d' + i] = { name: d.name || '', expiry: d.expiry || '', files };
+    }
+  });
+  if(Object.keys(documents).length) newUser.documents = documents;
+  const depositAmtEl = document.getElementById('uDepositAmt');
+  const depositNoteEl = document.getElementById('uDepositNote');
+  const depositAmt = depositAmtEl ? parseFloat(depositAmtEl.value) : NaN;
+  const depositNote = depositNoteEl ? depositNoteEl.value.trim() : '';
   userRef.set(newUser)
     .then(() => {
-      db.ref('journeys').push({
+      const journeyRef = db.ref('journeys').push();
+      journeyRef.set({
         user_id: userRef.key, current_stage: 'DOC_COLLECTED', updated_at: Date.now(),
         agency_fee: 0, cost_medical: 0, cost_visa: 0, cost_flight: 0
       });
+      if(!isNaN(depositAmt) && depositAmt > 0){
+        journeyRef.child('payments').push({ amount: depositAmt, note: depositNote || '', date: Date.now() });
+      }
       document.getElementById('uCountry').value = '';
       Object.keys(customFields).forEach(fid => {
         const el = document.getElementById('cf-' + fid);
         if(el) el.value = '';
       });
       renderCustomFieldInputs();
+      uDocuments = [];
       closeAddUserModal();
       alert('ইউজার সফলভাবে যোগ হয়েছে!');
     })
@@ -1521,7 +1561,7 @@ function renderCountrySelects(){
   const cfSel = document.getElementById('cfCountry');
   if(cfSel){
     const current = cfSel.value;
-    cfSel.innerHTML = '<option value="">সকল দেশের জন্য প্রযোজ্য</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
+    cfSel.innerHTML = '<option value="">দেশ নির্বাচন করুন</option>' + opts + '<option value="__add__">নতুন দেশ যোগ করুন  ➕</option>';
     cfSel.value = current;
   }
   renderCountryList();
@@ -1530,10 +1570,12 @@ function renderCountrySelects(){
 function toggleSettingsPanel(id){
   const el = document.getElementById(id);
   const chev = document.getElementById('chev-' + id);
+  const addBtn = document.getElementById('addBtn-' + id);
   if(!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : 'block';
   if(chev) chev.classList.toggle('open', !isOpen);
+  if(addBtn) addBtn.style.display = isOpen ? 'none' : 'flex';
 }
 
 /* ================= PASSWORD CHANGE ================= */
@@ -1602,13 +1644,18 @@ async function reEnrollFaceLock(){
   }
 }
 
-function toggleSettingsCountryPanel(){
-  const el = document.getElementById('settingsCountryPanel');
-  const chev = document.getElementById('chev-settingsCountryPanel');
-  if(!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.classList.toggle('open', !isOpen);
+function openCfFormModal(){
+  document.getElementById('cfFormModal').classList.add('active');
+  const typeSel = document.getElementById('cfType');
+  typeSel.value = 'visa';
+  typeSel.style.display = 'none';
+  const detailsBox = document.getElementById('cfVisaDetails');
+  detailsBox.value = '';
+  detailsBox.style.height = 'auto';
+  toggleCfOptions();
+}
+function closeCfFormModal(){
+  document.getElementById('cfFormModal').classList.remove('active');
 }
 
 function toggleCountryListPanel(){
@@ -1625,10 +1672,9 @@ function renderCountryList(){
   if(!container) return;
   const entries = Object.entries(countries).sort((a,b) => a[1].localeCompare(b[1], 'bn'));
 
-  const allFields = Object.entries(customFields).filter(([fid, f]) => !f.country);
-  let html = renderCountryAccordionRow('__all__', 'সকল দেশ', allFields, [], false);
+  let html = '';
 
-  html += entries.map(([id, name]) => {
+  html += entries.filter(([id, name]) => Object.values(visaTypes).some(v => v.country === name)).map(([id, name]) => {
     const fields = Object.entries(customFields).filter(([fid, f]) => f.country === name);
     const visas = Object.entries(visaTypes).filter(([vid, v]) => v.country === name);
     return renderCountryAccordionRow(id, name, fields, visas, true);
@@ -1638,42 +1684,40 @@ function renderCountryList(){
 }
 
 function renderCountryAccordionRow(id, name, fields, visas, deletable){
-  const label = deletable ? ('<i class="fas fa-globe"></i> ' + name) : name;
-  const delBtn = deletable
-    ? `<button class="del" onclick="event.stopPropagation(); deleteCountry('${id}', '${name.replace(/'/g, "\\'")}')">মুছুন</button>`
-    : '';
-  const visaHtml = visas.length
-    ? `<div style="margin-left:14px;margin-bottom:10px;">
-        <p class="hint" style="margin:0 0 6px;font-weight:700;color:#1c2733;">ভিসার ধরন</p>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          ${visas.map(([vid, v]) => `<span style="background:#f0ece4;border:1px solid var(--border);border-radius:20px;padding:4px 8px 4px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">${v.name}<button onclick="deleteVisaType('${vid}')" style="border:none;background:none;color:var(--fail);cursor:pointer;font-weight:700;font-size:13px;line-height:1;">×</button></span>`).join('')}
-        </div>
-      </div>`
-    : '';
-  const fieldsHtml = fields.length
-    ? fields.map(([fid, f]) => `
-        <div class="fieldRow" style="margin-left:14px;background:#f8f4ec;">
-          <div>${f.label} <span class="fr-meta">(${CF_TYPE_LABEL[f.type] || f.type}${f.options ? ': ' + f.options.join('/') : ''})</span></div>
-          <button class="del" onclick="deleteCustomField('${fid}')">মুছুন</button>
+  const flag = COUNTRY_FLAGS[name] || '🌍';
+  const label = deletable ? (flag + ' ' + name) : name;
+  const count = visas.length;
+  const visaListHtml = count
+    ? visas.map(([vid, v]) => `
+        <div class="visaSubRow">
+          <span>${v.name}${v.fee ? ` — ৳${v.fee.toLocaleString('bn-BD')}` : ''}</span>
+          <span style="display:flex;gap:4px;flex-shrink:0;">
+            <button class="edit" title="এডিট করুন" onclick="event.stopPropagation();openVisaEditModal('${vid}')"><i class="fas fa-pen"></i></button>
+            <button class="del" title="মুছুন" onclick="event.stopPropagation();deleteVisaType('${vid}')"><i class="fas fa-trash"></i></button>
+          </span>
         </div>`).join('')
-    : '<p class="hint" style="margin-left:14px;">এই দেশের জন্য কোনো কাস্টম ফিল্ড নেই।</p>';
+    : '<p class="hint" style="margin:6px 0 4px;">এই দেশে এখনো কোনো ভিসার ধরন যোগ করা হয়নি।</p>';
   return `
     <div class="countryAccordion">
-      <div class="fieldRow" style="cursor:pointer;" onclick="toggleCountryFields('${id}')">
-        <div>${label}</div>
-        <div style="display:flex;align-items:center;gap:10px;">${delBtn}<span id="chev-${id}" class="chev-ico"><i class="fas fa-chevron-down"></i></span></div>
+      <div class="fieldRow" style="cursor:pointer;" onclick="toggleCountryAccordion('${id}')">
+        <div>${label} <span class="fr-meta">(${count}টি ভিসার ধরন)</span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <i class="fas fa-chevron-down" id="cac-chev-${id}" style="font-size:11px;color:#8896ab;transition:transform .2s;"></i>
+        </div>
       </div>
-      <div id="fields-${id}" style="display:none;margin:6px 0 10px;">${visaHtml}${fieldsHtml}</div>
+      <div id="cac-body-${id}" style="display:none;padding:2px 10px 8px 28px;">
+        ${visaListHtml}
+      </div>
     </div>`;
 }
 
-function toggleCountryFields(id){
-  const el = document.getElementById('fields-' + id);
-  const chev = document.getElementById('chev-' + id);
-  if(!el) return;
-  const isOpen = el.style.display !== 'none';
-  el.style.display = isOpen ? 'none' : 'block';
-  if(chev) chev.classList.toggle('open', !isOpen);
+function toggleCountryAccordion(id){
+  const body = document.getElementById('cac-body-' + id);
+  const chev = document.getElementById('cac-chev-' + id);
+  if(!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 function deleteCountry(id, name){
@@ -1706,6 +1750,37 @@ function deleteVisaType(vid){
     .catch(err => { alert('ভিসা ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
 }
 
+let editingVisaId = null;
+
+function openVisaEditModal(vid){
+  const v = visaTypes[vid];
+  if(!v) return;
+  editingVisaId = vid;
+  document.getElementById('veName').value = v.name || '';
+  document.getElementById('veFee').value = v.fee || '';
+  document.getElementById('veQuota').value = v.quota || '';
+  document.getElementById('veDetails').value = (v.details || []).join('\n');
+  syncDetailsHighlight('veDetails', 'veDetailsHl');
+  document.getElementById('visaEditModal').classList.add('active');
+}
+
+function closeVisaEditModal(){
+  document.getElementById('visaEditModal').classList.remove('active');
+  editingVisaId = null;
+}
+
+function saveVisaEdit(){
+  if(!editingVisaId) return;
+  const name = document.getElementById('veName').value.trim();
+  if(!name){ alert('ভিসার নাম দিন'); return; }
+  const fee = parseInt(document.getElementById('veFee').value) || 0;
+  const quota = parseInt(document.getElementById('veQuota').value) || 0;
+  const details = document.getElementById('veDetails').value.split('\n').map(s => s.trim()).filter(Boolean);
+  db.ref('visa_types/' + editingVisaId).update({ name, fee, quota, details })
+    .then(() => closeVisaEditModal())
+    .catch(err => { alert('সেভ করতে ব্যর্থ: ' + err.message); console.error(err); });
+}
+
 function renderVisaInfoList(){
   const container = document.getElementById('visaInfoList');
   if(!container) return;
@@ -1717,7 +1792,7 @@ function renderVisaInfoList(){
   const groups = {};
   entries.forEach(([vid, v]) => {
     if(!groups[v.country]) groups[v.country] = [];
-    groups[v.country].push({ name: v.name, fee: v.fee || 0 });
+    groups[v.country].push({ vid, name: v.name, fee: v.fee || 0, quota: v.quota || 0, details: v.details || [] });
   });
   const searchEl = document.getElementById('visaSearch');
   const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
@@ -1734,42 +1809,31 @@ function renderVisaInfoList(){
 
   container.innerHTML = countryNames.map(country => {
     const countryUserIds = userEntries.filter(([uid, u]) => u.country === country).map(([uid]) => uid);
-    const total = countryUserIds.length;
     const active = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
     const departed = journeyList.filter(j => countryUserIds.includes(j.user_id) && j.current_stage === 'DEPARTED').length;
-    const visaLine = groups[country].map(v => v.fee ? `${v.name} (৳${v.fee.toLocaleString('bn-BD')})` : v.name).join(', ');
     const flag = COUNTRY_FLAGS[country] || '🌍';
-    const fees = groups[country].map(v => v.fee).filter(f => f > 0);
-    let priceBadge = '';
-    if(fees.length === 1){
-      priceBadge = `<span class="vc-price">৳${fees[0].toLocaleString('bn-BD')}</span>`;
-    } else if(fees.length > 1){
-      const min = Math.min(...fees), max = Math.max(...fees);
-      priceBadge = min === max
-        ? `<span class="vc-price">৳${min.toLocaleString('bn-BD')}</span>`
-        : `<span class="vc-price">৳${min.toLocaleString('bn-BD')} – ৳${max.toLocaleString('bn-BD')}</span>`;
-    }
-    const shareText = `${flag} ${country}\nভিসার ধরন: ${visaLine}\nমোট প্রার্থী: ${total}\nচলমান প্রসেসিং: ${active}`;
-    return `
-    <div class="visaCard">
-      <div class="vc-head">
-        <div class="vc-title">${flag} ${country}${priceBadge}</div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;">
-        ${groups[country].map(v => `<span class="visaChip">${v.name}${v.fee ? ` <b style="color:var(--navy);">৳${v.fee.toLocaleString('bn-BD')}</b>` : ''}</span>`).join('')}
-      </div>
-      <div class="visaStatRow">
-        <div class="vsr-stats">
-          <span>মোট প্রার্থী <br><b>${total}</b></span>
-          <span>চলমান প্রসেসিং <br><b style="color:var(--gold);">${active}</b></span>
-          <span>রওনা সম্পন্ন <br><b style="color:var(--ok);">${departed}</b></span>
+    return groups[country].map(v => {
+      const shareText = `${flag} ${country}\nভিসার ধরন: ${v.name}${v.fee ? ` (৳${v.fee.toLocaleString('bn-BD')})` : ''}\nমোট ভিসা: ${v.quota}\nচলমান প্রসেসিং: ${active}`;
+      return `
+      <div class="visaCard">
+        <div class="vc-head">
+          <div class="vc-title">${flag} ${country}</div>
+          <span class="vc-price" style="cursor:pointer;" onclick='showVisaCharges(${JSON.stringify(country)}, ${JSON.stringify([v])})'><i class="fas fa-tag"></i> ভিসার মূল্য${v.fee ? `: ৳${v.fee.toLocaleString('bn-BD')}` : ''}</span>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='showVisaCharges(${JSON.stringify(country)}, ${JSON.stringify(groups[country])})'><i class="fas fa-tag"></i> ভিসার মূল্য</button>
-          <button type="button" class="btn small" style="width:auto;padding:5px 12px;font-size:11px;" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
+        ${v.details.length ? `<div class="visaDetailLines">${v.details.map(d => `<div class="visaDetailLine">${formatDetailChip(d)}</div>`).join('')}</div>` : ''}
+        <div class="visaStatRow">
+          <div class="vsr-stats">
+            <span>ভিসা <b>${v.quota || 0}</b></span>
+            <span>প্রসেসিং <b style="color:var(--gold);">${active}</b></span>
+            <span>সম্পন্ন <b style="color:var(--ok);">${departed}</b></span>
+          </div>
+          <div class="vsr-actions">
+            <button type="button" class="icon-btn gold" title="ভিসা বিক্রি করুন" onclick='openAddUserModal(${JSON.stringify(country)}, ${JSON.stringify(v.vid)})'><span>বিক্রি</span><i class="fas fa-plane-departure" style="font-size:12px;color:#c9932c;"></i></button>
+            <button type="button" class="icon-btn" title="শেয়ার করুন" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><span>শেয়ার</span><i class="fas fa-share"></i></button>
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
+    }).join('');
   }).join('');
 }
 
@@ -1793,8 +1857,12 @@ function handleCfCountryChange(sel){
   if(sel.value === '__add__'){
     sel.value = sel.dataset.prev || '';
     addCountry('cfCountry');
-  } else {
-    sel.dataset.prev = sel.value;
+    return;
+  }
+  sel.dataset.prev = sel.value;
+  if(sel.id === 'cfCountry'){
+    if(sel.value) populateCfVisaSelect(sel.value);
+    toggleCfOptions();
   }
 }
 
@@ -1825,6 +1893,115 @@ function loadCustomFields(){
 
 let editingUserUid = null;
 let uPhotoBase64 = null;
+let uDocuments = [];
+
+function renderUDocumentsRows(){
+  const wrap = document.getElementById('uDocumentsList');
+  if(!wrap) return;
+  wrap.innerHTML = uDocuments.map((d, i) => {
+    const pages = d.files || [];
+    return `
+    <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:8px;">
+      <div style="flex:1;display:grid;gap:6px;">
+        <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
+        ${pages.length ? `
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;">
+            ${pages.map((p, pi) => `
+              <div style="position:relative;">
+                ${p.fileBase64 && p.fileBase64.startsWith('data:image')
+                  ? `<img src="${p.fileBase64}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;">`
+                  : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;"><i class="fas fa-file-lines" style="font-size:22px;color:var(--navy2);"></i></div>`}
+                <span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(20,24,32,.7);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">পৃষ্ঠা ${pi+1}</span>
+                <button type="button" onclick="removeUDocPage(${i},${pi})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        <button type="button" class="btn small gold" style="width:auto;padding:4px 10px;font-size:11px;" onclick="document.getElementById('uDocFile${i}').click()"><i class="fas fa-plus"></i> ${pages.length ? 'আরও পৃষ্ঠা যোগ করুন' : 'ছবি যোগ করুন'}</button>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
+          <input type="text" style="width:100%;box-sizing:border-box;" placeholder="ডকুমেন্টের নাম (যেমন: পাসপোর্ট, ভিসা)" value="${d.name || ''}" oninput="updateUDocumentField(${i},'name',this.value)">
+          <input type="date" title="মেয়াদ শেষের তারিখ (ঐচ্ছিক)" style="width:100%;box-sizing:border-box;" value="${d.expiry || ''}" oninput="updateUDocumentField(${i},'expiry',this.value)">
+        </div>
+      </div>
+      <button type="button" class="btn small danger" style="width:auto;padding:6px 10px;" onclick="removeUDocumentRow(${i})"><i class="fas fa-xmark"></i></button>
+    </div>
+  `;
+  }).join('');
+}
+
+function addUDocumentRow(){
+  // Row (name/date fields) is created only AFTER a file is actually chosen.
+  // If the user cancels the file picker, no empty row is added.
+  const tempInput = document.createElement('input');
+  tempInput.type = 'file';
+  tempInput.accept = 'image/*,application/pdf,.pdf';
+  tempInput.multiple = true;
+  tempInput.onchange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if(!files.length) return;
+    uDocuments.push({ name:'', expiry:'', files:[] });
+    const newIndex = uDocuments.length - 1;
+    files.forEach(file => processUDocumentFile(file, newIndex));
+  };
+  tempInput.click();
+}
+
+function removeUDocumentRow(i){
+  uDocuments.splice(i, 1);
+  renderUDocumentsRows();
+}
+
+function removeUDocPage(i, pi){
+  if(!uDocuments[i] || !uDocuments[i].files) return;
+  uDocuments[i].files.splice(pi, 1);
+  renderUDocumentsRows();
+}
+
+function updateUDocumentField(i, key, value){
+  if(!uDocuments[i]) return;
+  uDocuments[i][key] = value;
+}
+
+function handleUDocumentFileSelect(e, i){
+  const files = Array.from(e.target.files || []);
+  files.forEach(file => processUDocumentFile(file, i));
+  e.target.value = '';
+}
+
+function processUDocumentFile(file, i){
+  if(!file || !uDocuments[i]) return;
+  if(!uDocuments[i].files) uDocuments[i].files = [];
+  const page = { fileBase64:null, fileName: file.name };
+  uDocuments[i].files.push(page);
+  if(file.type.startsWith('image/')){
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1000;
+        let w = img.width, h = img.height;
+        if(w > maxDim || h > maxDim){
+          if(w >= h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        page.fileBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        renderUDocumentsRows();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      page.fileBase64 = ev.target.result;
+      renderUDocumentsRows();
+    };
+    reader.readAsDataURL(file);
+  }
+}
 
 function populateAgentRefSelect(selectedAgentId){
   const sel = document.getElementById('uAgentRef');
@@ -1834,17 +2011,50 @@ function populateAgentRefSelect(selectedAgentId){
   sel.innerHTML = '<option value="">এজেন্ট রেফারেন্স (সরাসরি/নেই)</option>' + opts;
 }
 
-function openAddUserModal(){
+function handleUCountryChange(){
+  const country = document.getElementById('uCountry').value;
+  populateUVisaTypeSelect(country);
+  renderCustomFieldInputs();
+}
+
+function populateUVisaTypeSelect(country, selectedVid){
+  const wrap = document.getElementById('uVisaTypeWrap');
+  const sel = document.getElementById('uVisaType');
+  const visas = Object.entries(visaTypes).filter(([vid, v]) => v.country === country);
+  if(!country || !visas.length){
+    wrap.style.display = 'none';
+    sel.innerHTML = '<option value="">ভিসার ধরন নির্বাচন করুন (ঐচ্ছিক)</option>';
+    return;
+  }
+  wrap.style.display = '';
+  sel.innerHTML = '<option value="">ভিসার ধরন নির্বাচন করুন (ঐচ্ছিক)</option>' +
+    visas.map(([vid, v]) => `<option value="${vid}" ${vid === selectedVid ? 'selected' : ''}>${v.name}</option>`).join('');
+}
+
+function openAddUserModal(prefillCountry, prefillVisaId){
   editingUserUid = null;
   uPhotoBase64 = null;
-  document.getElementById('uModalTitle').textContent = 'নতুন ইউজার যোগ করুন';
+  uDocuments = [];
+  const isSellMode = !!prefillVisaId;
+  document.getElementById('uModalTitle').textContent = isSellMode ? 'ভিসা বিক্রি করুন' : 'নতুন ইউজার যোগ করুন';
   document.getElementById('uSubmitBtn').textContent = 'যোগ করুন';
-  document.getElementById('uCountry').value = '';
+  document.getElementById('uCountry').value = prefillCountry || '';
   document.getElementById('uNotes').value = '';
   document.getElementById('uPhoto').value = '';
-  document.getElementById('uPhotoPreviewWrap').style.display = 'none';
+  document.getElementById('uPhotoPreview').style.display = 'none';
+  document.getElementById('uPhotoIcon').style.display = '';
+  populateUVisaTypeSelect(prefillCountry || '', prefillVisaId || '');
   populateAgentRefSelect('');
   renderCustomFieldInputs();
+  renderUDocumentsRows();
+  document.getElementById('uScanButtonsWrap').style.display = isSellMode ? 'none' : 'flex';
+  document.getElementById('uFormGrid').style.display = isSellMode ? 'none' : '';
+  if(isSellMode) document.getElementById('uVisaTypeWrap').style.display = 'none';
+  document.getElementById('customFieldsWrap').style.display = isSellMode ? 'none' : '';
+  document.getElementById('uDocumentsWrap').style.display = isSellMode ? 'block' : 'none';
+  document.getElementById('uDepositWrap').style.display = isSellMode ? 'block' : 'none';
+  document.getElementById('uDepositAmt').value = '';
+  document.getElementById('uDepositNote').value = '';
   document.getElementById('addUserModal').classList.add('active');
 }
 
@@ -1852,19 +2062,28 @@ function openEditUserModal(uid){
   editingUserUid = uid;
   const u = (window._usersCache || {})[uid] || {};
   uPhotoBase64 = u.photoBase64 || null;
+  uDocuments = [];
+  document.getElementById('uDocumentsWrap').style.display = 'none';
+  document.getElementById('uDepositWrap').style.display = 'none';
   document.getElementById('uModalTitle').textContent = 'ইউজারের তথ্য এডিট করুন';
   document.getElementById('uSubmitBtn').textContent = 'পরিবর্তন সংরক্ষণ করুন';
   document.getElementById('uCountry').value = u.country || '';
   document.getElementById('uNotes').value = u.notes || '';
   document.getElementById('uPhoto').value = '';
+  populateUVisaTypeSelect(u.country || '', u.visa_type_id || '');
   if(uPhotoBase64){
     document.getElementById('uPhotoPreview').src = uPhotoBase64;
-    document.getElementById('uPhotoPreviewWrap').style.display = 'block';
+    document.getElementById('uPhotoPreview').style.display = 'block';
+    document.getElementById('uPhotoIcon').style.display = 'none';
   } else {
-    document.getElementById('uPhotoPreviewWrap').style.display = 'none';
+    document.getElementById('uPhotoPreview').style.display = 'none';
+    document.getElementById('uPhotoIcon').style.display = '';
   }
   populateAgentRefSelect(u.agent_id || '');
   renderCustomFieldInputs(u.custom_data || {});
+  document.getElementById('uScanButtonsWrap').style.display = 'flex';
+  document.getElementById('uFormGrid').style.display = '';
+  document.getElementById('customFieldsWrap').style.display = '';
   document.getElementById('addUserModal').classList.add('active');
 }
 
@@ -1872,11 +2091,11 @@ function closeAddUserModal(){
   document.getElementById('addUserModal').classList.remove('active');
   editingUserUid = null;
   uPhotoBase64 = null;
+  uDocuments = [];
 }
 
 function handleUserPhotoSelect(e){
   const file = e.target.files[0];
-  const previewWrap = document.getElementById('uPhotoPreviewWrap');
   if(!file) return;
   const reader = new FileReader();
   reader.onload = (ev) => {
@@ -1893,7 +2112,8 @@ function handleUserPhotoSelect(e){
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       uPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
       document.getElementById('uPhotoPreview').src = uPhotoBase64;
-      previewWrap.style.display = 'block';
+      document.getElementById('uPhotoPreview').style.display = 'block';
+      document.getElementById('uPhotoIcon').style.display = 'none';
     };
     img.src = ev.target.result;
   };
@@ -2188,56 +2408,38 @@ function applyScanToForm(parsed){
   }
 }
 function toggleCfOptions(){
-  const type = document.getElementById('cfType').value;
-  const isDropdown = type === 'dropdown';
-  const isVisa = type === 'visa';
-  document.getElementById('cfOptions').style.display = isDropdown ? '' : 'none';
-  document.getElementById('cfVisaText').style.display = isVisa ? '' : 'none';
-  document.getElementById('cfVisaAddBtn').style.display = isVisa ? '' : 'none';
-  document.getElementById('cfLabelRow').style.display = isVisa ? 'none' : '';
+  document.getElementById('cfVisaName').style.display = 'none';
+  document.getElementById('cfVisaFeeQuotaRow').style.display = 'flex';
+  document.getElementById('cfVisaDetailsWrap').style.display = '';
+  document.getElementById('cfVisaAddBtn').style.display = '';
+}
+
+function populateCfVisaSelect(country){
+  const sel = document.getElementById('cfVisaSelect');
+  sel.innerHTML = '<option value="">এই দেশের সকল ভিসার জন্য</option>' +
+    Object.entries(visaTypes).filter(([vid, v]) => v.country === country)
+      .map(([vid, v]) => `<option value="${vid}">${v.name}</option>`).join('');
 }
 
 function addCustomField(){
-  const label = document.getElementById('cfLabel').value.trim();
-  const type = document.getElementById('cfType').value;
   const country = document.getElementById('cfCountry').value;
-
-  if(type === 'visa'){
-    if(!country){ alert('ভিসার ধরন যোগ করতে একটা নির্দিষ্ট দেশ নির্বাচন করুন (সকল দেশের জন্য প্রযোজ্য দিয়ে হবে না)।'); return; }
-    const visaLines = document.getElementById('cfVisaText').value.split('\n').map(s => s.trim()).filter(Boolean);
-    if(!visaLines.length){ alert('অন্তত একটা ভিসার ধরন লিখুন (প্রতি লাইনে একটা করে)।'); return; }
-    const updates = {};
-    visaLines.forEach(line => {
-      const key = db.ref('visa_types').push().key;
-      const parts = line.split(/\s*-\s*/);
-      const name = parts[0].trim();
-      const feeRaw = parts.length > 1 ? parts.slice(1).join('-') : '';
-      const fee = feeRaw ? (parseInt(feeRaw.replace(/[^0-9]/g, '')) || 0) : 0;
-      updates[key] = { country, name, fee, created_at: Date.now() };
-    });
-    db.ref('visa_types').update(updates).then(() => {
-      document.getElementById('cfVisaText').value = '';
-      document.getElementById('cfType').value = 'text';
-      document.getElementById('cfCountry').value = '';
-      toggleCfOptions();
-    }).catch(err => { alert('ভিসা যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
-    return;
-  }
-
-  if(!label){ alert('ফিল্ডের নাম দিন'); return; }
-  const field = { label, type, country, created_at: Date.now() };
-  if(type === 'dropdown'){
-    const options = document.getElementById('cfOptions').value.split(',').map(s => s.trim()).filter(Boolean);
-    if(options.length < 2){ alert('ড্রপডাউনের জন্য অন্তত ২টা অপশন কমা দিয়ে দিন'); return; }
-    field.options = options;
-  }
-  db.ref('custom_fields').push(field).then(() => {
-    document.getElementById('cfLabel').value = '';
-    document.getElementById('cfOptions').value = '';
-    document.getElementById('cfType').value = 'text';
+  if(!country){ alert('ভিসার ধরন যোগ করতে একটা নির্দিষ্ট দেশ নির্বাচন করুন (সকল দেশের জন্য প্রযোজ্য দিয়ে হবে না)।'); return; }
+  const name = document.getElementById('cfVisaName').value.trim();
+  if(!name){ alert('ভিসার নাম দিন।'); return; }
+  const fee = parseInt(document.getElementById('cfVisaFee').value) || 0;
+  const quota = parseInt(document.getElementById('cfVisaQuota').value) || 0;
+  const details = document.getElementById('cfVisaDetails').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const key = db.ref('visa_types').push().key;
+  db.ref('visa_types/' + key).set({ country, name, fee, quota, details, created_at: Date.now() }).then(() => {
+    document.getElementById('cfVisaName').value = 'ওয়ার্কার ভিসা';
+    document.getElementById('cfVisaFee').value = '';
+    document.getElementById('cfVisaQuota').value = '';
+    document.getElementById('cfVisaDetails').value = '';
+    document.getElementById('cfVisaDetails').style.height = 'auto';
+    syncDetailsHighlight('cfVisaDetails', 'cfVisaDetailsHl');
     document.getElementById('cfCountry').value = '';
     toggleCfOptions();
-  }).catch(err => { alert('ফিল্ড সেভ ব্যর্থ: ' + err.message); console.error(err); });
+  }).catch(err => { alert('ভিসা যোগ করতে ব্যর্থ: ' + err.message); console.error(err); });
 }
 
 function deleteCustomField(fid){
@@ -2252,7 +2454,12 @@ function renderCustomFieldInputs(prefill){
   prefill = prefill || {};
   const wrap = document.getElementById('customFieldsWrap');
   const selectedCountry = (document.getElementById('uCountry') || {}).value || '';
-  const entries = Object.entries(customFields).filter(([fid, f]) => !f.country || f.country === selectedCountry);
+  const selectedVisaType = (document.getElementById('uVisaType') || {}).value || '';
+  const entries = Object.entries(customFields).filter(([fid, f]) => {
+    if(f.country && f.country !== selectedCountry) return false;
+    if(f.visa_type_id && f.visa_type_id !== selectedVisaType) return false;
+    return true;
+  });
   if(!entries.length){ wrap.innerHTML = ''; return; }
   wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="formGrid">' +
     entries.map(([fid, f]) => {
@@ -2266,35 +2473,6 @@ function renderCustomFieldInputs(prefill){
       }
       return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}" value="${val}">`;
     }).join('') + '</div>';
-}
-
-/* ================= TEMPLATES ================= */
-function saveTemplate(){
-  const key = document.getElementById('tKey').value.trim();
-  const channel = document.getElementById('tChannel').value;
-  const body = document.getElementById('tBody').value.trim();
-  if(!key || !body){ alert('Key এবং Body আবশ্যক'); return; }
-  db.ref('templates/' + key).set({ channel, body }).then(() => {
-    document.getElementById('tKey').value = '';
-    document.getElementById('tBody').value = '';
-  }).catch(err => { alert('টেমপ্লেট সেভ ব্যর্থ: ' + err.message); console.error(err); });
-}
-function loadTemplates(){
-  db.ref('templates').on('value', snap => {
-    const templates = snap.val() || {};
-    const rows = Object.entries(templates).map(([key, t]) => `
-      <tr>
-        <td data-label="Key">${key}</td>
-        <td data-label="Channel">${t.channel}</td>
-        <td data-label="Body" style="max-width:340px;">${t.body}</td>
-        <td data-label=""><button class="btn small danger" onclick="deleteTemplate('${key}')">ডিলিট</button></td>
-      </tr>`).join('');
-    document.getElementById('templateRows').innerHTML = rows || '<tr><td colspan="4" class="hint">কোনো টেমপ্লেট নেই</td></tr>';
-  });
-}
-function deleteTemplate(key){
-  db.ref('templates/' + key).remove()
-    .catch(err => { alert('টেমপ্লেট ডিলিট ব্যর্থ: ' + err.message); console.error(err); });
 }
 
 /* ================= LOGS ================= */
@@ -2322,14 +2500,6 @@ async function retryNotification(id){
 }
 
 /* ================= SETTINGS ================= */
-function saveSettings(){
-  const waWebhook = document.getElementById('waWebhook').value.trim();
-  const smsWebhook = document.getElementById('smsWebhook').value.trim();
-  const aviationKey = document.getElementById('aviationKey').value.trim();
-  db.ref('settings').update({ waWebhook, smsWebhook, aviationKey })
-    .then(() => alert('সেভ হয়েছে'))
-    .catch(err => { alert('সেটিংস সেভ ব্যর্থ: ' + err.message); console.error(err); });
-}
 db.ref('settings').once('value').then(snap => {
   const s = snap.val() || {};
   if(document.getElementById('waWebhook')) document.getElementById('waWebhook').value = s.waWebhook || '';
@@ -2474,6 +2644,16 @@ function getExpiringItems(users, thresholdDays){
       const daysLeft = Math.floor((dateVal - now) / (1000*60*60*24));
       if(daysLeft <= thresholdDays){
         items.push({ uid, label: f.label, dateStr: val, daysLeft });
+      }
+    });
+    const docs = u.documents || {};
+    Object.entries(docs).forEach(([did, d]) => {
+      if(!d || !d.expiry) return;
+      const dateVal = new Date(d.expiry + 'T00:00:00').getTime();
+      if(isNaN(dateVal)) return;
+      const daysLeft = Math.floor((dateVal - now) / (1000*60*60*24));
+      if(daysLeft <= thresholdDays){
+        items.push({ uid, label: d.name || 'ডকুমেন্ট', dateStr: d.expiry, daysLeft });
       }
     });
   });
@@ -2669,6 +2849,55 @@ function renderCalDayList(flightsByDate){
     </div>`;
   }).join('');
 }
+
+// ---- "key: value" line highlighting for details textareas ----
+const COLON_RE = /[:：﹕︓∶]/;
+function escapeHtmlForHl(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatDetailChip(d){
+  const idx = d.search(COLON_RE);
+  if(idx === -1) return escapeHtmlForHl(d);
+  const key = d.slice(0, idx + 1);
+  const rest = d.slice(idx + 1);
+  return `<span class="chipKey">${escapeHtmlForHl(key)}</span>${escapeHtmlForHl(rest)}`;
+}
+function renderDetailsHighlight(text){
+  const lines = text.split('\n').map(line => {
+    const idx = line.search(COLON_RE);
+    if(idx === -1) return escapeHtmlForHl(line);
+    const key = line.slice(0, idx + 1);
+    const rest = line.slice(idx + 1);
+    return `<span class="hlKey">${escapeHtmlForHl(key)}</span>${escapeHtmlForHl(rest)}`;
+  });
+  return lines.join('\n') + '\n';
+}
+function syncDetailsHighlight(textareaId, backdropId){
+  const ta = document.getElementById(textareaId);
+  const bd = document.getElementById(backdropId);
+  if(!ta || !bd) return;
+  bd.innerHTML = renderDetailsHighlight(ta.value);
+  bd.scrollTop = ta.scrollTop;
+}
+function setupHlTextarea(taId, bdId){
+  const ta = document.getElementById(taId);
+  const bd = document.getElementById(bdId);
+  if(!ta || !bd) return;
+  const wrap = ta.closest('.hlWrap');
+  // বাংলা/জটিল স্ক্রিপ্ট টাইপ করার সময় (IME composition), মোবাইল কীবোর্ড টেক্সটএরিয়ার
+  // আসল অক্ষর color:transparent উপেক্ষা করে দেখিয়ে দেয় - তখন এটা পেছনের হাইলাইট
+  // ব্যাকড্রপের উপর লেপে গিয়ে মাত্রা/অক্ষর ওভারল্যাপ দেখায়। কম্পোজিশন চলাকালীন
+  // ব্যাকড্রপ সাময়িক লুকিয়ে দিলে এই সমস্যা হয় না।
+  ta.addEventListener('compositionstart', () => wrap && wrap.classList.add('composing'));
+  ta.addEventListener('compositionend', () => {
+    if(wrap) wrap.classList.remove('composing');
+    syncDetailsHighlight(taId, bdId);
+  });
+  ta.addEventListener('input', () => syncDetailsHighlight(taId, bdId));
+  ta.addEventListener('scroll', () => syncDetailsHighlight(taId, bdId));
+  syncDetailsHighlight(taId, bdId);
+}
+[['veDetails','veDetailsHl'], ['cfVisaDetails','cfVisaDetailsHl']].forEach(([taId, bdId]) => setupHlTextarea(taId, bdId));
 </script>
 </body>
 </html>
