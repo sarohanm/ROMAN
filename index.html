@@ -947,6 +947,15 @@ function renderJourneys(){
               <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
             </div>
             ${renderPaymentSection(jid, j)}
+            <div class="accSectionTitle"><i class="fas fa-hourglass-half"></i>ভিসা প্রসেসিং সময়</div>
+            <div class="accRow">
+              ${visaPromiseStatusHtml(j)}
+              <div class="financeGrid" style="margin-top:8px;">
+                <input type="number" id="vpdays-${jid}" placeholder="কতদিন সময় নিয়েছি (দিন)" value="${j.visa_promised_days || ''}">
+                <input type="date" id="vpstart-${jid}" title="কবে থেকে গণনা শুরু" value="${j.visa_promise_start ? new Date(j.visa_promise_start).toISOString().slice(0,10) : new Date().toISOString().slice(0,10)}">
+              </div>
+              <button class="btn small" onclick="saveVisaPromise('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
+            </div>
             <div class="accSectionTitle"><i class="fas fa-route"></i>পরবর্তী স্টেজে যান</div>
             ${nextStages.length ? `
             <div class="accRow">
@@ -1000,6 +1009,33 @@ async function saveJourneyFinance(journeyId){
   const cost_flight = parseFloat(document.getElementById('flight-' + journeyId).value) || 0;
   await db.ref('journeys/' + journeyId).update({ agency_fee, cost_medical, cost_visa, cost_flight });
   alert('হিসাব সেভ হয়েছে');
+}
+
+function visaPromiseStatusHtml(j){
+  if(!j || !j.visa_promised_days || !j.visa_promise_start) return '<span class="hint">এখনো কোনো সময়সীমা সেট করা হয়নি</span>';
+  const start = new Date(j.visa_promise_start);
+  const deadline = new Date(start.getTime() + j.visa_promised_days * 86400000);
+  const today = new Date();
+  const msLeft = deadline.setHours(23,59,59,999) - today.getTime();
+  const daysLeft = Math.ceil(msLeft / 86400000);
+  const deadlineStr = deadline.toLocaleDateString('bn-BD');
+  let color = 'var(--ok)', text = `বাকি আছে ${daysLeft} দিন`;
+  if(daysLeft < 0){ color = 'var(--fail)'; text = `মেয়াদ শেষ, ${Math.abs(daysLeft)} দিন পার হয়ে গেছে`; }
+  else if(daysLeft <= 3){ color = 'var(--gold)'; text = `বাকি আছে মাত্র ${daysLeft} দিন`; }
+  return `<div style="display:flex;flex-direction:column;gap:2px;">
+    <span style="font-size:12.5px;color:#5b6b7a;">প্রতিশ্রুত সময়: <b>${j.visa_promised_days} দিন</b> (শুরু: ${start.toLocaleDateString('bn-BD')})</span>
+    <span style="font-size:12.5px;color:#5b6b7a;">ডেডলাইন: <b>${deadlineStr}</b></span>
+    <span style="font-size:13px;font-weight:700;color:${color};">${text}</span>
+  </div>`;
+}
+
+async function saveVisaPromise(journeyId){
+  const days = parseInt(document.getElementById('vpdays-' + journeyId).value) || 0;
+  const startVal = document.getElementById('vpstart-' + journeyId).value;
+  if(!days || !startVal){ alert('দিন সংখ্যা এবং শুরুর তারিখ দিন'); return; }
+  const visa_promise_start = new Date(startVal).getTime();
+  await db.ref('journeys/' + journeyId).update({ visa_promised_days: days, visa_promise_start });
+  alert('ভিসা প্রসেসিং সময়সীমা সেভ হয়েছে');
 }
 
 /* ================= PAYMENT / INSTALLMENT TRACKING ================= */
@@ -1903,7 +1939,7 @@ function renderUDocumentsRows(){
     return `
     <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:8px;">
       <div style="flex:1;display:grid;gap:6px;">
-        <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
+        <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png,*/*" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
         ${pages.length ? `
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;">
             ${pages.map((p, pi) => `
@@ -1917,13 +1953,13 @@ function renderUDocumentsRows(){
             `).join('')}
           </div>
         ` : ''}
-        <button type="button" class="btn small gold" style="width:auto;padding:4px 10px;font-size:11px;" onclick="document.getElementById('uDocFile${i}').click()"><i class="fas fa-plus"></i> ${pages.length ? 'আরও পৃষ্ঠা যোগ করুন' : 'ছবি যোগ করুন'}</button>
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
+        <button type="button" class="btn small gold" style="width:auto;padding:4px 10px;font-size:11px;" onclick="document.getElementById('uDocFile${i}').click()"><i class="fas fa-plus"></i> ${pages.length ? 'আরও পৃষ্ঠা যোগ করুন' : 'ডকুমেন্ট যোগ করুন'}</button>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center;">
           <input type="text" style="width:100%;box-sizing:border-box;" placeholder="ডকুমেন্টের নাম (যেমন: পাসপোর্ট, ভিসা)" value="${d.name || ''}" oninput="updateUDocumentField(${i},'name',this.value)">
+          <button type="button" class="btn small danger" style="width:auto;padding:6px 10px;flex-shrink:0;" onclick="removeUDocumentRow(${i})"><i class="fas fa-xmark"></i></button>
           <input type="date" title="মেয়াদ শেষের তারিখ (ঐচ্ছিক)" style="width:100%;box-sizing:border-box;" value="${d.expiry || ''}" oninput="updateUDocumentField(${i},'expiry',this.value)">
         </div>
       </div>
-      <button type="button" class="btn small danger" style="width:auto;padding:6px 10px;" onclick="removeUDocumentRow(${i})"><i class="fas fa-xmark"></i></button>
     </div>
   `;
   }).join('');
@@ -1934,7 +1970,7 @@ function addUDocumentRow(){
   // If the user cancels the file picker, no empty row is added.
   const tempInput = document.createElement('input');
   tempInput.type = 'file';
-  tempInput.accept = 'image/*,application/pdf,.pdf';
+  tempInput.accept = 'image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png,*/*';
   tempInput.multiple = true;
   tempInput.onchange = (e) => {
     const files = Array.from(e.target.files || []);
