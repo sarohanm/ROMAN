@@ -489,11 +489,15 @@
 
       <div style="text-align:center;margin-bottom:10px;">
         <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
-        <div id="uPhotoCircle" onclick="document.getElementById('uPhoto').click()" style="width:76px;height:76px;border-radius:50%;margin:0 auto;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
-          <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
-          <img id="uPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
+        <div style="position:relative;width:76px;margin:0 auto;">
+          <div id="uPhotoCircle" onclick="document.getElementById('uPhoto').click()" style="width:76px;height:76px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+            <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
+            <img id="uPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
+          </div>
+          <button type="button" onclick="document.getElementById('uPhotoCam').click()" title="ক্যামেরা দিয়ে তুলুন" style="position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;"><i class="fas fa-camera"></i></button>
         </div>
         <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)" style="display:none;">
+        <input type="file" id="uPhotoCam" accept="image/*" capture="user" onchange="handleUserPhotoSelect(event)" style="display:none;">
       </div>
 
       <div class="formGrid" id="uFormGrid">
@@ -514,6 +518,18 @@
         <label class="hint" style="display:block;margin-bottom:6px;">ডকুমেন্ট (ঐচ্ছিক) — মেয়াদ দিলে অটো এক্সপায়ারি রিমাইন্ডার পাবেন</label>
         <div id="uDocumentsList"></div>
         <button type="button" class="btn small gold" style="width:auto;margin-top:2px;" onclick="addUDocumentRow()"><i class="fas fa-plus"></i> ডকুমেন্ট যোগ করুন</button>
+      </div>
+      <div id="uSellExtraWrap" style="display:none;margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:4px;">যোগাযোগের নম্বর</label>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
+          <input type="tel" id="uCustomerPhone" placeholder="ইউজারের মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
+          <input type="tel" id="uFatherPhone" placeholder="বাবার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
+        </div>
+        <label class="hint" style="display:block;margin:10px 0 4px;">ভিসাটি কতদিনের মধ্যে প্রসেসিং করে দিবেন (ঐচ্ছিক)</label>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
+          <input type="number" id="uVisaPromiseDays" placeholder="যেমন: ৩০ দিন">
+          <input type="date" id="uVisaPromiseStart" title="কবে থেকে গণনা শুরু">
+        </div>
       </div>
       <div id="uDepositWrap" style="display:none;margin-top:10px;">
         <label class="hint" style="display:block;margin-bottom:4px;">প্রাথমিক জমা / অগ্রিম টাকা (৳) (ঐচ্ছিক)</label>
@@ -928,6 +944,7 @@ function renderJourneys(){
             <div class="accSectionTitle" style="margin-top:0;"><i class="fas fa-id-card"></i>মৌলিক তথ্য</div>
             <div class="accInfoGrid">
               <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>ফোন</div><div class="aii-val" title="${getUserPhone(u)}">${getUserPhone(u)}</div></div>
+              ${u.father_phone ? `<div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>বাবার ফোন</div><div class="aii-val" title="${u.father_phone}">${u.father_phone}</div></div>` : ''}
               <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-passport"></i>পাসপোর্ট</div><div class="aii-val" title="${getUserPassport(u)}">${getUserPassport(u)}</div></div>
               <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-user-tie"></i>এজেন্ট রেফারেন্স</div><div class="aii-val" title="${agentName}">${agentName}</div></div>
               ${j ? `<div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-plane"></i>ফ্লাইট</div><div class="aii-val" title="${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div></div>` : ''}
@@ -1137,9 +1154,9 @@ function getUserPhone(u){ return getUserField(u, 'phone', ['ফোন','phone','
 function getUserPassport(u){ return getUserField(u, 'passport_no', ['পাসপোর্ট','passport']) || '-'; }
 
 function addUser(){
-  const country = document.getElementById('uCountry').value;
+  const country = document.getElementById('uCountry').value || uSellModeCountry || '';
   if(!country){ alert('দেশ নির্বাচন করুন'); return; }
-  const visa_type_id = document.getElementById('uVisaType').value || null;
+  const visa_type_id = document.getElementById('uVisaType').value || uSellModeVisaId || null;
 
   const custom_data = {};
   Object.entries(customFields).forEach(([fid, f]) => {
@@ -1148,10 +1165,25 @@ function addUser(){
   });
   const agent_id = document.getElementById('uAgentRef').value || null;
   const notes = document.getElementById('uNotes').value.trim();
+  const phoneEl = document.getElementById('uCustomerPhone');
+  const fatherPhoneEl = document.getElementById('uFatherPhone');
+  const phone = phoneEl ? phoneEl.value.trim() : '';
+  const father_phone = fatherPhoneEl ? fatherPhoneEl.value.trim() : '';
 
   if(editingUserUid){
     const updates = { country, visa_type_id, custom_data, agent_id, notes };
+    if(phone) updates.phone = phone;
+    if(father_phone) updates.father_phone = father_phone;
     if(uPhotoBase64) updates.photoBase64 = uPhotoBase64;
+    const ejVp = getJourneyForUser(editingUserUid);
+    const ejVpId = ejVp ? Object.entries(journeysCache).find(([id, jj]) => jj === ejVp)[0] : null;
+    const vpDaysElE = document.getElementById('uVisaPromiseDays');
+    const vpStartElE = document.getElementById('uVisaPromiseStart');
+    const vpDaysE = vpDaysElE ? parseInt(vpDaysElE.value) : NaN;
+    const vpStartE = vpStartElE ? vpStartElE.value : '';
+    if(ejVpId && !isNaN(vpDaysE) && vpDaysE > 0 && vpStartE){
+      db.ref('journeys/' + ejVpId).update({ visa_promised_days: vpDaysE, visa_promise_start: new Date(vpStartE).getTime() });
+    }
     db.ref('users/' + editingUserUid).update(updates)
       .then(() => { closeAddUserModal(); alert('তথ্য সফলভাবে পরিবর্তন হয়েছে!'); })
       .catch(err => { alert('পরিবর্তন সেভ করতে ব্যর্থ: ' + err.message); console.error('editUser error:', err); });
@@ -1160,6 +1192,8 @@ function addUser(){
 
   const userRef = db.ref('users').push();
   const newUser = { country, visa_type_id, doc_status: {}, custom_data, agent_id, notes, created_at: Date.now() };
+  if(phone) newUser.phone = phone;
+  if(father_phone) newUser.father_phone = father_phone;
   if(uPhotoBase64) newUser.photoBase64 = uPhotoBase64;
   const documents = {};
   uDocuments.forEach((d, i) => {
@@ -1173,13 +1207,22 @@ function addUser(){
   const depositNoteEl = document.getElementById('uDepositNote');
   const depositAmt = depositAmtEl ? parseFloat(depositAmtEl.value) : NaN;
   const depositNote = depositNoteEl ? depositNoteEl.value.trim() : '';
+  const vpDaysEl = document.getElementById('uVisaPromiseDays');
+  const vpStartEl = document.getElementById('uVisaPromiseStart');
+  const vpDays = vpDaysEl ? parseInt(vpDaysEl.value) : NaN;
+  const vpStart = vpStartEl ? vpStartEl.value : '';
   userRef.set(newUser)
     .then(() => {
       const journeyRef = db.ref('journeys').push();
-      journeyRef.set({
+      const journeyData = {
         user_id: userRef.key, current_stage: 'DOC_COLLECTED', updated_at: Date.now(),
         agency_fee: 0, cost_medical: 0, cost_visa: 0, cost_flight: 0
-      });
+      };
+      if(!isNaN(vpDays) && vpDays > 0 && vpStart){
+        journeyData.visa_promised_days = vpDays;
+        journeyData.visa_promise_start = new Date(vpStart).getTime();
+      }
+      journeyRef.set(journeyData);
       if(!isNaN(depositAmt) && depositAmt > 0){
         journeyRef.child('payments').push({ amount: depositAmt, note: depositNote || '', date: Date.now() });
       }
@@ -1930,6 +1973,8 @@ function loadCustomFields(){
 let editingUserUid = null;
 let uPhotoBase64 = null;
 let uDocuments = [];
+let uSellModeCountry = null;
+let uSellModeVisaId = null;
 
 function renderUDocumentsRows(){
   const wrap = document.getElementById('uDocumentsList');
@@ -2072,12 +2117,14 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   uPhotoBase64 = null;
   uDocuments = [];
   const isSellMode = !!prefillVisaId;
+  uSellModeCountry = isSellMode ? (prefillCountry || null) : null;
+  uSellModeVisaId = isSellMode ? (prefillVisaId || null) : null;
   document.getElementById('uModalTitle').textContent = isSellMode ? 'ভিসা বিক্রি করুন' : 'নতুন ইউজার যোগ করুন';
   document.getElementById('uSubmitBtn').textContent = 'যোগ করুন';
   document.getElementById('uCountry').value = prefillCountry || '';
   document.getElementById('uNotes').value = '';
   document.getElementById('uPhoto').value = '';
-  document.getElementById('uPhotoPreview').style.display = 'none';
+  document.getElementById('uPhotoCam').value = '';
   document.getElementById('uPhotoIcon').style.display = '';
   populateUVisaTypeSelect(prefillCountry || '', prefillVisaId || '');
   populateAgentRefSelect('');
@@ -2088,6 +2135,11 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   if(isSellMode) document.getElementById('uVisaTypeWrap').style.display = 'none';
   document.getElementById('customFieldsWrap').style.display = isSellMode ? 'none' : '';
   document.getElementById('uDocumentsWrap').style.display = isSellMode ? 'block' : 'none';
+  document.getElementById('uSellExtraWrap').style.display = isSellMode ? 'block' : 'none';
+  document.getElementById('uCustomerPhone').value = '';
+  document.getElementById('uFatherPhone').value = '';
+  document.getElementById('uVisaPromiseDays').value = '';
+  document.getElementById('uVisaPromiseStart').value = new Date().toISOString().slice(0,10);
   document.getElementById('uDepositWrap').style.display = isSellMode ? 'block' : 'none';
   document.getElementById('uDepositAmt').value = '';
   document.getElementById('uDepositNote').value = '';
@@ -2096,17 +2148,26 @@ function openAddUserModal(prefillCountry, prefillVisaId){
 
 function openEditUserModal(uid){
   editingUserUid = uid;
+  uSellModeCountry = null;
+  uSellModeVisaId = null;
   const u = (window._usersCache || {})[uid] || {};
   uPhotoBase64 = u.photoBase64 || null;
   uDocuments = [];
   document.getElementById('uDocumentsWrap').style.display = 'none';
   document.getElementById('uDepositWrap').style.display = 'none';
+  document.getElementById('uSellExtraWrap').style.display = 'block';
+  document.getElementById('uCustomerPhone').value = u.phone || '';
+  document.getElementById('uFatherPhone').value = u.father_phone || '';
+  { const ej = getJourneyForUser(uid);
+    document.getElementById('uVisaPromiseDays').value = (ej && ej.visa_promised_days) || '';
+    document.getElementById('uVisaPromiseStart').value = (ej && ej.visa_promise_start) ? new Date(ej.visa_promise_start).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  }
   document.getElementById('uModalTitle').textContent = 'ইউজারের তথ্য এডিট করুন';
   document.getElementById('uSubmitBtn').textContent = 'পরিবর্তন সংরক্ষণ করুন';
   document.getElementById('uCountry').value = u.country || '';
   document.getElementById('uNotes').value = u.notes || '';
   document.getElementById('uPhoto').value = '';
-  populateUVisaTypeSelect(u.country || '', u.visa_type_id || '');
+  document.getElementById('uPhotoCam').value = '';
   if(uPhotoBase64){
     document.getElementById('uPhotoPreview').src = uPhotoBase64;
     document.getElementById('uPhotoPreview').style.display = 'block';
@@ -2128,6 +2189,8 @@ function closeAddUserModal(){
   editingUserUid = null;
   uPhotoBase64 = null;
   uDocuments = [];
+  uSellModeCountry = null;
+  uSellModeVisaId = null;
 }
 
 function handleUserPhotoSelect(e){
