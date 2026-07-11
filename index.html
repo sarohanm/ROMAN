@@ -490,12 +490,18 @@
       <div style="text-align:center;margin-bottom:10px;">
         <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
         <div style="position:relative;width:76px;margin:0 auto;">
-          <div id="uPhotoCircle" onclick="document.getElementById('uPhoto').click()" style="width:76px;height:76px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+          <div id="uPhotoCircle" style="width:76px;height:76px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;">
             <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
             <img id="uPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
           </div>
         </div>
-        <input type="file" id="uPhoto" accept="image/*" capture="user" onchange="handleUserPhotoSelect(event)" style="display:none;">
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;">
+          <button type="button" class="btn small gold" onclick="document.getElementById('uPhotoCam').click()"><i class="fas fa-camera"></i> ক্যামেরা</button>
+          <button type="button" class="btn small" style="background:var(--navy2);color:#fff;" onclick="document.getElementById('uPhotoGallery').click()"><i class="fas fa-images"></i> গ্যালারি</button>
+        </div>
+        <input type="file" id="uPhotoCam" accept="image/*" capture="user" onchange="handleUserPhotoSelect(event)" style="display:none;">
+        <input type="file" id="uPhotoGallery" accept="image/*" onchange="handleUserPhotoSelect(event)" style="display:none;">
+        <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)" style="display:none;">
         <input type="text" id="uFullName" placeholder="ইউজারের নাম" style="width:100%;max-width:260px;box-sizing:border-box;margin:10px auto 0;display:block;text-align:center;">
       </div>
 
@@ -2124,6 +2130,8 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   document.getElementById('uCountry').value = prefillCountry || '';
   document.getElementById('uNotes').value = '';
   document.getElementById('uPhoto').value = '';
+  document.getElementById('uPhotoCam').value = '';
+  document.getElementById('uPhotoGallery').value = '';
   document.getElementById('uFullName').value = '';
   document.getElementById('uPhotoIcon').style.display = '';
   populateUVisaTypeSelect(prefillCountry || '', prefillVisaId || '');
@@ -2167,6 +2175,8 @@ function openEditUserModal(uid){
   document.getElementById('uCountry').value = u.country || '';
   document.getElementById('uNotes').value = u.notes || '';
   document.getElementById('uPhoto').value = '';
+  document.getElementById('uPhotoCam').value = '';
+  document.getElementById('uPhotoGallery').value = '';
   document.getElementById('uFullName').value = u.full_name || getUserField(u, 'full_name', ['নাম','name']) || '';
   if(uPhotoBase64){
     document.getElementById('uPhotoPreview').src = uPhotoBase64;
