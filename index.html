@@ -1986,6 +1986,7 @@ function renderUDocumentsRows(){
     <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:8px;">
       <div style="flex:1;display:grid;gap:6px;">
         <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
+        <input type="file" id="uDocFileCam${i}" accept="image/*" capture="user" style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
         ${pages.length ? `
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;">
             ${pages.map((p, pi) => `
@@ -1999,7 +2000,7 @@ function renderUDocumentsRows(){
             `).join('')}
           </div>
         ` : ''}
-        <button type="button" class="btn small gold" style="width:auto;padding:4px 10px;font-size:11px;" onclick="document.getElementById('uDocFile${i}').click()"><i class="fas fa-plus"></i> ${pages.length ? 'আরও পৃষ্ঠা যোগ করুন' : 'ডকুমেন্ট যোগ করুন'}</button>
+        <button type="button" class="btn small gold" style="width:auto;padding:4px 10px;font-size:11px;" onclick="openUDocSheet(${i})"><i class="fas fa-plus"></i> ${pages.length ? 'আরও পৃষ্ঠা যোগ করুন' : 'ডকুমেন্ট যোগ করুন'}</button>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;align-items:center;">
           <input type="text" style="width:100%;box-sizing:border-box;" placeholder="ডকুমেন্টের নাম (যেমন: পাসপোর্ট, ভিসা)" value="${d.name || ''}" oninput="updateUDocumentField(${i},'name',this.value)">
           <button type="button" class="btn small danger" style="width:auto;padding:6px 10px;flex-shrink:0;" onclick="removeUDocumentRow(${i})"><i class="fas fa-xmark"></i></button>
@@ -2203,6 +2204,26 @@ function openUPhotoSheet(){
 function closeUPhotoSheet(){
   document.getElementById('uPhotoSheetOverlay').style.display = 'none';
   document.getElementById('uPhotoSheet').style.display = 'none';
+}
+let currentUDocSheetIndex = null;
+function openUDocSheet(i){
+  currentUDocSheetIndex = i;
+  document.getElementById('uDocSheetOverlay').style.display = 'block';
+  document.getElementById('uDocSheet').style.display = 'block';
+}
+function closeUDocSheet(){
+  document.getElementById('uDocSheetOverlay').style.display = 'none';
+  document.getElementById('uDocSheet').style.display = 'none';
+}
+function triggerUDocCam(){
+  if(currentUDocSheetIndex === null) return;
+  const el = document.getElementById('uDocFileCam' + currentUDocSheetIndex);
+  if(el) el.click();
+}
+function triggerUDocGallery(){
+  if(currentUDocSheetIndex === null) return;
+  const el = document.getElementById('uDocFile' + currentUDocSheetIndex);
+  if(el) el.click();
 }
 function handleUserPhotoSelect(e){
   const file = e.target.files[0];
@@ -3020,6 +3041,24 @@ function setupHlTextarea(taId, bdId){
       <span style="font-size:13px;color:#3a3a3a;">ক্যামেরা</span>
     </button>
     <button type="button" onclick="document.getElementById('uPhotoGalleryInput').click();closeUPhotoSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:64px;height:64px;border-radius:16px;background:#e8edfd;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
+        <i class="fas fa-images" style="font-size:26px;color:var(--teal);"></i>
+      </div>
+      <span style="font-size:13px;color:#3a3a3a;">গ্যালারি</span>
+    </button>
+  </div>
+</div>
+<div id="uDocSheetOverlay" onclick="closeUDocSheet()" style="display:none;position:fixed;inset:0;background:rgba(20,24,32,.5);z-index:900;"></div>
+<div id="uDocSheet" style="display:none;position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:#f2f2f2;border-radius:20px 20px 0 0;z-index:901;padding:18px 20px calc(20px + env(safe-area-inset-bottom,0));box-shadow:0 -8px 30px rgba(20,24,32,.25);">
+  <button type="button" onclick="closeUDocSheet()" style="background:none;border:none;color:var(--teal);font-size:17px;font-weight:600;padding:0;cursor:pointer;">বাতিল</button>
+  <div style="display:flex;gap:34px;justify-content:center;margin-top:22px;">
+    <button type="button" onclick="triggerUDocCam();closeUDocSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:64px;height:64px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
+        <i class="fas fa-camera" style="font-size:26px;color:#1c2733;"></i>
+      </div>
+      <span style="font-size:13px;color:#3a3a3a;">ক্যামেরা</span>
+    </button>
+    <button type="button" onclick="triggerUDocGallery();closeUDocSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
       <div style="width:64px;height:64px;border-radius:16px;background:#e8edfd;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
         <i class="fas fa-images" style="font-size:26px;color:var(--teal);"></i>
       </div>
