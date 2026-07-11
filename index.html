@@ -26,6 +26,9 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+<!-- Cropper.js for straightening/cropping crooked document photos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 
 <style>
   :root{
@@ -494,10 +497,9 @@
             <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
             <img id="uPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
           </div>
-          <button type="button" onclick="document.getElementById('uPhotoCam').click()" title="ক্যামেরা দিয়ে তুলুন" style="position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:var(--gold);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;"><i class="fas fa-camera"></i></button>
         </div>
         <input type="file" id="uPhoto" accept="image/*" onchange="handleUserPhotoSelect(event)" style="display:none;">
-        <input type="file" id="uPhotoCam" accept="image/*" capture="user" onchange="handleUserPhotoSelect(event)" style="display:none;">
+        <input type="text" id="uFullName" placeholder="ইউজারের নাম" style="width:100%;max-width:260px;box-sizing:border-box;margin:10px auto 0;display:block;text-align:center;">
       </div>
 
       <div class="formGrid" id="uFormGrid">
@@ -543,6 +545,31 @@
         <textarea id="uNotes" class="noteBox" placeholder="এই ইউজার সম্পর্কে নোট লিখুন..."></textarea>
       </div>
       <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" id="uSubmitBtn" onclick="addUser()">যোগ করুন</button></div>
+    </div>
+  </div>
+
+  <!-- DOCUMENT IMAGE EDITOR MODAL (straighten / crop crooked photos) -->
+  <div class="modalOverlay" id="docEditModal">
+    <div class="modalBox" style="max-width:480px;">
+      <button class="close-x" onclick="closeDocEditModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">ছবি সোজা করুন / ক্রপ করুন</h3>
+      <div style="max-height:360px;overflow:hidden;background:#1c2733;border-radius:8px;">
+        <img id="docEditImg" style="display:block;max-width:100%;">
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button type="button" class="btn small" style="width:auto;" onclick="docEditRotate90(-90)"><i class="fas fa-rotate-left"></i> ৯০° ঘোরান</button>
+        <button type="button" class="btn small" style="width:auto;" onclick="docEditRotate90(90)"><i class="fas fa-rotate-right"></i> ৯০° ঘোরান</button>
+        <button type="button" class="btn small" style="width:auto;" onclick="docEditReset()"><i class="fas fa-arrows-rotate"></i> রিসেট</button>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="hint" style="display:block;margin-bottom:4px;">বাঁকা ছবি সূক্ষ্মভাবে সোজা করুন</label>
+        <input type="range" id="docEditFineRotate" min="-45" max="45" step="0.5" value="0" style="width:100%;" oninput="docEditFineRotateInput(this.value)">
+      </div>
+      <div class="hint" style="margin-top:6px;">ছবির কোণ টেনে ক্রপ বক্স ঠিক করুন যাতে শুধু ডকুমেন্টটুকু থাকে।</div>
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        <button type="button" class="btn" style="flex:1;" onclick="closeDocEditModal()">বাতিল</button>
+        <button type="button" class="btn gold" style="flex:1;" onclick="saveDocEdit()">সেভ করুন</button>
+      </div>
     </div>
   </div>
 
@@ -1165,13 +1192,14 @@ function addUser(){
   });
   const agent_id = document.getElementById('uAgentRef').value || null;
   const notes = document.getElementById('uNotes').value.trim();
+  const full_name = document.getElementById('uFullName').value.trim();
   const phoneEl = document.getElementById('uCustomerPhone');
   const fatherPhoneEl = document.getElementById('uFatherPhone');
   const phone = phoneEl ? phoneEl.value.trim() : '';
   const father_phone = fatherPhoneEl ? fatherPhoneEl.value.trim() : '';
 
   if(editingUserUid){
-    const updates = { country, visa_type_id, custom_data, agent_id, notes };
+    const updates = { country, visa_type_id, custom_data, agent_id, notes, full_name };
     if(phone) updates.phone = phone;
     if(father_phone) updates.father_phone = father_phone;
     if(uPhotoBase64) updates.photoBase64 = uPhotoBase64;
@@ -1191,7 +1219,7 @@ function addUser(){
   }
 
   const userRef = db.ref('users').push();
-  const newUser = { country, visa_type_id, doc_status: {}, custom_data, agent_id, notes, created_at: Date.now() };
+  const newUser = { country, visa_type_id, doc_status: {}, custom_data, agent_id, notes, full_name, created_at: Date.now() };
   if(phone) newUser.phone = phone;
   if(father_phone) newUser.father_phone = father_phone;
   if(uPhotoBase64) newUser.photoBase64 = uPhotoBase64;
@@ -1993,6 +2021,7 @@ function renderUDocumentsRows(){
                   ? `<img src="${p.fileBase64}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;">`
                   : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;"><i class="fas fa-file-lines" style="font-size:22px;color:var(--navy2);"></i></div>`}
                 <span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(20,24,32,.7);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">পৃষ্ঠা ${pi+1}</span>
+                ${p.fileBase64 && p.fileBase64.startsWith('data:image') ? `<button type="button" onclick="openDocEditor(${i},${pi})" title="সোজা করুন / ক্রপ করুন" style="position:absolute;top:-6px;left:-6px;width:20px;height:20px;border-radius:50%;background:var(--teal);color:#fff;border:2px solid #fff;font-size:9px;line-height:1;cursor:pointer;"><i class="fas fa-pen"></i></button>` : ''}
                 <button type="button" onclick="removeUDocPage(${i},${pi})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
               </div>
             `).join('')}
@@ -2084,6 +2113,78 @@ function processUDocumentFile(file, i){
   }
 }
 
+// ---- Document image editor (straighten crooked photos / crop) ----
+let docEditCropper = null;
+let docEditTarget = { docIndex: null, pageIndex: null };
+let docEditBaseRotation = 0;
+
+function openDocEditor(i, pi){
+  const page = uDocuments[i] && uDocuments[i].files && uDocuments[i].files[pi];
+  if(!page || !page.fileBase64 || !page.fileBase64.startsWith('data:image')) return;
+  docEditTarget = { docIndex: i, pageIndex: pi };
+  docEditBaseRotation = 0;
+  document.getElementById('docEditFineRotate').value = 0;
+  const img = document.getElementById('docEditImg');
+  img.src = page.fileBase64;
+  document.getElementById('docEditModal').classList.add('active');
+  if(docEditCropper){ docEditCropper.destroy(); docEditCropper = null; }
+  const initCropper = () => {
+    docEditCropper = new Cropper(img, {
+      viewMode: 1,
+      background: false,
+      autoCropArea: 1,
+      responsive: true,
+      dragMode: 'move',
+      guides: true
+    });
+  };
+  if(img.complete) setTimeout(initCropper, 50);
+  else img.onload = () => setTimeout(initCropper, 50);
+}
+
+function closeDocEditModal(){
+  document.getElementById('docEditModal').classList.remove('active');
+  if(docEditCropper){ docEditCropper.destroy(); docEditCropper = null; }
+  docEditTarget = { docIndex: null, pageIndex: null };
+}
+
+function applyDocEditRotation(fineVal){
+  if(!docEditCropper) return;
+  const fine = fineVal !== undefined ? parseFloat(fineVal) : parseFloat(document.getElementById('docEditFineRotate').value || 0);
+  docEditCropper.rotateTo(docEditBaseRotation + fine);
+}
+
+function docEditRotate90(deg){
+  docEditBaseRotation = (docEditBaseRotation + deg + 360) % 360;
+  applyDocEditRotation();
+}
+
+function docEditFineRotateInput(val){
+  applyDocEditRotation(val);
+}
+
+function docEditReset(){
+  docEditBaseRotation = 0;
+  document.getElementById('docEditFineRotate').value = 0;
+  if(docEditCropper){
+    docEditCropper.reset();
+    docEditCropper.rotateTo(0);
+  }
+}
+
+function saveDocEdit(){
+  if(!docEditCropper) return closeDocEditModal();
+  const canvas = docEditCropper.getCroppedCanvas({ maxWidth: 1400, maxHeight: 1400, imageSmoothingQuality: 'high' });
+  if(!canvas) return closeDocEditModal();
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+  const { docIndex, pageIndex } = docEditTarget;
+  if(uDocuments[docIndex] && uDocuments[docIndex].files && uDocuments[docIndex].files[pageIndex]){
+    uDocuments[docIndex].files[pageIndex].fileBase64 = dataUrl;
+  }
+  closeDocEditModal();
+  renderUDocumentsRows();
+}
+
 function populateAgentRefSelect(selectedAgentId){
   const sel = document.getElementById('uAgentRef');
   if(!sel) return;
@@ -2124,7 +2225,7 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   document.getElementById('uCountry').value = prefillCountry || '';
   document.getElementById('uNotes').value = '';
   document.getElementById('uPhoto').value = '';
-  document.getElementById('uPhotoCam').value = '';
+  document.getElementById('uFullName').value = '';
   document.getElementById('uPhotoIcon').style.display = '';
   populateUVisaTypeSelect(prefillCountry || '', prefillVisaId || '');
   populateAgentRefSelect('');
@@ -2167,7 +2268,7 @@ function openEditUserModal(uid){
   document.getElementById('uCountry').value = u.country || '';
   document.getElementById('uNotes').value = u.notes || '';
   document.getElementById('uPhoto').value = '';
-  document.getElementById('uPhotoCam').value = '';
+  document.getElementById('uFullName').value = u.full_name || getUserField(u, 'full_name', ['নাম','name']) || '';
   if(uPhotoBase64){
     document.getElementById('uPhotoPreview').src = uPhotoBase64;
     document.getElementById('uPhotoPreview').style.display = 'block';
