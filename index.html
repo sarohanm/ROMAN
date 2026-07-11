@@ -1987,12 +1987,15 @@ function renderUDocumentsRows(){
       <div style="flex:1;display:grid;gap:6px;">
         <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
         <input type="file" id="uDocFileCam${i}" accept="image/*" capture="user" style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
+        <input type="file" id="uDocFileVideo${i}" accept="video/*" capture="user" style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
         ${pages.length ? `
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;">
             ${pages.map((p, pi) => `
               <div style="position:relative;">
                 ${p.fileBase64 && p.fileBase64.startsWith('data:image')
                   ? `<img src="${p.fileBase64}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;">`
+                  : p.fileBase64 && p.fileBase64.startsWith('data:video')
+                  ? `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#20242c;"><i class="fas fa-circle-play" style="font-size:24px;color:var(--gold);"></i></div>`
                   : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;"><i class="fas fa-file-lines" style="font-size:22px;color:var(--navy2);"></i></div>`}
                 <span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(20,24,32,.7);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">পৃষ্ঠা ${pi+1}</span>
                 <button type="button" onclick="removeUDocPage(${i},${pi})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
@@ -2218,6 +2221,11 @@ function closeUDocSheet(){
 function triggerUDocCam(){
   if(currentUDocSheetIndex === null) return;
   const el = document.getElementById('uDocFileCam' + currentUDocSheetIndex);
+  if(el) el.click();
+}
+function triggerUDocVideo(){
+  if(currentUDocSheetIndex === null) return;
+  const el = document.getElementById('uDocFileVideo' + currentUDocSheetIndex);
   if(el) el.click();
 }
 function triggerUDocGallery(){
@@ -3051,18 +3059,24 @@ function setupHlTextarea(taId, bdId){
 <div id="uDocSheetOverlay" onclick="closeUDocSheet()" style="display:none;position:fixed;inset:0;background:rgba(20,24,32,.5);z-index:900;"></div>
 <div id="uDocSheet" style="display:none;position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;background:#f2f2f2;border-radius:20px 20px 0 0;z-index:901;padding:18px 20px calc(20px + env(safe-area-inset-bottom,0));box-shadow:0 -8px 30px rgba(20,24,32,.25);">
   <button type="button" onclick="closeUDocSheet()" style="background:none;border:none;color:var(--teal);font-size:17px;font-weight:600;padding:0;cursor:pointer;">বাতিল</button>
-  <div style="display:flex;gap:34px;justify-content:center;margin-top:22px;">
+  <div style="display:flex;gap:22px;justify-content:center;margin-top:22px;">
     <button type="button" onclick="triggerUDocCam();closeUDocSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
       <div style="width:64px;height:64px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
         <i class="fas fa-camera" style="font-size:26px;color:#1c2733;"></i>
       </div>
       <span style="font-size:13px;color:#3a3a3a;">ক্যামেরা</span>
     </button>
+    <button type="button" onclick="triggerUDocVideo();closeUDocSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <div style="width:64px;height:64px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
+        <i class="fas fa-video" style="font-size:26px;color:var(--fail);"></i>
+      </div>
+      <span style="font-size:13px;color:#3a3a3a;">ভিডিও</span>
+    </button>
     <button type="button" onclick="triggerUDocGallery();closeUDocSheet();" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;">
       <div style="width:64px;height:64px;border-radius:16px;background:#e8edfd;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(20,24,32,.15);">
         <i class="fas fa-images" style="font-size:26px;color:var(--teal);"></i>
       </div>
-      <span style="font-size:13px;color:#3a3a3a;">গ্যালারি</span>
+      <span style="font-size:13px;color:#3a3a3a;">ফাইল</span>
     </button>
   </div>
 </div>
