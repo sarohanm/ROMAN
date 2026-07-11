@@ -1984,7 +1984,7 @@ function renderUDocumentsRows(){
     return `
     <div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:8px;padding:8px;border:1px solid var(--border);border-radius:8px;">
       <div style="flex:1;display:grid;gap:6px;">
-        <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
+        <input type="file" id="uDocFile${i}" accept="image/*,application/pdf,.pdf,.doc,.docx,.jpg,.jpeg,.png,*/*" multiple style="display:none;" onchange="handleUDocumentFileSelect(event,${i})">
         ${pages.length ? `
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;">
             ${pages.map((p, pi) => `
