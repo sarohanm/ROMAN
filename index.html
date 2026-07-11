@@ -157,6 +157,8 @@
   .badge-fail{color:var(--fail);font-weight:600;}
   .badge-pending{color:var(--warn);font-weight:600;}
   .formGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;}
+  .customFieldsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+  .customFieldsGrid input,.customFieldsGrid select,.customFieldsGrid textarea{width:100%;box-sizing:border-box;}
   .formGrid input,.formGrid select{width:100%;}
   .hint{font-size:11px;color:#8896ab;margin-top:4px;}
   .flex{display:flex;gap:8px;align-items:center;}
@@ -203,7 +205,9 @@
   .accBody .accRow{padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
   .accBody .accRow:last-child{border-bottom:none;}
   .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
-  .accBody .accActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .accBody .accActions{display:flex;flex-wrap:nowrap;gap:6px;margin-top:10px;}
+  .accBody .accActions .btn.small{flex:1;padding:8px 2px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;}
+  .accBody .accActions .btn.small i{margin-right:3px;}
   .accInfoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--border);}
   .accInfoItem{min-width:0;}
   .accInfoItem .aii-lbl{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:3px;}
@@ -513,16 +517,11 @@
         </select>
       </div>
       <div id="customFieldsWrap"></div>
-      <div id="uDocumentsWrap" style="display:none;margin-top:10px;">
-        <label class="hint" style="display:block;margin-bottom:6px;">ডকুমেন্ট (ঐচ্ছিক) — মেয়াদ দিলে অটো এক্সপায়ারি রিমাইন্ডার পাবেন</label>
-        <div id="uDocumentsList"></div>
-        <button type="button" class="btn small gold" style="width:auto;margin-top:2px;" onclick="addUDocumentRow()"><i class="fas fa-plus"></i> ডকুমেন্ট যোগ করুন</button>
-      </div>
       <div id="uSellExtraWrap" style="display:none;margin-top:10px;">
         <label class="hint" style="display:block;margin-bottom:4px;">যোগাযোগের নম্বর</label>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
-          <input type="tel" id="uCustomerPhone" placeholder="ইউজারের মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
-          <input type="tel" id="uFatherPhone" placeholder="বাবার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
+          <input type="tel" id="uCustomerPhone" placeholder="মাতার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
+          <input type="tel" id="uFatherPhone" placeholder="পিতার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
         </div>
         <label class="hint" style="display:block;margin:10px 0 4px;">ভিসাটি কতদিনের মধ্যে প্রসেসিং করে দিবেন (ঐচ্ছিক)</label>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
@@ -540,6 +539,11 @@
       <div style="margin-top:10px;">
         <label class="hint" style="display:block;margin-bottom:4px;">নোট (ঐচ্ছিক)</label>
         <textarea id="uNotes" class="noteBox" placeholder="এই ইউজার সম্পর্কে নোট লিখুন..."></textarea>
+      </div>
+      <div id="uDocumentsWrap" style="display:none;margin-top:10px;">
+        <label class="hint" style="display:block;margin-bottom:6px;">ডকুমেন্ট (ঐচ্ছিক) — মেয়াদ দিলে অটো এক্সপায়ারি রিমাইন্ডার পাবেন</label>
+        <div id="uDocumentsList"></div>
+        <button type="button" class="btn small gold" style="width:auto;margin-top:2px;" onclick="addUDocumentRow()"><i class="fas fa-plus"></i> ডকুমেন্ট যোগ করুন</button>
       </div>
       <div style="margin-top:10px;"><button type="button" class="btn small" style="width:100%;" id="uSubmitBtn" onclick="addUser()">যোগ করুন</button></div>
     </div>
@@ -918,7 +922,7 @@ function renderJourneys(){
           ? `<img src="${u.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
           : `<div class="avatarCircle">${initials}</div>`;
         const agentName = u.agent_id && agentsCache[u.agent_id] ? agentsCache[u.agent_id].name : 'সরাসরি';
-        const customEntries = Object.entries(u.custom_data || {}).filter(([fid, val]) => val);
+        const customEntries = Object.entries(u.custom_data || {}).filter(([fid, val]) => val && customFields[fid]);
         const customHtml = customEntries.length ? `
             <div class="accSectionTitle"><i class="fas fa-list-ul"></i>কাস্টম তথ্য</div>
             <div class="accInfoGrid">
@@ -933,53 +937,19 @@ function renderJourneys(){
             ${avatarHtml}
             <div class="accTextWrap">
               <div class="accName">${getUserName(u)}</div>
-              <div class="accSub">${flag} ${u.country || '-'}</div>
+              <div class="accSub">${flag} ${u.country || '-'}${getUserPhone(u) && getUserPhone(u) !== '-' ? ' · ' + getUserPhone(u) : ''}</div>
+              ${j ? visaPromiseCompactHtml(j) : ''}
               <div style="margin-top:6px;">${j ? stagePillHtml(j.current_stage) : '<span class="stagePill">শুরু হয়নি</span>'}</div>
               ${j ? stageTrackHtml(j.current_stage) : ''}
             </div>
             <span id="chev-j-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
           </div>
           <div class="accBody" id="acc-j-${uid}">
-            <div class="accSectionTitle" style="margin-top:0;"><i class="fas fa-id-card"></i>মৌলিক তথ্য</div>
-            <div class="accInfoGrid">
-              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>ফোন</div><div class="aii-val" title="${getUserPhone(u)}">${getUserPhone(u)}</div></div>
-              ${u.father_phone ? `<div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-phone"></i>বাবার ফোন</div><div class="aii-val" title="${u.father_phone}">${u.father_phone}</div></div>` : ''}
-              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-passport"></i>পাসপোর্ট</div><div class="aii-val" title="${getUserPassport(u)}">${getUserPassport(u)}</div></div>
-              <div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-user-tie"></i>এজেন্ট রেফারেন্স</div><div class="aii-val" title="${agentName}">${agentName}</div></div>
-              ${j ? `<div class="accInfoItem"><div class="aii-lbl"><i class="fas fa-plane"></i>ফ্লাইট</div><div class="aii-val" title="${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}">${j.flight_datetime ? new Date(j.flight_datetime).toLocaleString('bn-BD') : '-'}</div></div>` : ''}
-            </div>
             ${customHtml}
-            <div class="accSectionTitle"><i class="fas fa-folder-open"></i>ডকুমেন্ট স্ট্যাটাস</div>
+            <div class="accSectionTitle" style="margin-top:0;"><i class="fas fa-folder-open"></i>ডকুমেন্ট স্ট্যাটাস</div>
             <div class="accRow noBorder">${docStatus}</div>
             ${j ? `
-            <div class="accSectionTitle"><i class="fas fa-sack-dollar"></i>আয়/খরচ (৳)</div>
-            <div class="accRow">
-              <div class="financeGrid">
-                <input type="number" id="fee-${jid}" placeholder="ফি" value="${j.agency_fee || ''}">
-                <input type="number" id="med-${jid}" placeholder="মেডিকেল খরচ" value="${j.cost_medical || ''}">
-                <input type="number" id="visa-${jid}" placeholder="ভিসা খরচ" value="${j.cost_visa || ''}">
-                <input type="number" id="flight-${jid}" placeholder="ফ্লাইট খরচ" value="${j.cost_flight || ''}">
-              </div>
-              <button class="btn small" onclick="saveJourneyFinance('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
-            </div>
             ${renderPaymentSection(jid, j)}
-            <div class="accSectionTitle"><i class="fas fa-hourglass-half"></i>ভিসা প্রসেসিং সময়</div>
-            <div class="accRow">
-              ${visaPromiseStatusHtml(j)}
-              <div class="financeGrid" style="margin-top:8px;">
-                <input type="number" id="vpdays-${jid}" placeholder="কতদিন সময় নিয়েছি (দিন)" value="${j.visa_promised_days || ''}">
-                <input type="date" id="vpstart-${jid}" title="কবে থেকে গণনা শুরু" value="${j.visa_promise_start ? new Date(j.visa_promise_start).toISOString().slice(0,10) : new Date().toISOString().slice(0,10)}">
-              </div>
-              <button class="btn small" onclick="saveVisaPromise('${jid}')" style="width:auto;margin-top:8px;">সেভ</button>
-            </div>
-            <div class="accSectionTitle"><i class="fas fa-route"></i>পরবর্তী স্টেজে যান</div>
-            ${nextStages.length ? `
-            <div class="accRow">
-              <div class="flex" style="gap:6px;">
-                <select id="next-${jid}" style="flex:1;">${options}</select>
-                <button class="btn small" style="width:auto;flex-shrink:0;" onclick="advanceStage('${jid}')">আপডেট</button>
-              </div>
-            </div>` : `<div class="accRow"><span class="hint">শেষ স্টেজ</span></div>`}
             ` : ''}
             <div class="accSectionTitle"><i class="fas fa-note-sticky"></i>নোট</div>
             <div class="accRow">
@@ -987,8 +957,6 @@ function renderJourneys(){
               <button class="btn small" onclick="saveUserNote('${uid}')" style="width:auto;margin-top:6px;">নোট সেভ করুন</button>
             </div>
             <div class="accActions">
-              <button class="btn small" onclick="viewUserDetails('${uid}')"><i class="fas fa-circle-info"></i> বিস্তারিত</button>
-              <button class="btn small" onclick="openEditUserModal('${uid}')"><i class="fas fa-pen"></i> এডিট</button>
               <button class="btn small" onclick="shareUserProgress('${uid}')"><i class="fas fa-share-nodes"></i> শেয়ার করুন</button>
               <button class="btn small" onclick="generateContractPdf('${uid}')"><i class="fas fa-file-pdf"></i> চুক্তিনামা PDF</button>
               <button class="btn small danger" onclick="deleteUser('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
@@ -1043,6 +1011,19 @@ function visaPromiseStatusHtml(j){
     <span style="font-size:12.5px;color:#5b6b7a;">ডেডলাইন: <b>${deadlineStr}</b></span>
     <span style="font-size:13px;font-weight:700;color:${color};">${text}</span>
   </div>`;
+}
+
+function visaPromiseCompactHtml(j){
+  if(!j || !j.visa_promised_days || !j.visa_promise_start) return '';
+  const start = new Date(j.visa_promise_start);
+  const deadline = new Date(start.getTime() + j.visa_promised_days * 86400000);
+  const today = new Date();
+  const msLeft = deadline.setHours(23,59,59,999) - today.getTime();
+  const daysLeft = Math.ceil(msLeft / 86400000);
+  let color = 'var(--ok)', text = `বাকি আছে ${daysLeft} দিন`;
+  if(daysLeft < 0){ color = 'var(--fail)'; text = `মেয়াদ শেষ, ${Math.abs(daysLeft)} দিন পার`; }
+  else if(daysLeft <= 3){ color = 'var(--gold)'; text = `বাকি মাত্র ${daysLeft} দিন`; }
+  return `<span style="font-size:11px;font-weight:700;color:${color};display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-hourglass-half"></i>${text}</span>`;
 }
 
 async function saveVisaPromise(journeyId){
@@ -1344,10 +1325,12 @@ function viewUserDetails(uid){
     ['যোগ হয়েছে', u.created_at ? new Date(u.created_at).toLocaleDateString('bn-BD') : '-']
   ];
   const cd = u.custom_data || {};
-  const customRows = Object.entries(cd).map(([fid, val]) => {
-    const label = (customFields[fid] && customFields[fid].label) || fid;
-    return [label, val];
-  });
+  const customRows = Object.entries(cd)
+    .filter(([fid, val]) => customFields[fid])
+    .map(([fid, val]) => {
+      const label = customFields[fid].label || fid;
+      return [label, val];
+    });
   const allRows = baseRows.concat(customRows);
   document.getElementById('udmRows').innerHTML = allRows.map(([label, val]) =>
     `<div class="detailRow"><div class="dr-label">${label}</div><div class="dr-val">${val || '-'}</div></div>`
@@ -1959,11 +1942,27 @@ function addCountry(targetId){
 }
 
 /* ================= CUSTOM FIELDS (FORM BUILDER) ================= */
-let customFields = {};
+/* These base fields are now hardcoded directly in the file so they always
+   show up, regardless of country/visa selection or online settings data.
+   Any extra fields created later via Settings > কাস্টম ফিল্ড will still be
+   added on top of these. */
+const BASE_CUSTOM_FIELDS = {
+  cf_phone:      { label: 'ফোন নম্বর',       type: 'text' },
+  cf_nid:        { label: 'NID',              type: 'text' },
+  cf_passport:   { label: 'পাসপোর্ট নম্বর',   type: 'text' },
+  cf_village:    { label: 'গ্রাম',             type: 'text' },
+  cf_thana:      { label: 'থানা',              type: 'text' },
+  cf_district:   { label: 'জেলা',              type: 'text' },
+  cf_division:   { label: 'বিভাগ',             type: 'text' },
+  cf_postal:     { label: 'পোস্টাল কোড',      type: 'text' },
+  cf_dob:        { label: 'জন্ম তারিখ',       type: 'date' },
+  cf_occupation: { label: 'আপনার পেশা',       type: 'text' }
+};
+let customFields = { ...BASE_CUSTOM_FIELDS };
 
 function loadCustomFields(){
   db.ref('custom_fields').on('value', snap => {
-    customFields = snap.val() || {};
+    customFields = Object.assign({}, BASE_CUSTOM_FIELDS, snap.val() || {});
     renderCountryList();
     renderCustomFieldInputs();
     if(document.getElementById('expiryAlertsList')) renderDashboard();
@@ -2135,7 +2134,7 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   document.getElementById('uScanButtonsWrap').style.display = isSellMode ? 'none' : 'flex';
   document.getElementById('uFormGrid').style.display = isSellMode ? 'none' : '';
   if(isSellMode) document.getElementById('uVisaTypeWrap').style.display = 'none';
-  document.getElementById('customFieldsWrap').style.display = isSellMode ? 'none' : '';
+  document.getElementById('customFieldsWrap').style.display = '';
   document.getElementById('uDocumentsWrap').style.display = isSellMode ? 'block' : 'none';
   document.getElementById('uSellExtraWrap').style.display = isSellMode ? 'block' : 'none';
   document.getElementById('uCustomerPhone').value = '';
@@ -2559,15 +2558,12 @@ const CF_TYPE_LABEL = { text:'টেক্সট', number:'নাম্বার
 function renderCustomFieldInputs(prefill){
   prefill = prefill || {};
   const wrap = document.getElementById('customFieldsWrap');
-  const selectedCountry = (document.getElementById('uCountry') || {}).value || '';
-  const selectedVisaType = (document.getElementById('uVisaType') || {}).value || '';
-  const entries = Object.entries(customFields).filter(([fid, f]) => {
-    if(f.country && f.country !== selectedCountry) return false;
-    if(f.visa_type_id && f.visa_type_id !== selectedVisaType) return false;
-    return true;
-  });
+  // Only the fields hardcoded in BASE_CUSTOM_FIELDS are shown here now —
+  // fields coming from the online settings panel are no longer mixed in,
+  // to avoid duplicate boxes.
+  const entries = Object.entries(BASE_CUSTOM_FIELDS);
   if(!entries.length){ wrap.innerHTML = ''; return; }
-  wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="formGrid">' +
+  wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="customFieldsGrid">' +
     entries.map(([fid, f]) => {
       const val = prefill[fid] || '';
       if(f.type === 'dropdown'){
