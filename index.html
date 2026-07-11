@@ -492,7 +492,6 @@
       </div>
 
       <div style="text-align:center;margin-bottom:10px;">
-        <label class="hint" style="display:block;margin-bottom:6px;">ইউজারের ছবি (ঐচ্ছিক)</label>
         <div style="position:relative;width:76px;margin:0 auto;">
           <div id="uPhotoCircle" onclick="document.getElementById('uPhoto').click()" style="width:76px;height:76px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
             <i class="fas fa-camera" id="uPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
@@ -518,30 +517,25 @@
       </div>
       <div id="customFieldsWrap"></div>
       <div id="uSellExtraWrap" style="display:none;margin-top:10px;">
-        <label class="hint" style="display:block;margin-bottom:4px;">যোগাযোগের নম্বর</label>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
           <input type="tel" id="uCustomerPhone" placeholder="মাতার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
           <input type="tel" id="uFatherPhone" placeholder="পিতার মোবাইল নম্বর" style="width:100%;box-sizing:border-box;">
         </div>
-        <label class="hint" style="display:block;margin:10px 0 4px;">ভিসাটি কতদিনের মধ্যে প্রসেসিং করে দিবেন (ঐচ্ছিক)</label>
-        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
-          <input type="number" id="uVisaPromiseDays" placeholder="যেমন: ৩০ দিন">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;margin-top:10px;">
+          <input type="number" id="uVisaPromiseDays" placeholder="প্রসেসিং সময়">
           <input type="date" id="uVisaPromiseStart" title="কবে থেকে গণনা শুরু">
         </div>
       </div>
       <div id="uDepositWrap" style="display:none;margin-top:10px;">
-        <label class="hint" style="display:block;margin-bottom:4px;">প্রাথমিক জমা / অগ্রিম টাকা (৳) (ঐচ্ছিক)</label>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;">
-          <input type="number" id="uDepositAmt" placeholder="যেমন: ৫০০০" style="width:100%;box-sizing:border-box;">
-          <input type="text" id="uDepositNote" placeholder="নোট (ঐচ্ছিক)" style="width:100%;box-sizing:border-box;">
+          <input type="number" id="uDepositAmt" placeholder="জমা/অগ্রিম টাকা (৳)" style="width:100%;box-sizing:border-box;">
+          <input type="text" id="uDepositNote" placeholder="জমার নোট (ঐচ্ছিক)" style="width:100%;box-sizing:border-box;">
         </div>
       </div>
       <div style="margin-top:10px;">
-        <label class="hint" style="display:block;margin-bottom:4px;">নোট (ঐচ্ছিক)</label>
         <textarea id="uNotes" class="noteBox" placeholder="এই ইউজার সম্পর্কে নোট লিখুন..."></textarea>
       </div>
       <div id="uDocumentsWrap" style="display:none;margin-top:10px;">
-        <label class="hint" style="display:block;margin-bottom:6px;">ডকুমেন্ট (ঐচ্ছিক) — মেয়াদ দিলে অটো এক্সপায়ারি রিমাইন্ডার পাবেন</label>
         <div id="uDocumentsList"></div>
         <button type="button" class="btn small gold" style="width:auto;margin-top:2px;" onclick="addUDocumentRow()"><i class="fas fa-plus"></i> ডকুমেন্ট যোগ করুন</button>
       </div>
@@ -1947,14 +1941,14 @@ function addCountry(targetId){
    Any extra fields created later via Settings > কাস্টম ফিল্ড will still be
    added on top of these. */
 const BASE_CUSTOM_FIELDS = {
-  cf_phone:      { label: 'ফোন নম্বর',       type: 'text' },
-  cf_nid:        { label: 'NID',              type: 'text' },
+  cf_phone:      { label: 'ফোন নম্বর',       type: 'text', inputmode: 'tel' },
+  cf_nid:        { label: 'NID',              type: 'text', inputmode: 'numeric' },
   cf_passport:   { label: 'পাসপোর্ট নম্বর',   type: 'text' },
   cf_village:    { label: 'গ্রাম',             type: 'text' },
   cf_thana:      { label: 'থানা',              type: 'text' },
   cf_district:   { label: 'জেলা',              type: 'text' },
   cf_division:   { label: 'বিভাগ',             type: 'text' },
-  cf_postal:     { label: 'পোস্টাল কোড',      type: 'text' },
+  cf_postal:     { label: 'পোস্টাল কোড',      type: 'text', inputmode: 'numeric' },
   cf_dob:        { label: 'জন্ম তারিখ',       type: 'date' },
   cf_occupation: { label: 'আপনার পেশা',       type: 'text' }
 };
@@ -2120,7 +2114,7 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   const isSellMode = !!prefillVisaId;
   uSellModeCountry = isSellMode ? (prefillCountry || null) : null;
   uSellModeVisaId = isSellMode ? (prefillVisaId || null) : null;
-  document.getElementById('uModalTitle').textContent = isSellMode ? 'ভিসা বিক্রি করুন' : 'নতুন ইউজার যোগ করুন';
+  document.getElementById('uModalTitle').textContent = isSellMode ? 'ভিসা বিক্রি' : 'নতুন ইউজার যোগ করুন';
   document.getElementById('uSubmitBtn').textContent = 'যোগ করুন';
   document.getElementById('uCountry').value = prefillCountry || '';
   document.getElementById('uNotes').value = '';
@@ -2563,7 +2557,7 @@ function renderCustomFieldInputs(prefill){
   // to avoid duplicate boxes.
   const entries = Object.entries(BASE_CUSTOM_FIELDS);
   if(!entries.length){ wrap.innerHTML = ''; return; }
-  wrap.innerHTML = '<p class="hint">অতিরিক্ত তথ্য</p><div class="customFieldsGrid">' +
+  wrap.innerHTML = '<div class="customFieldsGrid">' +
     entries.map(([fid, f]) => {
       const val = prefill[fid] || '';
       if(f.type === 'dropdown'){
@@ -2573,7 +2567,10 @@ function renderCustomFieldInputs(prefill){
       if(f.type === 'description'){
         return `<textarea id="cf-${fid}" rows="2" placeholder="${f.label}" style="width:100%;">${val}</textarea>`;
       }
-      return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : (f.type === 'date' ? 'date' : 'text')}" placeholder="${f.label}" value="${val}">`;
+      if(f.type === 'date'){
+        return `<div style="display:flex;flex-direction:column;gap:3px;"><label style="font-size:11px;color:#8a93a3;padding-left:2px;">${f.label}</label><input id="cf-${fid}" type="date" value="${val}" style="width:100%;box-sizing:border-box;"></div>`;
+      }
+      return `<input id="cf-${fid}" type="${f.type === 'number' ? 'number' : 'text'}" ${f.inputmode ? `inputmode="${f.inputmode}"` : ''} placeholder="${f.label}" value="${val}">`;
     }).join('') + '</div>';
 }
 
@@ -2741,6 +2738,7 @@ function getExpiringItems(users, thresholdDays){
     Object.entries(cd).forEach(([fid, val]) => {
       const f = customFields[fid];
       if(!f || f.type !== 'date' || !val) return;
+      if(fid === 'cf_dob') return; // জন্ম তারিখ কোনো মেয়াদ-উত্তীর্ণ ডকুমেন্ট না, তাই রিমাইন্ডারে দেখানো হবে না
       const dateVal = new Date(val + 'T00:00:00').getTime();
       if(isNaN(dateVal)) return;
       const daysLeft = Math.floor((dateVal - now) / (1000*60*60*24));
