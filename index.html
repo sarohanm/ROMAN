@@ -53,12 +53,12 @@
 
   #app{display:none;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg);}
   .shell{display:flex;flex-direction:column;min-height:100vh;}
-  .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);flex-shrink:0;}
+  .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);flex-shrink:0;}
   .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a8710f,#f6d998 22%,#e0a530 50%,#f6d998 78%,#a8710f);}
-  .nav-brand{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;white-space:nowrap;}
-  .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
-  .nav-brand i{color:var(--gold);}
-  .nav-r{display:flex;align-items:center;gap:8px;}
+  .nav-brand{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;overflow:hidden;}
+  .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nav-brand i{color:var(--gold);flex-shrink:0;}
+  .nav-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
   .logout-btn{width:32px;height:32px;background:rgba(220,53,69,.15);border:1px solid rgba(220,53,69,.3);color:#f2a3a3;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;}
   .logout-btn:active{background:rgba(220,53,69,.3);}
   .main{flex:1;padding:14px 14px 78px;overflow-x:auto;width:100%;}
@@ -280,7 +280,7 @@
 <div id="app">
 <div class="shell">
   <div class="top-nav">
-    <div class="nav-brand"><i class="fas fa-plane-departure"></i> <span class="brand-text">Talent Overseas</span></div>
+    <div class="nav-brand"><i class="fas fa-plane-departure"></i> <span class="brand-text">Talent Overseas Pvt. Ltd</span></div>
     <div class="nav-r">
       <img id="navAvatar" style="display:none;width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);" alt="">
       <span class="roleTag" id="roleTag">Admin</span>
@@ -313,7 +313,6 @@
       <div class="card">
         <div class="card-hd"><i class="fas fa-hourglass-half"></i> মেয়াদ শেষ হওয়ার সতর্কতা</div>
         <div id="expiryAlertsList"></div>
-        <p class="hint" style="margin-top:8px;">এখানে দেখাতে হলে সেটিংস থেকে "কাস্টম ফিল্ড তৈরি করুন" দিয়ে "ডেট" টাইপের ফিল্ড বানান (যেমন: পাসপোর্ট মেয়াদ, ভিসা মেয়াদ, মেডিকেল রিপোর্ট মেয়াদ) এবং প্রতিটা ইউজারের জন্য পূরণ করুন।</p>
       </div>
 
       <div class="card">
@@ -330,11 +329,6 @@
       <div class="card">
         <div class="card-hd"><i class="fas fa-plane"></i> আসন্ন ফ্লাইট</div>
         <div id="upcomingFlightsList"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><i class="fas fa-bell"></i> সাম্প্রতিক নোটিফিকেশন</div>
-        <div id="recentActivityList"></div>
       </div>
 
       <div class="card">
@@ -362,18 +356,17 @@
       </div>
     </div>
 
-    <!-- USERS TAB (এখন এজেন্ট ব্যবস্থাপনা) -->
+    <!-- USERS TAB (এখন ওয়েটিং কাস্টমার) -->
     <div class="panel admin-only" id="panel-users">
       <div class="topbar">
-        <h1 style="margin:0;">এজেন্ট</h1>
+        <h1 style="margin:0;">ওয়েটিং</h1>
         <div class="searchWrap" style="flex:1;margin-left:14px;margin-right:0;">
           <i class="fas fa-magnifying-glass"></i>
-          <input type="text" id="agentSearch" placeholder="নাম বা ফোন দিয়ে খুঁজুন..." oninput="renderAgents()">
+          <input type="text" id="waitingCustomerSearch" placeholder="দেশ বা এজেন্ট দিয়ে খুঁজুন..." oninput="renderVisaMessages()">
         </div>
       </div>
       <div class="card">
-        <p class="hint" style="margin-top:0;">এজেন্টরা বাইরে থেকে কাস্টমার নিয়ে আসেন। এখানে তাদের জন্য লগইন আইডি খুলে দিন — সেই আইডি দিয়ে তারা তথ্য দেখে কাস্টমার আকৃষ্ট করবেন।</p>
-        <div id="agentRows"></div>
+        <div id="visaMessageRows" style="margin-top:10px;"></div>
       </div>
     </div>
 
@@ -423,22 +416,32 @@
       <div class="card settingsCard" style="--ac:#1a9e5c">
         <div class="settingsHead" style="--ic:rgba(26,158,92,.12);--ac:#1a9e5c" onclick="toggleSettingsPanel('agentAddPanel')">
           <div class="sh-ico"><i class="fas fa-user-plus"></i></div>
-          <h3 style="flex:1;">নতুন এজেন্ট যোগ করুন</h3>
+          <h3 style="flex:1;">এজেন্ট ব্যবস্থাপনা</h3>
+          <span id="addBtn-agentAddPanel" class="addFieldBtn" title="নতুন এজেন্ট যোগ করুন" onclick="event.stopPropagation(); openAddAgentModal()" style="width:26px;height:26px;border-radius:50%;background:rgba(26,158,92,.12);color:#1a9e5c;display:none;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:8px;"><i class="fas fa-plus"></i></span>
           <span id="chev-agentAddPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="agentAddPanel" style="display:none;">
-          <p class="hint" style="margin-top:0;">এজেন্টরা বাইরে থেকে কাস্টমার নিয়ে আসেন। এখানে তাদের জন্য লগইন আইডি খুলে দিন।</p>
-          <div style="margin-top:8px;"><button class="btn small" onclick="openAddAgentModal()"><i class="fas fa-plus" style="margin-right:6px;"></i>নতুন এজেন্ট যোগ করুন</button></div>
+          <input type="text" id="agentSearchSettings" placeholder="নাম বা ফোন দিয়ে খুঁজুন..." oninput="renderAgents()" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;margin-top:12px;">
+          <div id="agentRowsSettings"></div>
         </div>
       </div>
-
       <div class="card settingsCard" style="--ac:#dc3545">
         <div class="settingsHead" style="--ic:rgba(220,53,69,.1);--ac:#dc3545" onclick="toggleSettingsPanel('securityPanel')">
           <div class="sh-ico"><i class="fas fa-lock"></i></div>
-          <h3 style="flex:1;">পাসওয়ার্ড ও ফেসলক পরিবর্তন</h3>
+          <h3 style="flex:1;">পাসওয়ার্ড</h3>
           <span id="chev-securityPanel" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
         </div>
         <div id="securityPanel" style="display:none;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 0 22px;text-align:center;">
+            <input id="flImageInput" type="file" accept="image/*" style="display:none;" onchange="handleFlImageUpload(event)">
+            <div id="flDropZone" onclick="document.getElementById('flImageInput').click()" style="width:110px;height:110px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;color:#8a8478;background:#faf8f4;overflow:hidden;flex-shrink:0;">
+              <i class="fas fa-camera" style="font-size:20px;"></i>
+              <span style="font-size:10px;padding:0 8px;">ছবি বাছাই করুন</span>
+            </div>
+            <img id="flPreview" onclick="document.getElementById('flImageInput').click()" style="display:none;width:110px;height:110px;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid var(--border);flex-shrink:0;">
+            <div id="flMsg" style="font-size:12px;"></div>
+          </div>
+
           <div class="fieldRow" style="cursor:default;margin-top:8px;">
             <div style="font-weight:700;">পাসওয়ার্ড পরিবর্তন করুন</div>
           </div>
@@ -448,33 +451,13 @@
             <input id="pcNewEmail" type="email" placeholder="নতুন ইমেইল">
             <input id="pcNewPass" type="password" placeholder="নতুন পাসওয়ার্ড">
           </div>
-          <p class="hint" style="margin-top:6px;">ইমেইল ও পাসওয়ার্ড দুইটিই একসাথে পরিবর্তন হবে — চারটি ঘরই পূরণ করতে হবে।</p>
-          <div style="margin-top:8px;"><button class="btn small" onclick="changeAdminPassword()">পরিবর্তন করুন</button></div>
+          <div style="margin-top:12px;"><button class="btn small" onclick="changeAdminPassword()">পরিবর্তন করুন</button></div>
           <div id="pcMsg" style="font-size:12px;margin-top:6px;"></div>
-
-          <div class="fieldRow" style="cursor:default;margin-top:16px;">
-            <div style="font-weight:700;">ফেসলক পরিবর্তন করুন</div>
-          </div>
-          <p class="hint">স্পষ্ট, সামনাসামনি তোলা একটি ছবি আপলোড করুন, তারপর নিচের বাটনে চাপ দিয়ে নতুন ফেস এনরোল করুন। এটি আগের এনরোল করা ফেসকে প্রতিস্থাপন করবে।</p>
-          <input id="flImageInput" type="file" accept="image/*" style="display:none;" onchange="handleFlImageUpload(event)">
-          <div class="flex" style="gap:8px;flex-wrap:wrap;">
-            <div id="flDropZone" onclick="document.getElementById('flImageInput').click()" style="width:100%;max-width:280px;aspect-ratio:4/3;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;cursor:pointer;color:#8a8478;background:#faf8f4;overflow:hidden;">
-              <i class="fas fa-image" style="font-size:22px;"></i>
-              <span style="font-size:12px;">ছবি বাছাই করতে ক্লিক করুন</span>
-            </div>
-          </div>
-          <img id="flPreview" style="display:none;width:100%;max-width:280px;border-radius:8px;margin-top:10px;">
-          <div class="flex" style="margin-top:10px;gap:8px;">
-            <button class="btn small gold" onclick="reEnrollFaceLock()">নতুন ফেস এনরোল করুন</button>
-          </div>
-          <div id="flMsg" style="font-size:12px;margin-top:6px;"></div>
         </div>
       </div>
     </div>
 
   </div>
-
-  <!-- USER DETAIL MODAL -->
   <div class="modalOverlay" id="userDetailModal">
     <div class="modalBox">
       <button class="close-x" onclick="closeUserDetailModal()"><i class="fas fa-xmark"></i></button>
@@ -568,25 +551,68 @@
     </div>
   </div>
 
+  <!-- VISA MESSAGE MODAL (agent → admin, replaces সরাসরি বিক্রি) -->
+  <div class="modalOverlay" id="visaMessageModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeVisaMessageModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">মেসেজ পাঠান</h3>
+      <p class="hint" style="margin-top:0;" id="vmVisaLabel"></p>
+      <input type="file" id="vmFile" accept="image/*,.pdf" onchange="handleVmFileSelect(event)" style="width:100%;box-sizing:border-box;">
+      <div id="vmFilePreviewWrap" style="display:none;text-align:center;margin-top:10px;">
+        <img id="vmFilePreview" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);" alt="">
+        <div class="hint" id="vmFileName" style="margin-top:4px;"></div>
+      </div>
+      <div id="vmMsg" style="font-size:12px;margin-top:6px;"></div>
+      <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="sendVisaMessage()">পাঠান</button></div>
+    </div>
+  </div>
+
+  <!-- EDIT AGENT MODAL (ইমেইল, পাসওয়ার্ড, ফেসলক পরিবর্তন) -->
+  <div class="modalOverlay" id="editAgentModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeEditAgentModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">এজেন্টের তথ্য পরিবর্তন করুন</h3>
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="position:relative;width:84px;margin:0 auto;">
+          <div id="eagPhotoCircle" onclick="document.getElementById('eagPhoto').click()" style="width:84px;height:84px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+            <i class="fas fa-camera" id="eagPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
+            <img id="eagPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <input type="file" id="eagPhoto" accept="image/*" onchange="handleEditAgentPhotoSelect(event)" style="display:none;">
+        <div class="hint" id="eagPhotoFaceMsg" style="margin-top:6px;"></div>
+      </div>
+      <div class="formGrid">
+        <input id="eagName" placeholder="এজেন্টের নাম">
+        <input id="eagPhone" placeholder="ফোন নম্বর">
+        <input id="eagEmail" type="email" placeholder="ইমেইল (লগইনের জন্য)">
+        <input id="eagPass" type="password" placeholder="নতুন পাসওয়ার্ড (খালি রাখলে অপরিবর্তিত থাকবে)">
+      </div>
+      <div id="eagMsg" style="font-size:12px;margin-top:6px;"></div>
+      <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="saveAgentEdit()">সংরক্ষণ করুন</button></div>
+    </div>
+  </div>
+
   <!-- ADD AGENT MODAL -->
   <div class="modalOverlay" id="addAgentModal">
     <div class="modalBox">
       <button class="close-x" onclick="closeAddAgentModal()"><i class="fas fa-xmark"></i></button>
       <h3 style="margin-top:0;">নতুন এজেন্ট যোগ করুন</h3>
-      <p class="hint" style="margin-top:0;">এই ইমেইল-পাসওয়ার্ড দিয়েই এজেন্ট লগইন করবেন।</p>
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="position:relative;width:84px;margin:0 auto;">
+          <div id="agPhotoCircle" onclick="document.getElementById('agPhoto').click()" style="width:84px;height:84px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;">
+            <i class="fas fa-camera" id="agPhotoIcon" style="font-size:22px;color:#b8ada0;"></i>
+            <img id="agPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover;">
+          </div>
+        </div>
+        <input type="file" id="agPhoto" accept="image/*" onchange="handleAgentPhotoSelect(event)" style="display:none;">
+        <div class="hint" id="agPhotoFaceMsg" style="margin-top:6px;"></div>
+      </div>
       <div class="formGrid">
         <input id="agName" placeholder="এজেন্টের নাম">
         <input id="agPhone" placeholder="ফোন নম্বর">
         <input id="agEmail" type="email" placeholder="ইমেইল (লগইনের জন্য)">
         <input id="agPass" type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ ডিজিট)">
-        <div>
-          <label class="hint" style="display:block;margin-bottom:4px;">এজেন্টের ছবি (ফেস লগইনের জন্য ব্যবহার হবে)</label>
-          <input type="file" id="agPhoto" accept="image/*" onchange="handleAgentPhotoSelect(event)">
-        </div>
-      </div>
-      <div id="agPhotoPreviewWrap" style="display:none;text-align:center;margin-bottom:10px;">
-        <img id="agPhotoPreview" style="width:84px;height:84px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
-        <div class="hint" id="agPhotoFaceMsg" style="margin-top:6px;"></div>
       </div>
       <div id="agMsg" style="font-size:12px;margin-top:6px;"></div>
       <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="addAgent()">যোগ করুন</button></div>
@@ -649,7 +675,7 @@
   <div class="bot-nav">
     <button class="bn active" data-tab="dashboard" onclick="showTab('dashboard')"><i class="fas fa-gauge-high"></i><span>ড্যাশবোর্ড</span></button>
     <button class="bn" data-tab="journeys" onclick="showTab('journeys')"><i class="fas fa-suitcase-rolling"></i><span>জার্নি</span></button>
-    <button class="bn admin-only" data-tab="users" onclick="showTab('users')"><i class="fas fa-users"></i><span>এজেন্ট</span></button>
+    <button class="bn admin-only" data-tab="users" onclick="showTab('users')"><i class="fas fa-users"></i><span>ওয়েটিং</span></button>
     <button class="bn" data-tab="templates" onclick="showTab('templates')"><i class="fas fa-passport"></i><span>ভিসা তথ্য</span></button>
     <button class="bn" data-tab="logs" onclick="showTab('logs')"><i class="fas fa-bell"></i><span>লগ</span></button>
     <button class="bn admin-only" data-tab="settings" onclick="showTab('settings')"><i class="fas fa-gear"></i><span>সেটিংস</span></button>
@@ -860,6 +886,7 @@ async function enterApp(){
   loadAgents();
   loadCountries();
   loadCustomFields();
+  loadVisaMessages();
 
   loadLogs();
   loadDashboard();
@@ -898,6 +925,7 @@ function loadJourneys(){
   db.ref('journeys').on('value', snap => {
     journeysCache = snap.val() || {};
     renderJourneys();
+    renderAgents();
   });
 }
 
@@ -926,6 +954,7 @@ function renderJourneys(){
           ? `<img src="${u.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
           : `<div class="avatarCircle">${initials}</div>`;
         const agentName = u.agent_id && agentsCache[u.agent_id] ? agentsCache[u.agent_id].name : 'সরাসরি';
+        const agentPhone = u.agent_id && agentsCache[u.agent_id] ? (agentsCache[u.agent_id].phone || '') : '';
         const customEntries = Object.keys(customFields)
           .filter(fid => u.custom_data && u.custom_data[fid] && customFields[fid])
           .map(fid => ({ label: customFields[fid].label || fid, val: u.custom_data[fid] }));
@@ -943,6 +972,7 @@ function renderJourneys(){
             ${avatarHtml}
             <div class="accTextWrap">
               <div class="accName">${getUserName(u)}${getUserPhone(u) && getUserPhone(u) !== '-' ? ` <span style="font-weight:400;color:#5b6b7a;font-size:12.5px;">· ${getUserPhone(u)}</span>` : ''}</div>
+              ${u.agent_id ? `<div class="accSub" style="color:var(--gold);font-weight:600;"><i class="fas fa-user-tie" style="margin-right:4px;"></i>${agentName}${agentPhone ? ' · ' + agentPhone : ''}</div>` : ''}
               <div class="accSub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 <span>${flag} ${u.country || '-'}${u.visa_type_id && visaTypes[u.visa_type_id] ? ' · ' + visaTypes[u.visa_type_id].name : ''}</span>
                 <span>${j ? visaPromiseCompactHtml(j) : ''}</span>
@@ -1029,7 +1059,7 @@ function visaPromiseCompactHtml(j){
   if(daysLeft < 0){ color = 'var(--fail)'; text = `প্রসেসিং সময় শেষ, ${Math.abs(daysLeft)} দিন পার`; }
   else if(daysLeft <= 3){ color = 'var(--gold)'; text = `প্রসেসিং সময় মাত্র ${daysLeft} দিন`; }
   const elapsedHtml = daysLeft >= 0 ? `<span style="font-size:11px;font-weight:400;color:#8a93a3;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-calendar-day"></i>${elapsed} দিন পার হয়েছে</span>` : '';
-  return `<span style="font-size:11px;font-weight:400;color:${color};display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-hourglass-half"></i>${text}</span>${elapsedHtml}`;
+  return `<span style="font-size:11px;font-weight:400;color:${color};display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><i class="fas fa-hourglass-half"></i>${text}</span>${elapsedHtml}`;
 }
 
 async function saveVisaPromise(journeyId){
@@ -1241,6 +1271,7 @@ function loadUsers(){
     renderVisaInfoList();
     populateCountryFilter(usersCache);
     renderJourneys();
+    renderAgents();
   });
 }
 
@@ -1427,18 +1458,12 @@ async function generateContractPdf(uid){
 }
 
 /* ================= AGENTS =================
-   এজেন্টরা বাইরে থেকে কাস্টমার ধরে আনেন। তাদের জন্য এখান থেকে লগইন আইডি (Firebase Auth)
-   খুলে দেওয়া হয় এবং প্রোফাইল 'admins/{uid}' নোডে role:'agent' সহ সেভ করা হয়, যাতে বর্তমান
-   লগইন সিস্টেম (admins/{uid}/role) স্বয়ংক্রিয়ভাবে তাদের Agent হিসেবে চিনতে পারে।
+   এজেন্টরা বাইরে থেকে কাস্টমার ধরে আনেন। যেহেতু Firebase Authentication (Email/Password
+   provider) এখনো Firebase Console-এ চালু করা নেই, এজেন্টের ইমেইল+পাসওয়ার্ড সরাসরি
+   Realtime Database-এ 'admins/{agentId}' নোডে role:'agent' সহ সেভ করা হয় (ঠিক যেমন
+   এডমিনের নিজের লগইনও আপাতত হার্ডকোড করা — একই প্যাটার্ন)। agent-login.html এই নোড থেকে
+   সরাসরি email/password মিলিয়ে লগইন করায়, কোনো Firebase Auth সাইন-আপ/সাইন-ইন কল ছাড়াই।
 */
-function getSecondaryAuth(){
-  // মূল admin সেশন থেকে সাইন-আউট না করেই নতুন এজেন্ট অ্যাকাউন্ট তৈরি করার জন্য
-  // আলাদা একটা সেকেন্ডারি Firebase app instance ব্যবহার করা হচ্ছে।
-  let secApp = firebase.apps.find(a => a.name === 'Secondary');
-  if(!secApp){ secApp = firebase.initializeApp(firebaseConfig, 'Secondary'); }
-  return secApp.auth();
-}
-
 function loadAgents(){
   db.ref('admins').on('value', snap => {
     const all = snap.val() || {};
@@ -1453,42 +1478,189 @@ function loadAgents(){
 
 function renderAgents(){
   const searchEl = document.getElementById('agentSearch');
-  const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+  const searchElSettings = document.getElementById('agentSearchSettings');
+  const activeSearchEl = document.activeElement && document.activeElement.id === 'agentSearchSettings' ? searchElSettings : searchEl;
+  const q = ((activeSearchEl ? activeSearchEl.value : '') || '').trim().toLowerCase();
   let entries = Object.entries(agentsCache);
   if(q){
     entries = entries.filter(([uid, a]) => ((a.name||'') + ' ' + (a.phone||'') + ' ' + (a.email||'')).toLowerCase().includes(q));
   }
-  const rows = entries.map(([uid, a]) => {
+  const emptyMsg = q ? 'ফিল্টারে কোনো এজেন্ট পাওয়া যায়নি' : 'কোনো এজেন্ট নেই';
+
+  const buildRows = (scope, mode) => entries.map(([uid, a]) => {
+    const scopedId = scope + '-' + uid;
     const initials = (a.name || '-').trim().charAt(0).toUpperCase() || '?';
     const active = a.active !== false;
     const avatarHtml = a.photoBase64
       ? `<img src="${a.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
       : `<div class="avatarCircle">${initials}</div>`;
+    const agentUserIds = Object.entries(usersCache).filter(([cuid, u]) => u.agent_id === uid).map(([cuid]) => cuid);
+    const totalSent = agentUserIds.length;
+    const processing = Object.values(journeysCache).filter(j => agentUserIds.includes(j.user_id) && j.current_stage !== 'DEPARTED' && j.current_stage !== 'MEDICAL_FAILED').length;
+    const departed = Object.values(journeysCache).filter(j => agentUserIds.includes(j.user_id) && j.current_stage === 'DEPARTED').length;
+    const agentJourneys = Object.values(journeysCache).filter(j => agentUserIds.includes(j.user_id));
+    const agentTotalFee = agentJourneys.reduce((sum, j) => sum + (j.agency_fee || 0), 0);
+    const agentPaid = agentJourneys.reduce((sum, j) => sum + Object.values(j.payments || {}).reduce((s, p) => s + (p.amount || 0), 0), 0);
+    const agentDue = agentTotalFee - agentPaid;
+    const digits = (a.phone || '').replace(/[^0-9]/g, '');
+    const withCC = digits ? (digits.startsWith('88') ? digits : ('88' + digits.replace(/^0/, ''))) : '';
+    const contactIconsHtml = a.phone
+      ? `<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+          <a href="tel:${a.phone}" onclick="event.stopPropagation()" style="width:24px;height:24px;border-radius:7px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;flex-shrink:0;"><i class="fas fa-phone"></i></a>
+          <a href="https://wa.me/${withCC}" target="_blank" onclick="event.stopPropagation()" style="width:24px;height:24px;border-radius:7px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11.5px;flex-shrink:0;"><i class="fab fa-whatsapp"></i></a>
+        </div>`
+      : '';
+    const actionsHtml = `<div class="accActions">
+          <button class="btn small" onclick="openEditAgentModal('${uid}')"><i class="fas fa-pen"></i> এডিট</button>
+          <button class="btn small" onclick="toggleAgentActive('${uid}')"><i class="fas fa-power-off"></i> ${active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}</button>
+          <button class="btn small danger" onclick="deleteAgent('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
+        </div>`;
     return `
     <div class="accItem">
-      <div class="accHead" onclick="toggleAccItem('ag-${uid}')">
+      <div class="accHead" onclick="toggleAccItem('${scopedId}')">
         ${avatarHtml}
         <div class="accTextWrap">
-          <div class="accName">${a.name || '-'}</div>
-          <div class="accSub">${a.phone || '-'}</div>
-          <div style="margin-top:6px;"><span class="stagePill" style="${active ? '' : 'opacity:.55;'}">${active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span></div>
+          <div class="accName" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span>${a.name || '-'}</span>
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+              <span class="stagePill" style="${active ? '' : 'opacity:.55;'}">${active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span>
+              ${contactIconsHtml}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
+            <span style="font-size:11px;color:#5b6b7a;"><i class="fas fa-user-group" style="margin-right:3px;color:var(--gold);"></i>পাঠিয়েছেন <b style="color:var(--navy);">${totalSent}</b></span>
+            <span style="font-size:11px;color:#5b6b7a;"><i class="fas fa-hourglass-half" style="margin-right:3px;color:var(--gold);"></i>প্রসেসিং <b style="color:var(--navy);">${processing}</b></span>
+            <span style="font-size:11px;color:#5b6b7a;"><i class="fas fa-plane-departure" style="margin-right:3px;color:var(--gold);"></i>রওনা <b style="color:var(--navy);">${departed}</b></span>
+          </div>
         </div>
-        <span id="chev-ag-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+        <span id="chev-${scopedId}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
       </div>
-      <div class="accBody" id="acc-ag-${uid}">
+      <div class="accBody" id="acc-${scopedId}">
         <div class="accRow"><div class="accLabel"><i class="fas fa-phone" style="margin-right:4px;"></i>ফোন</div>${a.phone || '-'}</div>
         <div class="accRow"><div class="accLabel"><i class="fas fa-envelope" style="margin-right:4px;"></i>ইমেইল (লগইন)</div>${a.email || '-'}</div>
         <div class="accRow"><div class="accLabel"><i class="fas fa-calendar" style="margin-right:4px;"></i>যোগ হয়েছে</div>${a.created_at ? new Date(a.created_at).toLocaleDateString('bn-BD') : '-'}</div>
-        <div class="accActions">
-          <button class="btn small" onclick="toggleAgentActive('${uid}')"><i class="fas fa-power-off"></i> ${active ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}</button>
-          <button class="btn small danger" onclick="deleteAgent('${uid}')"><i class="fas fa-trash"></i> ডিলিট</button>
+        <div class="accRow noBorder" style="display:flex;justify-content:space-between;gap:6px;padding:10px 0;">
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:10.5px;color:#8896ab;"><i class="fas fa-sack-dollar" style="color:var(--gold);margin-right:3px;"></i>প্রাপ্ত টাকা</div>
+            <div style="font-weight:700;font-size:14px;color:var(--navy);margin-top:2px;">৳${agentTotalFee.toLocaleString('bn-BD')}</div>
+          </div>
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:10.5px;color:#8896ab;"><i class="fas fa-circle-check" style="color:var(--gold);margin-right:3px;"></i>পরিশোধ</div>
+            <div style="font-weight:700;font-size:14px;color:var(--ok);margin-top:2px;">৳${agentPaid.toLocaleString('bn-BD')}</div>
+          </div>
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:10.5px;color:#8896ab;"><i class="fas fa-triangle-exclamation" style="color:var(--gold);margin-right:3px;"></i>বাকি</div>
+            <div style="font-weight:700;font-size:14px;color:${agentDue > 0 ? 'var(--fail)' : 'var(--ok)'};margin-top:2px;">৳${agentDue.toLocaleString('bn-BD')}</div>
+          </div>
         </div>
+        ${actionsHtml}
       </div>
     </div>`;
-  }).join('');
-  const emptyMsg = q ? 'ফিল্টারে কোনো এজেন্ট পাওয়া যায়নি' : 'কোনো এজেন্ট নেই';
-  const el = document.getElementById('agentRows');
-  if(el) el.innerHTML = rows || `<p class="hint">${emptyMsg}</p>`;
+  }).join('') || `<p class="hint">${emptyMsg}</p>`;
+
+  const settingsEl = document.getElementById('agentRowsSettings');
+  if(settingsEl) settingsEl.innerHTML = buildRows('agset', 'manage');
+}
+
+let eagPhotoBase64 = null;
+let eagPhotoDescriptor = null;
+let editingAgentUid = null;
+
+function openEditAgentModal(uid){
+  const a = agentsCache[uid];
+  if(!a) return;
+  editingAgentUid = uid;
+  eagPhotoBase64 = null;
+  eagPhotoDescriptor = null;
+  document.getElementById('eagName').value = a.name || '';
+  document.getElementById('eagPhone').value = a.phone || '';
+  document.getElementById('eagEmail').value = a.email || '';
+  document.getElementById('eagPass').value = '';
+  document.getElementById('eagPhoto').value = '';
+  const eagPreview = document.getElementById('eagPhotoPreview');
+  const eagIcon = document.getElementById('eagPhotoIcon');
+  if(a.photoBase64){
+    eagPreview.src = a.photoBase64;
+    eagPreview.style.display = 'block';
+    eagIcon.style.display = 'none';
+  } else {
+    eagPreview.style.display = 'none';
+    eagIcon.style.display = 'block';
+  }
+  document.getElementById('eagPhotoFaceMsg').textContent = '';
+  document.getElementById('eagMsg').textContent = '';
+  document.getElementById('editAgentModal').classList.add('active');
+}
+
+function closeEditAgentModal(){
+  document.getElementById('editAgentModal').classList.remove('active');
+  editingAgentUid = null;
+  eagPhotoBase64 = null;
+  eagPhotoDescriptor = null;
+}
+
+function handleEditAgentPhotoSelect(event){
+  const file = event.target.files && event.target.files[0];
+  const faceMsg = document.getElementById('eagPhotoFaceMsg');
+  faceMsg.textContent = '';
+  eagPhotoDescriptor = null;
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    eagPhotoBase64 = e.target.result;
+    const preview = document.getElementById('eagPhotoPreview');
+    preview.src = eagPhotoBase64;
+    preview.style.display = 'block';
+    document.getElementById('eagPhotoIcon').style.display = 'none';
+    try{
+      await loadModels();
+      const detection = await faceapi.detectSingleFace(preview, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks().withFaceDescriptor();
+      if(!detection){
+        faceMsg.style.color = "var(--fail)";
+        faceMsg.textContent = "ছবিতে মুখ শনাক্ত করা যায়নি, অন্য ছবি দিয়ে চেষ্টা করুন।";
+        return;
+      }
+      eagPhotoDescriptor = Array.from(detection.descriptor);
+      faceMsg.style.color = "var(--ok)";
+      faceMsg.textContent = "মুখ শনাক্ত হয়েছে, নতুন ফেসলক হিসেবে সেভ হবে।";
+    }catch(err){
+      faceMsg.style.color = "var(--fail)";
+      faceMsg.textContent = "ফেস শনাক্তকরণে সমস্যা: " + err.message;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveAgentEdit(){
+  const msg = document.getElementById('eagMsg');
+  msg.style.color = "var(--fail)";
+  if(!editingAgentUid){ return; }
+  const name = document.getElementById('eagName').value.trim();
+  const phone = document.getElementById('eagPhone').value.trim();
+  const email = document.getElementById('eagEmail').value.trim();
+  const pass = document.getElementById('eagPass').value;
+  if(!name || !email){
+    msg.textContent = "নাম ও ইমেইল আবশ্যক।";
+    return;
+  }
+  if(pass && pass.length < 6){
+    msg.textContent = "নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।";
+    return;
+  }
+  const updates = { name, phone, email };
+  if(pass) updates.password = pass;
+  if(eagPhotoBase64) updates.photoBase64 = eagPhotoBase64;
+  if(eagPhotoDescriptor) updates.faceDescriptor = eagPhotoDescriptor;
+  try{
+    await db.ref('admins/' + editingAgentUid).update(updates);
+    msg.style.color = "var(--ok)";
+    msg.textContent = "এজেন্টের তথ্য সফলভাবে সংরক্ষিত হয়েছে।";
+    setTimeout(closeEditAgentModal, 700);
+  }catch(e){
+    msg.style.color = "var(--fail)";
+    msg.textContent = "সংরক্ষণ করতে ব্যর্থ: " + e.message;
+  }
 }
 
 function openAddAgentModal(){
@@ -1498,7 +1670,8 @@ function openAddAgentModal(){
 function closeAddAgentModal(){
   document.getElementById('addAgentModal').classList.remove('active');
   ['agName','agPhone','agEmail','agPass','agPhoto'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('agPhotoPreviewWrap').style.display = 'none';
+  document.getElementById('agPhotoPreview').style.display = 'none';
+  document.getElementById('agPhotoIcon').style.display = 'block';
   document.getElementById('agPhotoFaceMsg').textContent = '';
   agPhotoBase64 = null;
   agPhotoDescriptor = null;
@@ -1510,10 +1683,11 @@ let agPhotoDescriptor = null;
 function handleAgentPhotoSelect(e){
   const file = e.target.files[0];
   const faceMsgEl = document.getElementById('agPhotoFaceMsg');
-  const previewWrap = document.getElementById('agPhotoPreviewWrap');
+  const previewImg = document.getElementById('agPhotoPreview');
+  const icon = document.getElementById('agPhotoIcon');
   agPhotoBase64 = null;
   agPhotoDescriptor = null;
-  if(!file){ previewWrap.style.display = 'none'; return; }
+  if(!file){ previewImg.style.display = 'none'; icon.style.display = 'block'; return; }
 
   const reader = new FileReader();
   reader.onload = (ev) => {
@@ -1530,8 +1704,9 @@ function handleAgentPhotoSelect(e){
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       agPhotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
-      document.getElementById('agPhotoPreview').src = agPhotoBase64;
-      previewWrap.style.display = 'block';
+      previewImg.src = agPhotoBase64;
+      previewImg.style.display = 'block';
+      icon.style.display = 'none';
 
       faceMsgEl.style.color = '';
       faceMsgEl.textContent = 'ছবিতে মুখ শনাক্ত করা হচ্ছে...';
@@ -1571,14 +1746,18 @@ async function addAgent(){
   msg.style.color = '';
   msg.textContent = 'তৈরি হচ্ছে...';
   try{
-    const secAuth = getSecondaryAuth();
-    const cred = await secAuth.createUserWithEmailAndPassword(email, pass);
-    const uid = cred.user.uid;
-    const agentData = { role: 'agent', name, phone, email, active: true, created_at: Date.now() };
+    // একই ইমেইল দিয়ে আগে থেকে কোনো এজেন্ট/এডমিন আছে কিনা চেক করা হচ্ছে
+    const existingSnap = await db.ref('admins').orderByChild('email').equalTo(email).once('value');
+    if(existingSnap.exists()){
+      msg.style.color = 'var(--fail)';
+      msg.textContent = 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে।';
+      return;
+    }
+    const agentRef = db.ref('admins').push();
+    const agentData = { role: 'agent', name, phone, email, password: pass, active: true, created_at: Date.now() };
     if(agPhotoBase64) agentData.photoBase64 = agPhotoBase64;
     if(agPhotoDescriptor) agentData.faceDescriptor = agPhotoDescriptor;
-    await db.ref('admins/' + uid).set(agentData);
-    await secAuth.signOut();
+    await agentRef.set(agentData);
     msg.style.color = 'var(--ok)';
     msg.textContent = 'এজেন্ট সফলভাবে যোগ হয়েছে!';
     setTimeout(closeAddAgentModal, 800);
@@ -1589,6 +1768,176 @@ async function addAgent(){
   }
 }
 
+/* ================= VISA MESSAGES (এজেন্ট → এডমিন) =================
+   এজেন্টরা সরাসরি ভিসা বিক্রি করতে পারেন না; বিক্রির বদলে তারা এখানে
+   একটি মেসেজ পাঠান, এডমিন সেটা দেখে নিজে বিক্রি প্রসেস করেন। */
+function loadVisaMessages(){
+  db.ref('visaMessages').on('value', snap => {
+    visaMessagesCache = snap.val() || {};
+    renderVisaMessages();
+  });
+}
+
+function renderVisaMessages(){
+  const wrap = document.getElementById('visaMessageRows');
+  if(!wrap) return;
+  const searchEl = document.getElementById('waitingCustomerSearch');
+  const q = ((searchEl ? searchEl.value : '') || '').trim().toLowerCase();
+  let entries = Object.entries(visaMessagesCache)
+    .filter(([id, m]) => (m.status || 'pending') === 'pending')
+    .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  if(q){
+    entries = entries.filter(([id, m]) => ((m.country||'') + ' ' + (m.agentName||'') + ' ' + (m.visaName||'') + ' ' + (m.fileName||'')).toLowerCase().includes(q));
+  }
+  if(!entries.length){ wrap.innerHTML = ''; return; }
+  wrap.innerHTML = entries.map(([id, m]) => {
+    const scopedId = 'vm-' + id;
+    const flag = COUNTRY_FLAGS[m.country] || '🌍';
+    const time = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
+    const isImage = (m.fileType || '').startsWith('image/');
+    const fileHtml = m.fileBase64
+      ? (isImage
+          ? `<img src="${m.fileBase64}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);display:block;margin-bottom:8px;" alt="">`
+          : `<a href="${m.fileBase64}" download="${m.fileName || 'file'}" class="hint" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;"><i class="fas fa-file-arrow-down"></i> ${m.fileName || 'ফাইল ডাউনলোড করুন'}</a>`)
+      : `<div class="hint" style="margin-bottom:8px;">কোনো ফাইল সংযুক্ত নেই।</div>`;
+    const agentPhoto = m.agentId && agentsCache[m.agentId] ? agentsCache[m.agentId].photoBase64 : null;
+    const avatarHtml = agentPhoto
+      ? `<img src="${agentPhoto}" class="avatarCircle" style="object-fit:cover;" alt="">`
+      : `<div class="avatarCircle">${flag}</div>`;
+    const v = m.visaId ? visaTypes[m.visaId] : null;
+    const visaDetailsHtml = v
+      ? `<div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:6px 0;background:#fbf9f5;">
+          ${v.name ? `<div class="visaDetailLine">${formatDetailChip(`ভিসার : ${v.name}`)}</div>` : ''}
+          ${v.fee ? `<div class="visaDetailLine">${formatDetailChip(`মূল্য : ৳${v.fee.toLocaleString('bn-BD')}`)}</div>` : ''}
+          ${v.quota ? `<div class="visaDetailLine">${formatDetailChip(`মোট ভিসা : ${v.quota}`)}</div>` : ''}
+          ${(v.details || []).map(d => `<div class="visaDetailLine">${formatDetailChip(d)}</div>`).join('')}
+        </div>`
+      : '';
+    const messageHtml = m.message ? `<div style="margin:6px 0;white-space:pre-wrap;font-size:13px;">${escapeHtmlForHl(m.message)}</div>` : '';
+    const agentPhone = m.agentId && agentsCache[m.agentId] ? (agentsCache[m.agentId].phone || '') : '';
+    const digits = agentPhone.replace(/[^0-9]/g, '');
+    const withCC = digits ? (digits.startsWith('88') ? digits : ('88' + digits.replace(/^0/, ''))) : '';
+    const agentContactHtml = agentPhone
+      ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fbf9f5;">
+          <span style="font-size:13px;color:var(--navy);"><i class="fas fa-user-tie" style="margin-right:5px;color:var(--gold);"></i><b>${m.agentName || 'অজানা'}</b> · ${agentPhone}</span>
+          <div style="display:flex;gap:8px;">
+            <a href="tel:${agentPhone}" class="btn small" style="width:auto;padding:6px 10px;"><i class="fas fa-phone"></i></a>
+            <a href="https://wa.me/${withCC}" target="_blank" class="btn small" style="width:auto;padding:6px 10px;background:#25d366;"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>`
+      : `<div style="margin:6px 0;">এজেন্ট: <b>${m.agentName || 'অজানা'}</b></div>`;
+    return `
+    <div class="accItem" style="background:rgba(212,146,42,.06);">
+      <div class="accHead" onclick="toggleAccItem('${scopedId}')">
+        ${avatarHtml}
+        <div class="accTextWrap">
+          <div class="accName">${m.country || ''} ${m.visaName ? '— ' + m.visaName : ''}</div>
+          <div class="accSub">এজেন্ট: ${m.agentName || 'অজানা'} · ${time}</div>
+        </div>
+        <span id="chev-${scopedId}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+      </div>
+      <div class="accBody" id="acc-${scopedId}">
+        ${agentContactHtml}
+        ${visaDetailsHtml}
+        ${messageHtml}
+        ${fileHtml}
+        <div class="accActions">
+          <button class="btn small" onclick='processVisaMessage(${JSON.stringify(id)})'>প্রসেস করুন</button>
+          <button class="btn small danger" onclick='dismissVisaMessage(${JSON.stringify(id)})'>বাতিল করুন</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let vmFileBase64 = null;
+let vmFileName = null;
+let vmFileType = null;
+
+function handleVmFileSelect(event){
+  const file = event.target.files[0];
+  const previewWrap = document.getElementById('vmFilePreviewWrap');
+  const previewImg = document.getElementById('vmFilePreview');
+  const nameEl = document.getElementById('vmFileName');
+  vmFileBase64 = null; vmFileName = null; vmFileType = null;
+  if(!file){ previewWrap.style.display = 'none'; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    vmFileBase64 = e.target.result;
+    vmFileName = file.name;
+    vmFileType = file.type;
+    nameEl.textContent = file.name;
+    previewWrap.style.display = 'block';
+    if(file.type.startsWith('image/')){
+      previewImg.src = vmFileBase64;
+      previewImg.style.display = 'block';
+    } else {
+      previewImg.style.display = 'none';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function openVisaMessageModal(country, visaId, visaName){
+  vmContext = { country, visaId, visaName };
+  document.getElementById('vmVisaLabel').textContent = `${country}${visaName ? ' — ' + visaName : ''} সম্পর্কে ফাইল`;
+  document.getElementById('vmFile').value = '';
+  document.getElementById('vmFilePreviewWrap').style.display = 'none';
+  vmFileBase64 = null; vmFileName = null; vmFileType = null;
+  document.getElementById('vmMsg').textContent = '';
+  document.getElementById('visaMessageModal').classList.add('active');
+}
+
+function closeVisaMessageModal(){
+  document.getElementById('visaMessageModal').classList.remove('active');
+  vmContext = null;
+}
+
+async function sendVisaMessage(){
+  const msgEl = document.getElementById('vmMsg');
+  if(!vmFileBase64){ msgEl.style.color = 'var(--fail)'; msgEl.textContent = 'অনুগ্রহ করে একটি ফাইল আপলোড করুন।'; return; }
+  if(!vmContext){ return; }
+  try{
+    let agentName = 'অজানা';
+    if(currentUser){
+      const nameSnap = await db.ref('admins/' + currentUser + '/name').once('value');
+      if(nameSnap.exists()) agentName = nameSnap.val();
+    }
+    await db.ref('visaMessages').push({
+      country: vmContext.country,
+      visaId: vmContext.visaId,
+      visaName: vmContext.visaName || '',
+      agentId: currentUser,
+      agentName,
+      fileBase64: vmFileBase64,
+      fileName: vmFileName || '',
+      fileType: vmFileType || '',
+      status: 'pending',
+      createdAt: Date.now()
+    });
+    msgEl.style.color = 'var(--ok)';
+    msgEl.textContent = 'ফাইল পাঠানো হয়েছে।';
+    setTimeout(closeVisaMessageModal, 700);
+  }catch(e){
+    msgEl.style.color = 'var(--fail)';
+    msgEl.textContent = 'পাঠাতে ব্যর্থ: ' + e.message;
+  }
+}
+
+function processVisaMessage(id){
+  const m = visaMessagesCache[id];
+  if(!m) return;
+  openAddUserModal(m.country, m.visaId, m.agentId);
+  db.ref('visaMessages/' + id).update({ status: 'done' })
+    .catch(err => console.error('processVisaMessage error:', err));
+}
+
+function dismissVisaMessage(id){
+  if(!confirm('এই মেসেজটি বাতিল করবেন?')) return;
+  db.ref('visaMessages/' + id).update({ status: 'dismissed' })
+    .catch(err => alert('বাতিল করতে ব্যর্থ: ' + err.message));
+}
+
 function toggleAgentActive(uid){
   const a = agentsCache[uid] || {};
   const active = a.active !== false;
@@ -1597,7 +1946,7 @@ function toggleAgentActive(uid){
 }
 
 function deleteAgent(uid){
-  if(!confirm('নিশ্চিত মুছবেন? (মনে রাখবেন, শুধু প্রোফাইল মুছবে — লগইন অ্যাকাউন্ট সম্পূর্ণ মুছতে হলে Firebase Console থেকে মুছতে হবে।)')) return;
+  if(!confirm('নিশ্চিত মুছবেন? এজেন্টের প্রোফাইল ও লগইন তথ্য সম্পূর্ণ মুছে যাবে।')) return;
   db.ref('admins/' + uid).remove()
     .catch(err => { alert('ডিলিট করতে ব্যর্থ: ' + err.message); console.error('deleteAgent error:', err); });
 }
@@ -1651,7 +2000,7 @@ function toggleSettingsPanel(id){
   if(addBtn) addBtn.style.display = isOpen ? 'none' : 'flex';
 }
 
-/* ================= PASSWORD CHANGE ================= */
+/* ================= PASSWORD CHANGE (এডমিনের নিজের অ্যাকাউন্ট) ================= */
 async function changeAdminPassword(){
   const msg = document.getElementById('pcMsg');
   const email = document.getElementById('pcEmail').value.trim();
@@ -1694,7 +2043,7 @@ async function changeAdminPassword(){
   }
 }
 
-/* ================= FACE LOCK CHANGE ================= */
+/* ================= FACE LOCK CHANGE (এডমিনের নিজের অ্যাকাউন্ট) ================= */
 function handleFlImageUpload(event){
   const file = event.target.files && event.target.files[0];
   const msg = document.getElementById('flMsg');
@@ -1708,34 +2057,29 @@ function handleFlImageUpload(event){
   const reader = new FileReader();
   reader.onload = (e) => {
     const preview = document.getElementById('flPreview');
+    document.getElementById('flDropZone').style.display = 'none';
+    preview.onload = async () => {
+      msg.style.color = '';
+      msg.textContent = 'মুখ শনাক্ত করা হচ্ছে...';
+      try{
+        await loadModels();
+        const detection = await faceapi.detectSingleFace(preview, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks().withFaceDescriptor();
+        if(!detection) throw new Error("ছবিতে মুখ শনাক্ত করা যায়নি, স্পষ্ট সামনাসামনি তোলা ছবি দিয়ে চেষ্টা করুন।");
+        const descriptor = Array.from(detection.descriptor);
+        const uid = currentUser || pendingUid;
+        await db.ref('admins/' + uid + '/faceDescriptor').set(descriptor);
+        msg.style.color = "var(--ok)";
+        msg.textContent = "নতুন ফেসলক সফলভাবে সেভ হয়েছে।";
+      }catch(err){
+        msg.style.color = "var(--fail)";
+        msg.textContent = err.message;
+      }
+    };
     preview.src = e.target.result;
     preview.style.display = 'block';
-    document.getElementById('flDropZone').style.display = 'none';
   };
   reader.readAsDataURL(file);
-}
-async function reEnrollFaceLock(){
-  const msg = document.getElementById('flMsg');
-  const preview = document.getElementById('flPreview');
-  msg.style.color = "var(--fail)";
-  if(!preview.src || preview.style.display === 'none'){
-    msg.textContent = "প্রথমে একটি ছবি আপলোড করুন।";
-    return;
-  }
-  try{
-    await loadModels();
-    const detection = await faceapi.detectSingleFace(preview, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks().withFaceDescriptor();
-    if(!detection) throw new Error("ছবিতে মুখ শনাক্ত করা যায়নি, স্পষ্ট সামনাসামনি তোলা ছবি দিয়ে চেষ্টা করুন।");
-    const descriptor = Array.from(detection.descriptor);
-    const uid = currentUser || pendingUid;
-    await db.ref('admins/' + uid + '/faceDescriptor').set(descriptor);
-    msg.style.color = "var(--ok)";
-    msg.textContent = "নতুন ফেসলক সফলভাবে সেভ হয়েছে।";
-  }catch(e){
-    msg.style.color="var(--fail)";
-    msg.textContent = e.message;
-  }
 }
 
 function openCfFormModal(){
@@ -1829,6 +2173,8 @@ let visaTypes = {};
 let journeysCache = {};
 let usersCache = {};
 let agentsCache = {};
+let visaMessagesCache = {};
+let vmContext = null; // { country, visaId, visaName } for the message modal in progress
 
 function loadVisaTypes(){
   db.ref('visa_types').on('value', snap => {
@@ -1924,7 +2270,10 @@ function renderVisaInfoList(){
             <span>সম্পন্ন <b style="color:var(--ok);">${departed}</b></span>
           </div>
           <div class="vsr-actions">
-            <button type="button" class="icon-btn gold" title="ভিসা বিক্রি করুন" onclick='openAddUserModal(${JSON.stringify(country)}, ${JSON.stringify(v.vid)})'><span>বিক্রি</span><i class="fas fa-plane-departure" style="font-size:12px;color:#c9932c;"></i></button>
+            ${currentRole === 'admin'
+              ? `<button type="button" class="icon-btn gold" title="ভিসা বিক্রি করুন" onclick='openAddUserModal(${JSON.stringify(country)}, ${JSON.stringify(v.vid)})'><span>বিক্রি</span><i class="fas fa-plane-departure" style="font-size:12px;color:#c9932c;"></i></button>`
+              : `<button type="button" class="icon-btn gold" title="মেসেজ পাঠান" onclick='openVisaMessageModal(${JSON.stringify(country)}, ${JSON.stringify(v.vid)}, ${JSON.stringify(v.name)})'><span>মেসেজ</span><i class="fas fa-comment-dots" style="font-size:12px;color:#c9932c;"></i></button>`
+            }
             <button type="button" class="icon-btn" title="শেয়ার করুন" onclick='shareVisaInfo(${JSON.stringify(shareText).replace(/'/g, "&#39;")})'><span>শেয়ার</span><i class="fas fa-share"></i></button>
           </div>
         </div>
@@ -2160,7 +2509,7 @@ function populateUVisaTypeSelect(country, selectedVid){
     visas.map(([vid, v]) => `<option value="${vid}" ${vid === selectedVid ? 'selected' : ''}>${v.name}</option>`).join('');
 }
 
-function openAddUserModal(prefillCountry, prefillVisaId){
+function openAddUserModal(prefillCountry, prefillVisaId, prefillAgentId){
   editingUserUid = null;
   uPhotoBase64 = null;
   uDocuments = [];
@@ -2175,7 +2524,7 @@ function openAddUserModal(prefillCountry, prefillVisaId){
   document.getElementById('uFullName').value = '';
   document.getElementById('uPhotoIcon').style.display = '';
   populateUVisaTypeSelect(prefillCountry || '', prefillVisaId || '');
-  populateAgentRefSelect('');
+  populateAgentRefSelect(prefillAgentId || '');
   renderCustomFieldInputs();
   renderUDocumentsRows();
   document.getElementById('uScanButtonsWrap').style.display = isSellMode ? 'none' : 'flex';
@@ -2768,7 +3117,6 @@ function renderDashboard(){
   renderProfitLoss(journeys, { startOfMonth, in7Days: in7Days, now });
   renderStageChart(journeys);
   renderUpcomingFlights(upcomingFlights);
-  renderRecentActivity();
   renderCalendar();
 }
 
@@ -2910,22 +3258,6 @@ function renderUpcomingFlights(flights){
         <div class="dash-row-sub">${new Date(j.flight_datetime).toLocaleString('bn-BD')}</div>
       </div>
       <div class="flight-pill">T-${hoursLeft}h</div>
-    </div>`;
-  }).join('');
-}
-
-function renderRecentActivity(){
-  const el = document.getElementById('recentActivityList');
-  const entries = Object.values(dashNotifs).sort((a,b) => (b.created_at||0) - (a.created_at||0)).slice(0, 8);
-  if(!entries.length){ el.innerHTML = '<div class="dash-empty">কোনো সাম্প্রতিক নোটিফিকেশন নেই</div>'; return; }
-  el.innerHTML = entries.map(n => {
-    const statusClass = n.status === 'sent' ? 'badge-ok' : n.status === 'failed' ? 'badge-fail' : 'badge-pending';
-    return `<div class="dash-row">
-      <div>
-        <div class="dash-row-title">${n.template_key || '-'}</div>
-        <div class="dash-row-sub">${n.created_at ? new Date(n.created_at).toLocaleString('bn-BD') : '-'} · ${n.channel || '-'}</div>
-      </div>
-      <div class="${statusClass}" style="font-size:11px;font-weight:700">${n.status}</div>
     </div>`;
   }).join('');
 }
