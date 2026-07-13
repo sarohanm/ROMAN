@@ -159,6 +159,7 @@
   .formGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;}
   .customFieldsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;align-items:start;}
   .customFieldsGrid input,.customFieldsGrid select,.customFieldsGrid textarea{width:100%;box-sizing:border-box;}
+  .ocrFilled{background:rgba(212,146,42,.1) !important;border-color:var(--gold) !important;}
   .formGrid input,.formGrid select{width:100%;}
   .hint{font-size:11px;color:#8896ab;margin-top:4px;}
   .flex{display:flex;gap:8px;align-items:center;}
@@ -313,33 +314,11 @@
         <div class="dc" style="--ac:#2563eb;--ic:rgba(37,99,235,.1)"><div class="dc-head"><div class="dc-ico"><i class="fas fa-plane"></i></div><div class="dc-label">আসন্ন ফ্লাইট</div><div class="dc-pl" id="dUpcomingFlights">০</div></div><div class="dc-val" id="plUpcoming">৳০</div><div class="dc-sub">পরবর্তী ৭ দিনে</div></div>
         <div class="dc" style="--ac:#dc3545;--ic:rgba(220,53,69,.1)"><div class="dc-ico"><i class="fas fa-hourglass-half"></i></div><div class="dc-label">মেয়াদ শেষ/কাছাকাছি</div><div class="dc-val" id="dExpiring">০</div><div class="dc-sub">পাসপোর্ট, ভিসা ইত্যাদি</div></div>
         <div class="dc" style="--ac:#1a9e5c;--ic:rgba(26,158,92,.1)"><div class="dc-ico"><i class="fas fa-circle-check"></i></div><div class="dc-label">নোটিফিকেশন সেন্ট</div><div class="dc-val" id="dNotifSent">০</div><div class="dc-sub">আজ</div></div>
-        <div class="dc" style="--ac:#dc3545;--ic:rgba(220,53,69,.1)"><div class="dc-ico"><i class="fas fa-circle-xmark"></i></div><div class="dc-label">নোটিফিকেশন ফেইল</div><div class="dc-val" id="dNotifFailed">০</div><div class="dc-sub">আজ</div></div>
       </div>
 
       <div class="card">
         <div class="card-hd"><i class="fas fa-chart-column"></i> স্টেজ অনুযায়ী প্রার্থী</div>
         <div class="chart-wrap"><canvas id="stageChart"></canvas></div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><i class="fas fa-hourglass-half"></i> মেয়াদ শেষ হওয়ার সতর্কতা</div>
-        <div id="expiryAlertsList"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><i class="fas fa-calendar-days"></i> ফ্লাইট ক্যালেন্ডার</div>
-        <div class="cal-header">
-          <button class="btn small cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
-          <div id="calMonthLabel" style="font-weight:700;font-size:13px;"></div>
-          <button class="btn small cal-nav-btn" onclick="calChangeMonth(1)">›</button>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div id="calDayList" style="margin-top:12px;"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-hd"><i class="fas fa-plane"></i> আসন্ন ফ্লাইট</div>
-        <div id="upcomingFlightsList"></div>
       </div>
 
       <div class="card">
@@ -483,11 +462,36 @@
     </div>
   </div>
 
+  <!-- IMAGE LIGHTBOX (fullscreen view + download for document images) -->
+  <div class="modalOverlay" id="imgLightboxModal" onclick="if(event.target===this) closeLightbox()" style="background:rgba(10,12,16,.92);z-index:9999;">
+    <button class="close-x" onclick="closeLightbox()" style="position:fixed;top:16px;right:16px;background:rgba(255,255,255,.15);color:#fff;"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:20px;box-sizing:border-box;">
+      <img id="imgLightboxImg" src="" alt="" style="max-width:100%;max-height:80vh;border-radius:8px;object-fit:contain;">
+      <a id="imgLightboxDownload" href="" download="document" class="btn small gold" style="width:auto;padding:10px 20px;"><i class="fas fa-download"></i> ডাউনলোড করুন</a>
+    </div>
+  </div>
+
+  <!-- HALF-SCREEN DOCUMENT PREVIEW (উপরে ডকুমেন্ট, নিচে ফর্ম/ফাংশন দেখা যাবে; জুম + সোয়াইপ সাপোর্ট) -->
+  <div id="halfPreviewOverlay" onclick="if(event.target===this) closeHalfPreview()" style="display:none;position:fixed;top:0;left:0;right:0;height:34vh;background:#0a0c10;z-index:9999;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.4);touch-action:none;">
+    <button onclick="closeHalfPreview()" style="position:absolute;top:8px;right:8px;z-index:2;width:30px;height:30px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-xmark"></i></button>
+    <a id="halfPreviewDownload" href="" download="document" style="position:absolute;top:8px;left:8px;z-index:2;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-download"></i></a>
+    <button id="halfPreviewPrev" onclick="hpPrev()" style="display:none;position:absolute;left:6px;top:50%;transform:translateY(-50%);z-index:2;width:28px;height:28px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:12px;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
+    <button id="halfPreviewNext" onclick="hpNext()" style="display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);z-index:2;width:28px;height:28px;border:none;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:12px;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
+    <div id="halfPreviewViewport" style="width:100%;height:100%;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;">
+      <img id="halfPreviewImg" src="" alt="" draggable="false" style="max-width:92%;max-height:88%;border-radius:8px;object-fit:contain;touch-action:none;user-select:none;transform-origin:center center;">
+    </div>
+    <div id="halfPreviewCounter" style="display:none;position:absolute;bottom:6px;left:50%;transform:translateX(-50%);z-index:2;background:rgba(255,255,255,.15);color:#fff;font-size:10.5px;padding:2px 9px;border-radius:20px;">1 / 1</div>
+    <div style="position:absolute;bottom:6px;right:8px;z-index:2;color:rgba(255,255,255,.5);font-size:9px;">পিঞ্চ করে জুম করুন</div>
+  </div>
+
   <!-- ADD/EDIT USER MODAL -->
   <div class="modalOverlay" id="addUserModal">
     <div class="modalBox">
       <button class="close-x" onclick="closeAddUserModal()"><i class="fas fa-xmark"></i></button>
-      <h3 style="margin-top:0;" id="uModalTitle">নতুন ইউজার যোগ করুন</h3>
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-right:26px;">
+        <h3 style="margin:0;" id="uModalTitle">নতুন ইউজার যোগ করুন</h3>
+        <span id="uAutoFillMsg" style="font-size:11.5px;min-height:14px;"></span>
+      </div>
 
       <div style="display:flex;gap:8px;margin-bottom:12px;" id="uScanButtonsWrap">
         <button type="button" class="btn small gold" style="flex:1;" onclick="openScanModal('passport')"><i class="fas fa-camera"></i> পাসপোর্ট স্ক্যান (MRZ)</button>
@@ -575,6 +579,18 @@
       </div>
       <div id="vmMsg" style="font-size:12px;margin-top:6px;"></div>
       <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="sendVisaMessage()">পাঠান</button></div>
+    </div>
+  </div>
+
+  <!-- VISA MESSAGE REPLY / NOTE MODAL (এই নির্দিষ্ট আবেদন ভিসা সম্পর্কে লেখার জন্য) -->
+  <div class="modalOverlay" id="vmReplyModal">
+    <div class="modalBox">
+      <button class="close-x" onclick="closeVmReplyModal()"><i class="fas fa-xmark"></i></button>
+      <h3 style="margin-top:0;">মেসেজ লিখুন</h3>
+      <p class="hint" style="margin-top:0;" id="vmReplyLabel"></p>
+      <textarea id="vmReplyText" rows="4" placeholder="এই ভিসা আবেদন সম্পর্কে লিখুন..." style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+      <div id="vmReplyMsg" style="font-size:12px;margin-top:6px;"></div>
+      <div style="margin-top:10px;"><button class="btn small" style="width:100%;" onclick="saveVmReply()">সংরক্ষণ করুন</button></div>
     </div>
   </div>
 
@@ -995,12 +1011,15 @@ function renderJourneys(){
                 return `<div class="accInfoItem"><div class="aii-lbl">${label}</div><div class="aii-val" title="${val}">${val}</div></div>`;
               }).join('')}
             </div>` : '';
+        const uPhoneVal = getUserPhone(u);
+        const uPhoneDigits = (uPhoneVal || '').replace(/[^0-9]/g, '');
+        const uPhoneWithCC = uPhoneDigits ? (uPhoneDigits.startsWith('88') ? uPhoneDigits : ('88' + uPhoneDigits.replace(/^0/, ''))) : '';
         return `
         <div class="accItem">
           <div class="accHead" onclick="toggleAccItem('j-${uid}')">
             ${avatarHtml}
             <div class="accTextWrap">
-              <div class="accName">${getUserName(u)}${getUserPhone(u) && getUserPhone(u) !== '-' ? ` <span style="font-weight:400;color:#5b6b7a;font-size:12.5px;">· ${getUserPhone(u)}</span>` : ''}</div>
+              <div class="accName">${getUserName(u)}${uPhoneVal && uPhoneVal !== '-' ? ` <span style="font-weight:400;color:#5b6b7a;font-size:12.5px;">· ${uPhoneVal}</span> <button type="button" onclick="event.stopPropagation();callChoice('${uPhoneVal}','${uPhoneWithCC}')" style="width:auto;height:auto;background:none;color:var(--ok);border:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;cursor:pointer;vertical-align:middle;padding:0;"><i class="fas fa-phone"></i></button>` : ''}</div>
               ${u.agent_id ? `<div class="accSub" style="color:var(--gold);font-weight:600;"><i class="fas fa-user-tie" style="margin-right:4px;"></i>${agentName}${agentPhone ? ' · ' + agentPhone : ''}</div>` : ''}
               <div class="accSub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 <span>${flag} ${u.country || '-'}${u.visa_type_id && visaTypes[u.visa_type_id] ? ' · ' + visaTypes[u.visa_type_id].name : ''}</span>
@@ -1412,6 +1431,141 @@ function viewUserDetails(uid){
 function closeUserDetailModal(){
   document.getElementById('userDetailModal').classList.remove('active');
 }
+
+function openLightbox(src, filename){
+  document.getElementById('imgLightboxImg').src = src;
+  const dl = document.getElementById('imgLightboxDownload');
+  dl.href = src;
+  dl.setAttribute('download', filename || 'document');
+  document.getElementById('imgLightboxModal').classList.add('active');
+}
+function closeLightbox(){
+  document.getElementById('imgLightboxModal').classList.remove('active');
+  document.getElementById('imgLightboxImg').src = '';
+}
+// ---- হাফ-স্ক্রিন ডকুমেন্ট প্রিভিউ: জুম + একাধিক পেজের মধ্যে সোয়াইপ সাপোর্ট ----
+let hpImages = [];   // [{src, filename}]
+let hpIndex = 0;
+let hpScale = 1, hpPanX = 0, hpPanY = 0;
+let hpPointers = new Map();
+let hpStartDist = 0, hpStartScale = 1;
+let hpLastTap = 0;
+let hpDragStart = null;
+let hpSwipeStartX = null;
+
+function openHalfPreview(images, startIndex, filename){
+  // ব্যাকওয়ার্ড কম্প্যাটিবিলিটি: শুধু একটা src স্ট্রিং পাঠালেও কাজ করবে
+  if(typeof images === 'string'){
+    hpImages = [{ src: images, filename: filename || 'document' }];
+    hpIndex = 0;
+  } else {
+    hpImages = images || [];
+    hpIndex = startIndex || 0;
+  }
+  if(!hpImages.length) return;
+  document.getElementById('halfPreviewOverlay').style.display = 'flex';
+  renderHalfPreviewImage();
+}
+
+function renderHalfPreviewImage(){
+  const item = hpImages[hpIndex];
+  if(!item) return;
+  const img = document.getElementById('halfPreviewImg');
+  img.src = item.src;
+  const dl = document.getElementById('halfPreviewDownload');
+  dl.href = item.src;
+  dl.setAttribute('download', item.filename || 'document');
+  hpScale = 1; hpPanX = 0; hpPanY = 0;
+  applyHpTransform();
+  const multi = hpImages.length > 1;
+  document.getElementById('halfPreviewPrev').style.display = multi ? 'flex' : 'none';
+  document.getElementById('halfPreviewNext').style.display = multi ? 'flex' : 'none';
+  const counter = document.getElementById('halfPreviewCounter');
+  counter.style.display = multi ? 'block' : 'none';
+  counter.textContent = (hpIndex + 1) + ' / ' + hpImages.length;
+}
+
+function applyHpTransform(){
+  const img = document.getElementById('halfPreviewImg');
+  img.style.transform = `translate(${hpPanX}px, ${hpPanY}px) scale(${hpScale})`;
+}
+
+function hpPrev(){
+  if(!hpImages.length) return;
+  hpIndex = (hpIndex - 1 + hpImages.length) % hpImages.length;
+  renderHalfPreviewImage();
+}
+function hpNext(){
+  if(!hpImages.length) return;
+  hpIndex = (hpIndex + 1) % hpImages.length;
+  renderHalfPreviewImage();
+}
+
+function closeHalfPreview(){
+  document.getElementById('halfPreviewOverlay').style.display = 'none';
+  document.getElementById('halfPreviewImg').src = '';
+  hpImages = []; hpIndex = 0; hpPointers.clear();
+}
+
+function hpDist(pts){
+  const [a, b] = pts;
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+(function initHalfPreviewGestures(){
+  const img = document.getElementById('halfPreviewImg');
+  if(!img) return;
+
+  img.addEventListener('pointerdown', e => {
+    img.setPointerCapture(e.pointerId);
+    hpPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if(hpPointers.size === 2){
+      hpStartDist = hpDist([...hpPointers.values()]);
+      hpStartScale = hpScale;
+    } else if(hpPointers.size === 1){
+      hpDragStart = { x: e.clientX - hpPanX, y: e.clientY - hpPanY };
+      hpSwipeStartX = e.clientX;
+    }
+  });
+
+  img.addEventListener('pointermove', e => {
+    if(!hpPointers.has(e.pointerId)) return;
+    hpPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if(hpPointers.size === 2){
+      const dist = hpDist([...hpPointers.values()]);
+      hpScale = Math.min(4, Math.max(1, hpStartScale * (dist / hpStartDist)));
+      applyHpTransform();
+    } else if(hpPointers.size === 1 && hpDragStart){
+      if(hpScale > 1){
+        hpPanX = e.clientX - hpDragStart.x;
+        hpPanY = e.clientY - hpDragStart.y;
+        applyHpTransform();
+      }
+    }
+  });
+
+  function endPointer(e){
+    if(hpPointers.size === 1 && hpScale === 1 && hpSwipeStartX !== null){
+      const dx = e.clientX - hpSwipeStartX;
+      if(Math.abs(dx) > 60 && hpImages.length > 1){
+        if(dx < 0) hpNext(); else hpPrev();
+      }
+    }
+    hpPointers.delete(e.pointerId);
+    if(hpPointers.size < 2){ hpStartDist = 0; }
+    if(hpPointers.size === 0){ hpDragStart = null; hpSwipeStartX = null; }
+  }
+  img.addEventListener('pointerup', endPointer);
+  img.addEventListener('pointercancel', endPointer);
+
+  img.addEventListener('dblclick', () => {
+    if(hpScale > 1){ hpScale = 1; hpPanX = 0; hpPanY = 0; }
+    else { hpScale = 2.2; }
+    applyHpTransform();
+  });
+})();
+
+
 function deleteUser(uid){
   if(!confirm('নিশ্চিত মুছবেন?')) return;
   db.ref('users/' + uid).remove()
@@ -1553,7 +1707,7 @@ function renderAgents(){
     const withCC = digits ? (digits.startsWith('88') ? digits : ('88' + digits.replace(/^0/, ''))) : '';
     const contactIconsHtml = a.phone
       ? `<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-          <button type="button" onclick="event.stopPropagation();callChoice('${a.phone}','${withCC}')" style="width:24px;height:24px;border-radius:7px;background:var(--navy);color:#fff;border:none;display:flex;align-items:center;justify-content:center;font-size:10.5px;flex-shrink:0;cursor:pointer;"><i class="fas fa-phone"></i></button>
+          <button type="button" onclick="event.stopPropagation();callChoice('${a.phone}','${withCC}')" style="width:auto;height:auto;background:none;color:var(--ok);border:none;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;cursor:pointer;padding:0;"><i class="fas fa-phone"></i></button>
         </div>`
       : '';
     const actionsHtml = `<div class="accActions">
@@ -1569,7 +1723,7 @@ function renderAgents(){
           <div class="accName" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <span>${a.name || '-'}</span>
             <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-              <span class="stagePill" style="${active ? '' : 'opacity:.55;'}">${active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span>
+              <span class="stagePill" style="font-size:9px;padding:2px 7px;${active ? 'background:rgba(26,158,92,.16);color:var(--ok);' : 'background:rgba(91,107,122,.14);color:#5b6b7a;'}">${active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span>
               ${contactIconsHtml}
             </div>
           </div>
@@ -1843,7 +1997,8 @@ function renderVisaMessages(){
     const isImage = (m.fileType || '').startsWith('image/');
     const fileHtml = m.fileBase64
       ? (isImage
-          ? `<img src="${m.fileBase64}" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);display:block;margin-bottom:8px;" alt="">`
+          ? `<img src="${m.fileBase64}" onclick="openHalfPreview('${m.fileBase64}','${(m.fileName || 'document').replace(/'/g,"")}')" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);display:block;margin-bottom:8px;cursor:zoom-in;" alt="">
+             <button type="button" onclick="openHalfPreview('${m.fileBase64}','${(m.fileName || 'document').replace(/'/g,"")}')" class="hint" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;background:none;border:none;padding:0;cursor:pointer;"><i class="fas fa-expand"></i> ডকুমেন্ট দেখুন / ডাউনলোড করুন</button>`
           : `<a href="${m.fileBase64}" download="${m.fileName || 'file'}" class="hint" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;"><i class="fas fa-file-arrow-down"></i> ${m.fileName || 'ফাইল ডাউনলোড করুন'}</a>`)
       : `<div class="hint" style="margin-bottom:8px;">কোনো ফাইল সংযুক্ত নেই।</div>`;
     const agentPhoto = m.agentId && agentsCache[m.agentId] ? agentsCache[m.agentId].photoBase64 : null;
@@ -1860,6 +2015,7 @@ function renderVisaMessages(){
         </div>`
       : '';
     const messageHtml = m.message ? `<div style="margin:6px 0;white-space:pre-wrap;font-size:13px;">${escapeHtmlForHl(m.message)}</div>` : '';
+    const adminReplyHtml = m.adminReply ? `<div style="margin:6px 0;padding:8px 10px;border-radius:8px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.18);white-space:pre-wrap;font-size:13px;color:var(--navy);"><i class="fas fa-comment-dots" style="margin-right:5px;color:var(--teal);"></i>${escapeHtmlForHl(m.adminReply)}</div>` : '';
     const agentPhone = m.agentId && agentsCache[m.agentId] ? (agentsCache[m.agentId].phone || '') : '';
     const digits = agentPhone.replace(/[^0-9]/g, '');
     const withCC = digits ? (digits.startsWith('88') ? digits : ('88' + digits.replace(/^0/, ''))) : '';
@@ -1867,8 +2023,8 @@ function renderVisaMessages(){
       ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fbf9f5;">
           <span style="font-size:13px;color:var(--navy);"><i class="fas fa-user-tie" style="margin-right:5px;color:var(--gold);"></i><b>${m.agentName || 'অজানা'}</b> · ${agentPhone}</span>
           <div style="display:flex;gap:8px;">
-            <a href="tel:${agentPhone}" class="btn small" style="width:auto;padding:6px 10px;"><i class="fas fa-phone"></i></a>
-            <a href="https://wa.me/${withCC}" target="_blank" class="btn small" style="width:auto;padding:6px 10px;background:#25d366;"><i class="fab fa-whatsapp"></i></a>
+            <button type="button" onclick="event.stopPropagation();callChoice('${agentPhone}','${withCC}')" style="width:auto;height:auto;padding:6px;background:none;border:none;color:var(--navy);font-size:16px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-phone"></i></button>
+            <button type="button" onclick='event.stopPropagation();openVmReplyModal(${JSON.stringify(id)})' style="width:auto;height:auto;padding:6px;background:none;border:none;color:var(--teal);font-size:16px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;"><i class="fas fa-comment-dots"></i></button>
           </div>
         </div>`
       : `<div style="margin:6px 0;">এজেন্ট: <b>${m.agentName || 'অজানা'}</b></div>`;
@@ -1886,6 +2042,7 @@ function renderVisaMessages(){
         ${agentContactHtml}
         ${visaDetailsHtml}
         ${messageHtml}
+        ${adminReplyHtml}
         ${fileHtml}
         <div class="accActions">
           <button class="btn small" onclick='processVisaMessage(${JSON.stringify(id)})'>প্রসেস করুন</button>
@@ -1970,12 +2127,88 @@ async function sendVisaMessage(){
   }
 }
 
+let vmReplyId = null;
+function openVmReplyModal(id){
+  vmReplyId = id;
+  const m = visaMessagesCache[id];
+  document.getElementById('vmReplyLabel').textContent = m ? `${m.country || ''}${m.visaName ? ' — ' + m.visaName : ''} সম্পর্কে` : '';
+  document.getElementById('vmReplyText').value = (m && m.adminReply) || '';
+  document.getElementById('vmReplyMsg').textContent = '';
+  document.getElementById('vmReplyModal').classList.add('active');
+}
+
+function closeVmReplyModal(){
+  document.getElementById('vmReplyModal').classList.remove('active');
+  vmReplyId = null;
+}
+
+async function saveVmReply(){
+  const msgEl = document.getElementById('vmReplyMsg');
+  const text = document.getElementById('vmReplyText').value.trim();
+  if(!vmReplyId){ return; }
+  if(!text){ msgEl.style.color = 'var(--fail)'; msgEl.textContent = 'অনুগ্রহ করে কিছু লিখুন।'; return; }
+  try{
+    await db.ref('visaMessages/' + vmReplyId).update({ adminReply: text, adminReplyAt: Date.now() });
+    msgEl.style.color = 'var(--ok)';
+    msgEl.textContent = 'সংরক্ষণ করা হয়েছে।';
+    setTimeout(closeVmReplyModal, 700);
+  }catch(e){
+    msgEl.style.color = 'var(--fail)';
+    msgEl.textContent = 'সংরক্ষণ করতে ব্যর্থ: ' + e.message;
+  }
+}
+
 function processVisaMessage(id){
   const m = visaMessagesCache[id];
   if(!m) return;
   openAddUserModal(m.country, m.visaId, m.agentId);
   db.ref('visaMessages/' + id).update({ status: 'done' })
     .catch(err => console.error('processVisaMessage error:', err));
+
+  if(!m.fileBase64) return;
+
+  // ডকুমেন্টটা সরাসরি নতুন ইউজারের ডকুমেন্ট লিস্টে যোগ করে দেওয়া হচ্ছে
+  uDocuments.push({
+    name: m.fileName || 'এজেন্ট থেকে প্রাপ্ত ডকুমেন্ট',
+    expiry: '',
+    files: [{ fileBase64: m.fileBase64, fileName: m.fileName || 'document' }]
+  });
+  renderUDocumentsRows();
+
+  // ছবি হলে OCR দিয়ে পড়ে ফর্মের ফিল্ড অটোফিল করার চেষ্টা করা হচ্ছে (NID/পাসপোর্ট স্ক্যানের মতো একই লজিক)
+  const isImage = (m.fileType || '').startsWith('image/');
+  if(!isImage) return;
+  const msg = document.getElementById('uAutoFillMsg');
+  if(!window.Tesseract){ if(msg){ msg.style.color = 'var(--warn)'; msg.textContent = 'OCR লাইব্রেরি লোড হয়নি, ম্যানুয়ালি ফিল্ড পূরণ করুন।'; } return; }
+  if(msg){ msg.style.color = 'var(--warn)'; msg.textContent = 'ডকুমেন্ট থেকে তথ্য পড়া হচ্ছে...'; }
+  prepareDocForOcr(m.fileBase64)
+    .then(preparedSrc => Tesseract.recognize(preparedSrc, 'eng+ben', { tessedit_pageseg_mode: '6' }))
+    .then(({ data }) => {
+      const text = data.text || '';
+      const parsedNid = parseNidText(text);
+      const parsedMrz = parseMrzText(text);
+      let applied = false;
+      if(parsedNid && (parsedNid.nidNo || parsedNid.fullName)){
+        applyScanToForm(parsedNid);
+        applied = true;
+      }
+      if(parsedMrz){
+        applyScanToForm(parsedMrz);
+        applied = true;
+      }
+      // NID/পাসপোর্ট নির্দিষ্ট ফরম্যাটে না মিললে (বা কিছু ফিল্ড এখনো খালি থাকলে) যেকোনো
+      // ধরনের ডকুমেন্ট থেকে সাধারণভাবে ফিল্ড অনুমান করে বাকিটা পূরণের চেষ্টা করা হচ্ছে
+      const parsedGeneric = parseGenericDocText(text);
+      if(applyGenericParseToForm(parsedGeneric)) applied = true;
+      if(msg){
+        if(applied){ msg.style.color = 'var(--ok)'; msg.textContent = 'ডকুমেন্ট থেকে কিছু তথ্য বসানো হয়েছে (সোনালি বর্ডারের ফিল্ডগুলো) — একবার মিলিয়ে দেখুন।'; }
+        else { msg.style.color = 'var(--warn)'; msg.textContent = 'ডকুমেন্ট থেকে তথ্য পড়া যায়নি, ম্যানুয়ালি পূরণ করুন।'; }
+      }
+    })
+    .catch(err => {
+      console.error('processVisaMessage OCR error:', err);
+      if(msg){ msg.style.color = 'var(--warn)'; msg.textContent = 'ডকুমেন্ট পড়তে সমস্যা হয়েছে, ম্যানুয়ালি পূরণ করুন।'; }
+    });
 }
 
 function dismissVisaMessage(id){
@@ -2407,7 +2640,7 @@ function loadCustomFields(){
     customFields = Object.assign({}, BASE_CUSTOM_FIELDS, snap.val() || {});
     renderCountryList();
     renderCustomFieldInputs();
-    if(document.getElementById('expiryAlertsList')) renderDashboard();
+    if(document.getElementById('dTotalUsers')) renderDashboard();
   });
 }
 
@@ -2431,11 +2664,12 @@ function renderUDocumentsRows(){
             ${pages.map((p, pi) => `
               <div style="position:relative;">
                 ${p.fileBase64 && p.fileBase64.startsWith('data:image')
-                  ? `<img src="${p.fileBase64}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;">`
+                  ? `<img src="${p.fileBase64}" onclick='openHalfPreview(${JSON.stringify(pages.filter(x=>x.fileBase64 && x.fileBase64.startsWith("data:image")).map(x=>({src:x.fileBase64, filename:(x.fileName||"document").replace(/['"]/g,"")})))}, ${pages.slice(0,pi).filter(x=>x.fileBase64 && x.fileBase64.startsWith("data:image")).length})' style="width:100%;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;">`
                   : p.fileBase64 && p.fileBase64.startsWith('data:video')
                   ? `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#20242c;"><i class="fas fa-circle-play" style="font-size:24px;color:var(--gold);"></i></div>`
                   : `<div style="width:100%;height:90px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:#f7f2ea;"><i class="fas fa-file-lines" style="font-size:22px;color:var(--navy2);"></i></div>`}
                 <span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(20,24,32,.7);color:#fff;font-size:9px;padding:1px 4px;border-radius:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">পৃষ্ঠা ${pi+1}</span>
+                ${p.fileBase64 && p.fileBase64.startsWith('data:image') ? `<span style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:5px;background:rgba(20,24,32,.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;pointer-events:none;"><i class="fas fa-expand"></i></span>` : ''}
                 <button type="button" onclick="removeUDocPage(${i},${pi})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
               </div>
             `).join('')}
@@ -2587,6 +2821,7 @@ function openAddUserModal(prefillCountry, prefillVisaId, prefillAgentId){
   document.getElementById('uDepositWrap').style.display = isSellMode ? 'block' : 'none';
   document.getElementById('uDepositAmt').value = '';
   document.getElementById('uDepositNote').value = '';
+  document.getElementById('uAutoFillMsg').textContent = '';
   document.getElementById('addUserModal').classList.add('active');
 }
 
@@ -2744,6 +2979,35 @@ function cropCanvas(srcCanvas, { xFrac, yFrac, wFrac, hFrac, scale = 1 }){
   const ctx = out.getContext('2d');
   ctx.drawImage(srcCanvas, sx, sy, sw, sh, 0, 0, out.width, out.height);
   return out;
+}
+
+// এজেন্টের পাঠানো ছবি সরাসরি কোনো প্রসেসিং ছাড়াই OCR-এ দিলে নির্ভুলতা কম হয় — ফোনের
+// ক্যামেরায় তোলা ছবি প্রায়ই কম কনট্রাস্ট বা ছোট রেজোলিউশনের হয়। MRZ/NID স্ক্যানের মতোই,
+// এখানে ছবিটা গ্রেস্কেলে কনট্রাস্ট বাড়িয়ে এবং প্রয়োজনে আপস্কেল করে OCR-এর জন্য প্রস্তুত করা হয়।
+function prepareDocForOcr(base64Src){
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const maxDim = 1800;
+        let w = img.width, h = img.height;
+        if(Math.max(w, h) < maxDim){
+          const s = maxDim / Math.max(w, h);
+          w = Math.round(w * s); h = Math.round(h * s);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        enhanceCanvas(canvas, { binarize: false, contrast: 1.3 });
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      }catch(e){
+        console.error('prepareDocForOcr error:', e);
+        resolve(base64Src);
+      }
+    };
+    img.onerror = () => resolve(base64Src);
+    img.src = base64Src;
+  });
 }
 
 async function captureScan(){
@@ -2935,17 +3199,137 @@ function parseNidText(rawText){
   return { type: 'nid', fullName, nidNo, dob, uncertainFields };
 }
 
+// এনআইডি/পাসপোর্ট নির্দিষ্ট ফরম্যাটে না মিললে যেকোনো ধরনের ডকুমেন্ট (ভিসা ফর্ম,
+// চাকরির চুক্তিপত্র, হাতে লেখা তথ্য ইত্যাদি) থেকে যতটুকু সম্ভব ফিল্ড অনুমান করে বের করার
+// শেষ চেষ্টা — প্রথমে লেবেল (নাম:, ফোন:, ইত্যাদি) খোঁজে, লেবেল না পেলে টেক্সট জুড়ে
+// পরিচিত প্যাটার্ন (ফোন নম্বর, এনআইডি ডিজিট, পাসপোর্ট ফরম্যাট) খোঁজে।
+function parseGenericDocText(rawText){
+  const text = (rawText || '').replace(/\r/g, '');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const result = {};
+
+  const FIELD_LABELS = {
+    cf_phone:      ['phone','mobile','মোবাইল','ফোন','সেল'],
+    cf_nid:        ['nid','national id','জাতীয় পরিচয়','এনআইডি'],
+    cf_passport:   ['passport','পাসপোর্ট'],
+    cf_village:    ['village','vill','গ্রাম'],
+    cf_thana:      ['thana','upazila','থানা','উপজেলা'],
+    cf_district:   ['district','জেলা'],
+    cf_division:   ['division','বিভাগ'],
+    cf_postal:     ['postal','post code','zip','পোস্টাল'],
+    cf_dob:        ['date of birth','dob','জন্ম তারিখ','জন্মতারিখ'],
+    cf_occupation: ['occupation','profession','পেশা']
+  };
+  const findLabeledValue = (keywords) => {
+    for(let i = 0; i < lines.length; i++){
+      const low = lines[i].toLowerCase();
+      if(keywords.some(k => low.includes(k))){
+        const sameLine = lines[i].replace(new RegExp('^.*?(' + keywords.join('|') + ')', 'i'), '').replace(/^[\s:.\-–—]+/, '').trim();
+        if(sameLine) return sameLine;
+        if(lines[i+1]) return lines[i+1].trim();
+      }
+    }
+    return '';
+  };
+  Object.entries(FIELD_LABELS).forEach(([fid, keywords]) => {
+    const v = findLabeledValue(keywords);
+    if(v) result[fid] = v;
+  });
+
+  // নাম: লেবেল না পেলে প্রথম প্লজিবল বাংলা/ইংরেজি নাম-সদৃশ লাইন
+  if(!result.fullName){
+    const nameByLabel = findLabeledValue(['name','নাম']);
+    if(nameByLabel) result.fullName = nameByLabel;
+    else {
+      const skipLabels = /father|mother|address|date|nid|passport|phone|mobile|village|thana|district|division|postal|occupation|government|republic|bangladesh|visa|company|salary|duty|contract/i;
+      const cand = lines.find(l => /^[A-Za-z\u0980-\u09FF\s.]{3,40}$/.test(l) && !skipLabels.test(l));
+      if(cand) result.fullName = cand.replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  // প্যাটার্ন-ভিত্তিক ফলব্যাক: লেবেল না মিললে টেক্সট জুড়ে পরিচিত ফরম্যাট খোঁজা হচ্ছে।
+  // ভুল ধরা এড়াতে প্রতিটার সাথে বাউন্ডারি-চেক ও ভ্যালিডেশন রাখা হয়েছে — যেমন ফোন নম্বর
+  // যেন কোনো লম্বা ডিজিট রানের ভেতর থেকে আংশিক না ধরা পড়ে, ভুয়া তারিখ যেন গৃহীত না হয়।
+  if(!result.cf_phone){
+    const m = text.match(/(?<!\d)(?:\+?88)?01[3-9]\d{8}(?!\d)/);
+    if(m) result.cf_phone = m[0];
+  }
+  if(!result.cf_passport){
+    const m = text.match(/(?<![A-Z0-9])[A-Z]{1,2}\d{7,8}(?![A-Z0-9])/);
+    if(m) result.cf_passport = m[0];
+  }
+  if(!result.cf_nid){
+    const usedPhone = (result.cf_phone || '').replace(/\D/g, '');
+    const runs = (text.match(/(?<!\d)\d[\d\s]{8,}\d(?!\d)/g) || []).map(r => r.replace(/\s+/g, ''));
+    const nidCandidate = runs.find(r => [10,13,17].includes(r.length) && r !== usedPhone);
+    if(nidCandidate) result.cf_nid = nidCandidate;
+  }
+  // পোস্টাল কোডের কোনো নির্ভরযোগ্য প্যাটার্ন নেই (যেকোনো ৪-ডিজিট সংখ্যাই হতে পারে ভুল
+  // ক্যাচ — যেমন সালের অংশ বা ফোন নম্বরের টুকরো), তাই এটা শুধু লেবেল মিললেই বসানো হয়,
+  // অনুমান করে বসানো হয় না।
+  if(!result.cf_dob){
+    const m = text.match(/(\d{1,2})[\s\/\-.]([A-Za-z]{3,9}|\d{1,2})[\s\/\-.](\d{4})/);
+    if(m){
+      const [, dd, monRaw, yyyy] = m;
+      const months = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+      const mm = /^\d+$/.test(monRaw) ? monRaw.padStart(2,'0') : (months[monRaw.slice(0,3).toLowerCase()] || '');
+      const ddNum = parseInt(dd,10), mmNum = parseInt(mm,10), yyNum = parseInt(yyyy,10);
+      const currentYear = new Date().getFullYear();
+      const validDate = mm && ddNum >= 1 && ddNum <= 31 && mmNum >= 1 && mmNum <= 12 && yyNum >= 1930 && yyNum <= currentYear;
+      if(validDate) result.cf_dob = `${yyyy}-${mm}-${dd.padStart(2,'0')}`;
+    }
+  }
+
+  return Object.keys(result).length ? result : null;
+}
+
+// parseGenericDocText-এর ফলাফল সরাসরি customFields আইডি অনুযায়ী, তাই কীওয়ার্ড
+// ম্যাচিং ছাড়াই id ধরে বসিয়ে দেওয়া যায় — শুধু আগে থেকে খালি থাকা ফিল্ডগুলোতে।
+// অনুমান করে বসানো প্রতিটা ফিল্ড হালকা সোনালি রঙে হাইলাইট হয়ে থাকে, যাতে ব্যবহারকারী
+// বুঝতে পারেন কোনটা যাচাই করা দরকার; ম্যানুয়ালি টাইপ করলেই হাইলাইট চলে যায়।
+function markOcrFilled(el){
+  if(!el) return;
+  el.classList.add('ocrFilled');
+  if(!el.dataset.ocrClearBound){
+    el.addEventListener('input', () => el.classList.remove('ocrFilled'), { once: true });
+    el.dataset.ocrClearBound = '1';
+  }
+}
+function applyGenericParseToForm(parsed){
+  if(!parsed) return false;
+  let applied = false;
+  Object.entries(parsed).forEach(([fid, value]) => {
+    if(fid === 'fullName'){
+      const el = document.getElementById('uFullName');
+      if(el && !el.value.trim()){ el.value = value; markOcrFilled(el); applied = true; }
+      return;
+    }
+    const el = document.getElementById('cf-' + fid);
+    if(el && !el.value.trim()){
+      el.value = value;
+      if(fid === 'cf_dob'){ const ph = document.getElementById('cf-cf_dob-ph'); if(ph) ph.style.display = 'none'; }
+      markOcrFilled(el);
+      applied = true;
+    }
+  });
+  return applied;
+}
+
 function applyScanToForm(parsed){
   const setByKeyword = (keywords, value) => {
     if(!value) return;
     Object.entries(customFields).forEach(([fid, f]) => {
       if(f && f.label && keywords.some(k => f.label.toLowerCase().includes(k))){
         const el = document.getElementById('cf-' + fid);
-        if(el) el.value = value;
+        if(el){ el.value = value; markOcrFilled(el); }
       }
     });
   };
   setByKeyword(['নাম','name'], parsed.fullName);
+  if(parsed.fullName){
+    const nameEl = document.getElementById('uFullName');
+    if(nameEl && !nameEl.value.trim()){ nameEl.value = parsed.fullName; markOcrFilled(nameEl); }
+  }
   setByKeyword(['জন্ম','dob','birth'], parsed.dob);
   if(parsed.type === 'passport'){
     setByKeyword(['পাসপোর্ট','passport'], parsed.passportNo);
@@ -3158,7 +3542,6 @@ function renderDashboard(){
   // Notifications sent/failed today
   const notifsToday = Object.values(dashNotifs).filter(n => (n.created_at||0) >= startOfToday);
   document.getElementById('dNotifSent').textContent = notifsToday.filter(n => n.status === 'sent').length;
-  document.getElementById('dNotifFailed').textContent = notifsToday.filter(n => n.status === 'failed').length;
 
   renderProfitLoss(journeys, { startOfMonth, in7Days: in7Days, now });
   renderStageChart(journeys);
@@ -3293,6 +3676,7 @@ function renderExpiryAlerts(items){
 
 function renderUpcomingFlights(flights){
   const el = document.getElementById('upcomingFlightsList');
+  if(!el) return;
   if(!flights.length){ el.innerHTML = '<div class="dash-empty">আগামী ৭ দিনে কোনো ফ্লাইট নেই</div>'; return; }
   const sorted = flights.slice().sort((a,b) => a.flight_datetime - b.flight_datetime);
   el.innerHTML = sorted.map(j => {
