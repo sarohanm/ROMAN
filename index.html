@@ -42,7 +42,7 @@
   .btn.gold{background:var(--gold);color:#1c2733;}
   .btn.small{width:auto;padding:6px 12px;font-size:12px;}
   .btn.danger{background:var(--fail);}
-  #faceStep{display:none;text-align:center;}
+  #faceStep{text-align:center;}
   video, canvas{border-radius:10px;width:100%;max-width:280px;}
   #loginMsg{font-size:12px;color:var(--fail);min-height:16px;margin-top:4px;}
 
@@ -123,19 +123,16 @@
     <h1><i class="fas fa-user-tie"></i>এজেন্ট লগইন</h1>
     <p class="sub">Talent Overseas — এজেন্ট পোর্টাল। অ্যাডমিন প্যানেল থেকে দেওয়া ইমেইল-পাসওয়ার্ড দিয়ে প্রবেশ করুন।</p>
 
-    <div id="passStep">
+    <div id="faceStep">
+      <p class="hint" style="margin-top:0;">ফেস দিয়ে লগইন করুন। ক্যামেরার সামনে সরাসরি তাকান, স্বয়ংক্রিয়ভাবে যাচাই হবে।</p>
+      <video id="video" autoplay muted playsinline></video>
+      <button class="btn small" style="width:100%;background:#8a8478;margin-top:10px;" onclick="showPassStep()">ইমেইল দিয়ে লগইন করুন</button>
+    </div>
+
+    <div id="passStep" style="display:none;">
       <input id="loginEmail" type="email" placeholder="ইমেইল" autocomplete="username">
       <input id="loginPass" type="password" placeholder="পাসওয়ার্ড" autocomplete="current-password">
       <button class="btn gold" onclick="handleAgentLogin()"><i class="fas fa-right-to-bracket" style="margin-right:6px;"></i>লগইন করুন</button>
-    </div>
-
-    <div id="faceStep">
-      <p class="hint" style="margin-top:0;">নিরাপত্তার জন্য মুখ ভেরিফাই করুন।</p>
-      <video id="video" autoplay muted></video>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button class="btn small" style="flex:1;" onclick="verifyFace()"><i class="fas fa-check" style="margin-right:6px;"></i>ভেরিফাই করুন</button>
-        <button class="btn small" style="flex:1;background:#8a8478;" onclick="skipFaceStep()">এড়িয়ে যান</button>
-      </div>
     </div>
 
     <div id="loginMsg"></div>
@@ -149,6 +146,10 @@
       <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span></div>
       <div class="nav-actions">
         <span id="agentNameTag" style="color:#cfd6e0;font-size:12px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button onclick="openInboxModal()" title="বার্তা" style="position:relative;">
+          <i class="fas fa-bell"></i>
+          <span id="inboxBadge" style="display:none;position:absolute;top:-2px;right:-4px;background:var(--fail);color:#fff;font-size:9px;line-height:1;padding:2px 4px;border-radius:8px;min-width:14px;text-align:center;"></span>
+        </button>
         <button onclick="agentLogout()" title="লগআউট"><i class="fas fa-right-from-bracket"></i></button>
       </div>
     </div>
@@ -207,6 +208,15 @@
   </div>
 </div>
 
+<!-- ================= INBOX MODAL (এডমিন থেকে পাঠানো বার্তা, যেমন ডিলিটের কারণ) ================= -->
+<div class="modalOverlay" id="inboxModal">
+  <div class="modalBox">
+    <button class="close-x" onclick="closeInboxModal()"><i class="fas fa-xmark"></i></button>
+    <h3 style="margin-top:0;"><i class="fas fa-bell" style="margin-right:6px;color:var(--gold);"></i>বার্তা</h3>
+    <div id="inboxList"></div>
+  </div>
+</div>
+
 <script>
 /* ================= FIREBASE ================= */
 const firebaseConfig = {
@@ -255,7 +265,7 @@ function formatDetailChip(d){
   return `<span class="chipKey">${escapeHtmlForHl(key)}</span>${escapeHtmlForHl(rest)}`;
 }
 
-/* ================= LOGIN: STEP 1 - PASSWORD ================= */
+/* ================= LOGIN: ইমেইল-পাসওয়ার্ড (ফেস ফেইল হলে ফলব্যাক) ================= */
 function handleAgentLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPass').value;
@@ -287,24 +297,50 @@ function handleAgentLogin(){
       }
       pendingUid = uid;
       currentAgentData = data;
-      if(data.faceDescriptor){
-        document.getElementById('passStep').style.display = 'none';
-        document.getElementById('faceStep').style.display = 'block';
-        startCamera();
-      } else {
-        enterAgentApp();
-      }
+      enterAgentApp();
     })
     .catch(err => { msg.textContent = "লগইন ব্যর্থ: " + err.message; });
 }
 
+function showPassStep(){
+  stopCamera();
+  document.getElementById('faceStep').style.display = 'none';
+  document.getElementById('passStep').style.display = 'block';
+  const msg = document.getElementById('loginMsg');
+  msg.style.color = "var(--fail)";
+  msg.textContent = "";
+}
+
+/* ---- ফেস লগইন: ক্যামেরা চালু হওয়া মাত্র স্বয়ংক্রিয়ভাবে বারবার স্ক্যান করে,
+   কয়েকবার চেষ্টায় মিল না পেলে নিজে থেকেই ইমেইল-পাসওয়ার্ড স্টেপে চলে যায় ---- */
+const FACE_MAX_ATTEMPTS = 20;        // মোট কতবার স্ক্যান করার পর ফেইলওভার হবে
+const FACE_SCAN_INTERVAL = 900;      // প্রতিটি স্ক্যানের মধ্যে বিরতি (ms)
+const FACE_MATCH_THRESHOLD = 0.5;    // euclidean distance থ্রেশহোল্ড
+const FACE_CONSECUTIVE_NEEDED = 2;   // ভুয়া মিল এড়াতে পরপর কতবার মিল লাগবে
+
+let faceLoopActive = false;
+let faceLoopTimer = null;
+let faceConsecutiveMatch = 0;
+let faceAttempts = 0;
+
 function startCamera(){
   const video = document.getElementById('video');
+  const msg = document.getElementById('loginMsg');
+  msg.style.color = "var(--fail)";
+  msg.textContent = "ক্যামেরা চালু হচ্ছে...";
   navigator.mediaDevices.getUserMedia({video:{width:280,height:210}})
-    .then(stream => { video.srcObject = stream; })
-    .catch(() => { document.getElementById('loginMsg').textContent = "ক্যামেরা এক্সেস দিতে হবে।"; });
+    .then(stream => {
+      video.srcObject = stream;
+      video.onloadedmetadata = () => { video.play(); beginAutoFaceLogin(); };
+    })
+    .catch(() => {
+      msg.textContent = "ক্যামেরা এক্সেস দিতে হবে।";
+      showPassStep();
+    });
 }
 function stopCamera(){
+  faceLoopActive = false;
+  if(faceLoopTimer){ clearTimeout(faceLoopTimer); faceLoopTimer = null; }
   const video = document.getElementById('video');
   if(video.srcObject){ video.srcObject.getTracks().forEach(t=>t.stop()); }
 }
@@ -319,30 +355,83 @@ async function loadModels(){
   modelsLoaded = true;
 }
 
-async function verifyFace(){
+async function beginAutoFaceLogin(){
   const msg = document.getElementById('loginMsg');
   msg.style.color = "var(--fail)";
+  msg.textContent = "মডেল লোড হচ্ছে...";
   try{
     await loadModels();
-    const video = document.getElementById('video');
+  }catch(e){
+    msg.textContent = "মডেল লোড ব্যর্থ, ইমেইল দিয়ে লগইন করুন।";
+    showPassStep();
+    return;
+  }
+  faceConsecutiveMatch = 0;
+  faceAttempts = 0;
+  faceLoopActive = true;
+  msg.textContent = "মুখ শনাক্ত করা হচ্ছে...";
+  runFaceScan();
+}
+
+async function runFaceScan(){
+  if(!faceLoopActive) return;
+  const msg = document.getElementById('loginMsg');
+  const video = document.getElementById('video');
+  faceAttempts++;
+
+  try{
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks().withFaceDescriptor();
-    if(!detection){ msg.textContent = "মুখ শনাক্ত করা যায়নি, ভালো আলোতে চেষ্টা করুন।"; return; }
-    const liveDescriptor = Array.from(detection.descriptor);
-    const dist = faceapi.euclideanDistance(liveDescriptor, currentAgentData.faceDescriptor);
-    if(dist < 0.5){
-      msg.style.color = "var(--ok)";
-      msg.textContent = "ভেরিফাই সফল, প্রবেশ করানো হচ্ছে...";
-      stopCamera();
-      enterAgentApp();
+
+    if(detection){
+      const liveDescriptor = Array.from(detection.descriptor);
+
+      // এখনো জানা নেই কোন এজেন্ট — তাই সব এজেন্টের সংরক্ষিত ফেস-ডিসক্রিপ্টরের সাথে মিলিয়ে দেখা হচ্ছে
+      const snap = await db.ref('admins').once('value');
+      const all = snap.val() || {};
+      let bestUid = null, bestData = null, bestDist = Infinity;
+      Object.entries(all).forEach(([uid, data]) => {
+        if(!data || data.role !== 'agent' || data.active === false || !data.faceDescriptor) return;
+        const dist = faceapi.euclideanDistance(liveDescriptor, data.faceDescriptor);
+        if(dist < bestDist){ bestDist = dist; bestUid = uid; bestData = data; }
+      });
+
+      if(bestUid && bestDist < FACE_MATCH_THRESHOLD){
+        faceConsecutiveMatch++;
+        msg.textContent = `যাচাই হচ্ছে (${faceConsecutiveMatch}/${FACE_CONSECUTIVE_NEEDED})...`;
+        if(faceConsecutiveMatch >= FACE_CONSECUTIVE_NEEDED){
+          faceLoopActive = false;
+          pendingUid = bestUid;
+          currentAgentData = bestData;
+          msg.style.color = "var(--ok)";
+          msg.textContent = "ভেরিফাই সফল, প্রবেশ করানো হচ্ছে...";
+          stopCamera();
+          enterAgentApp();
+          return;
+        }
+      } else {
+        faceConsecutiveMatch = 0;
+        msg.textContent = "মুখ শনাক্ত করা হচ্ছে...";
+      }
     } else {
-      msg.textContent = "ফেস মিলেনি (dist: " + dist.toFixed(2) + "), আবার চেষ্টা করুন।";
+      faceConsecutiveMatch = 0;
+      msg.textContent = "মুখ শনাক্ত করা হচ্ছে... (ভালো আলোতে ক্যামেরার সামনে থাকুন)";
     }
-  }catch(e){ msg.textContent = e.message; }
-}
-function skipFaceStep(){
-  stopCamera();
-  enterAgentApp();
+  }catch(e){
+    // সাময়িক স্ক্যান-এরর উপেক্ষা করে লুপ চালিয়ে যাওয়া হচ্ছে
+  }
+
+  if(!faceLoopActive) return;
+
+  if(faceAttempts >= FACE_MAX_ATTEMPTS){
+    faceLoopActive = false;
+    msg.style.color = "var(--fail)";
+    msg.textContent = "ফেস লক ফেইল হয়েছে, ইমেইল-পাসওয়ার্ড দিয়ে লগইন করুন।";
+    showPassStep();
+    return;
+  }
+
+  faceLoopTimer = setTimeout(runFaceScan, FACE_SCAN_INTERVAL);
 }
 
 /* ================= ENTER APP ================= */
@@ -359,6 +448,7 @@ function enterAgentApp(){
   showPage('home');
   loadVisaTypes();
   loadMyCustomers();
+  loadAgentMessages();
 }
 
 function showPage(name){
@@ -372,6 +462,70 @@ function showPage(name){
 
 function agentLogout(){
   location.reload();
+}
+
+/* ================= INBOX (এডমিন থেকে পাঠানো বার্তা, যেমন আবেদন ডিলিটের কারণ) =================
+   অ্যাডমিন প্যানেল কোনো ভিসা-মেসেজ ডিলিট করলে agentMessages/{agentId} নোডে কারণ লিখে রাখে,
+   এখানে সেটা রিয়েল-টাইমে দেখানো হয়। */
+let agentMessagesCache = {};
+const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে' };
+
+function loadAgentMessages(){
+  db.ref('agentMessages/' + currentAgentUid).on('value', snap => {
+    agentMessagesCache = snap.val() || {};
+    renderInboxBadge();
+    renderInboxList();
+  });
+}
+
+function renderInboxBadge(){
+  const badge = document.getElementById('inboxBadge');
+  const unread = Object.values(agentMessagesCache).filter(m => !m.read).length;
+  if(unread > 0){
+    badge.style.display = 'block';
+    badge.textContent = unread > 9 ? '9+' : String(unread);
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openInboxModal(){
+  renderInboxList();
+  document.getElementById('inboxModal').classList.add('active');
+}
+function closeInboxModal(){
+  document.getElementById('inboxModal').classList.remove('active');
+}
+
+function renderInboxList(){
+  const el = document.getElementById('inboxList');
+  if(!el) return;
+  const entries = Object.entries(agentMessagesCache).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  if(!entries.length){
+    el.innerHTML = '<div class="emptyMsg">কোনো বার্তা নেই।</div>';
+    return;
+  }
+  el.innerHTML = entries.map(([id, m]) => {
+    const time = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
+    const label = MSG_TYPE_LABEL[m.type] || 'বার্তা';
+    const related = [m.relatedCountry, m.relatedVisaName].filter(Boolean).join(' — ');
+    return `
+    <div class="custItem" style="cursor:pointer;${m.read ? '' : 'border-color:var(--gold);background:rgba(224,165,48,.06);'}" onclick='markMessageRead(${JSON.stringify(id)})'>
+      <div class="cname" style="display:flex;align-items:center;gap:6px;">
+        ${!m.read ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
+        ${label}
+      </div>
+      ${related ? `<div class="csub">${related}</div>` : ''}
+      <div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${escapeHtmlForHl(m.text || '')}</div>
+      <div class="csub" style="margin-top:6px;">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+function markMessageRead(id){
+  const m = agentMessagesCache[id];
+  if(!m || m.read) return;
+  db.ref('agentMessages/' + currentAgentUid + '/' + id).update({ read: true }).catch(() => {});
 }
 
 /* ================= VISA TYPES ================= */
@@ -595,6 +749,10 @@ async function sendVisaMessage(){
     msgEl.textContent = 'পাঠাতে ব্যর্থ: ' + e.message;
   }
 }
+
+/* ================= পেজ লোড হলেই ফেস লগইন ধাপ শুরু হবে ================= */
+startCamera();
+loadModels();
 
 </script>
 </body>
