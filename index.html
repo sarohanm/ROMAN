@@ -242,11 +242,9 @@
     <textarea id="vmText" rows="4" placeholder="কাস্টমারের বিস্তারিত বা আপনার বার্তা লিখুন..." style="width:100%;box-sizing:border-box;"></textarea>
     <div style="margin-top:10px;">
       <label class="hint" style="display:block;margin-bottom:6px;"><i class="fas fa-paperclip" style="margin-right:4px;"></i>ডকুমেন্ট সংযুক্ত করুন <span style="color:var(--fail);">*</span></label>
-      <input type="file" id="vmFile" accept="image/*,.pdf" onchange="handleVmFileSelect(event)" style="width:100%;box-sizing:border-box;">
-      <div id="vmFilePreviewWrap" style="display:none;text-align:center;margin-top:10px;">
-        <img id="vmFilePreview" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);display:none;" alt="">
-        <div class="hint" id="vmFileName" style="margin-top:4px;"></div>
-        <button type="button" class="btn small" style="width:auto;background:#8a8478;margin-top:4px;" onclick="clearVmFile()"><i class="fas fa-xmark" style="margin-right:4px;"></i>সরিয়ে ফেলুন</button>
+      <input type="file" id="vmFile" accept="image/*,.pdf" multiple onchange="handleVmFileSelect(event)" style="width:100%;box-sizing:border-box;">
+      <div id="vmFilePreviewWrap" style="display:none;margin-top:10px;">
+        <div id="vmFilePreviewGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
       </div>
     </div>
     <div id="vmMsg" style="font-size:12px;margin-top:6px;"></div>
@@ -748,26 +746,29 @@ function renderCustomers(){
       const label = d.name || 'নামহীন ডকুমেন্ট';
       const imgs = (d.files || []).filter(f => f.fileBase64 && f.fileBase64.startsWith('data:image'));
       const others = (d.files || []).filter(f => f.fileBase64 && !f.fileBase64.startsWith('data:image'));
-      const thumb = imgs[0];
-      const thumbInner = thumb
-        ? `<img src="${thumb.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">`
-        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f7f2ea;color:var(--gold);font-size:22px;"><i class="fas fa-file-lines"></i></div>`;
-      const clickAttr = thumb ? `onclick='openDocImage(${JSON.stringify(thumb.fileBase64)}, ${JSON.stringify(thumb.fileName || label)})'` : '';
-      const cursorStyle = thumb ? 'cursor:zoom-in;' : '';
-      const extraFilesHtml = (imgs.length > 1 || others.length) ? `
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
-          ${imgs.slice(1).map(f => `<a href="#" onclick='event.preventDefault();openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' class="hint" style="font-size:10.5px;"><i class="fas fa-image"></i> +১</a>`).join('')}
+      const otherFilesHtml = others.length ? `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;width:104px;">
           ${others.map(f => `<a href="${f.fileBase64}" download="${f.fileName || 'file'}" class="hint" style="font-size:10.5px;"><i class="fas fa-file-arrow-down"></i> ${f.fileName || 'ফাইল'}</a>`).join('')}
         </div>` : '';
-      return `
+      if(!imgs.length){
+        return `
+        <div style="width:104px;">
+          <div style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px;"><i class="fas fa-file-lines"></i>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
+          </div>
+          ${d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
+          ${otherFilesHtml}
+        </div>`;
+      }
+      return imgs.map((f, pi) => `
       <div style="width:104px;">
-        <div ${clickAttr} style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;${cursorStyle}">
-          ${thumbInner}
-          <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
+        <div onclick='openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;">
+          <img src="${f.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">
+          <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${pi === 0 ? label : `পৃষ্ঠা ${pi+1}`}</div>
         </div>
-        ${d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
-        ${extraFilesHtml}
-      </div>`;
+        ${pi === 0 && d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
+        ${pi === 0 ? otherFilesHtml : ''}
+      </div>`).join('');
     }).join('')}</div>` : '<div class="accRow noBorder">-</div>';
 
     const ownPhone = getUserPhone(u);
@@ -984,38 +985,50 @@ function shareVisaInfo(text){
   }
 }
 
-let vmFileBase64 = null;
-let vmFileName = null;
-let vmFileType = null;
+let vmFiles = []; // [{base64, name, type}]
 
 function handleVmFileSelect(event){
-  const file = event.target.files[0];
-  const previewWrap = document.getElementById('vmFilePreviewWrap');
-  const previewImg = document.getElementById('vmFilePreview');
-  const nameEl = document.getElementById('vmFileName');
-  vmFileBase64 = null; vmFileName = null; vmFileType = null;
-  if(!file){ previewWrap.style.display = 'none'; return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    vmFileBase64 = e.target.result;
-    vmFileName = file.name;
-    vmFileType = file.type;
-    nameEl.textContent = file.name;
-    previewWrap.style.display = 'block';
-    if(file.type.startsWith('image/')){
-      previewImg.src = vmFileBase64;
-      previewImg.style.display = 'block';
-    } else {
-      previewImg.style.display = 'none';
-    }
-  };
-  reader.readAsDataURL(file);
+  const files = Array.from(event.target.files || []);
+  if(!files.length) return;
+  let pending = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      vmFiles.push({ base64: e.target.result, name: file.name, type: file.type });
+      pending--;
+      if(pending === 0){ event.target.value = ''; renderVmFilePreview(); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderVmFilePreview(){
+  const wrap = document.getElementById('vmFilePreviewWrap');
+  const grid = document.getElementById('vmFilePreviewGrid');
+  if(!vmFiles.length){ wrap.style.display = 'none'; grid.innerHTML = ''; return; }
+  wrap.style.display = 'block';
+  grid.innerHTML = vmFiles.map((f, i) => {
+    const isImg = (f.type || '').startsWith('image/');
+    const thumbInner = isImg
+      ? `<img src="${f.base64}" style="width:100%;height:100%;object-fit:cover;" alt="">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f7f2ea;color:var(--gold);font-size:20px;"><i class="fas fa-file-lines"></i></div>`;
+    return `
+    <div style="position:relative;width:78px;height:78px;">
+      <div style="width:100%;height:100%;border-radius:8px;overflow:hidden;border:1px solid var(--border);">${thumbInner}</div>
+      <button type="button" onclick="removeVmFile(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeVmFile(i){
+  vmFiles.splice(i, 1);
+  renderVmFilePreview();
 }
 
 function clearVmFile(){
   document.getElementById('vmFile').value = '';
-  document.getElementById('vmFilePreviewWrap').style.display = 'none';
-  vmFileBase64 = null; vmFileName = null; vmFileType = null;
+  vmFiles = [];
+  renderVmFilePreview();
 }
 
 function openVisaMessageModal(country, visaId, visaName){
@@ -1036,9 +1049,10 @@ async function sendVisaMessage(){
   const msgEl = document.getElementById('vmMsg');
   const text = document.getElementById('vmText').value.trim();
   msgEl.style.color = 'var(--fail)';
-  if(!vmFileBase64){ msgEl.textContent = 'অনুগ্রহ করে একটি ডকুমেন্ট সংযুক্ত করুন।'; return; }
+  if(!vmFiles.length){ msgEl.textContent = 'অনুগ্রহ করে অন্তত একটি ডকুমেন্ট সংযুক্ত করুন।'; return; }
   if(!vmContext){ return; }
   try{
+    const filesPayload = vmFiles.map(f => ({ fileBase64: f.base64, fileName: f.name, fileType: f.type }));
     await db.ref('visaMessages').push({
       country: vmContext.country,
       visaId: vmContext.visaId,
@@ -1046,9 +1060,10 @@ async function sendVisaMessage(){
       agentId: currentAgentUid,
       agentName: (currentAgentData && currentAgentData.name) || 'অজানা',
       message: text,
-      fileBase64: vmFileBase64 || '',
-      fileName: vmFileName || '',
-      fileType: vmFileType || '',
+      files: filesPayload,
+      fileBase64: filesPayload[0].fileBase64,
+      fileName: filesPayload[0].fileName,
+      fileType: filesPayload[0].fileType,
       status: 'pending',
       createdAt: Date.now()
     });
