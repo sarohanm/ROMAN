@@ -267,7 +267,10 @@
     <button class="close-x" onclick="closeUserChatModal()"><i class="fas fa-xmark"></i></button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
       <div id="ucModalAvatar" class="avatarCircle" style="width:38px;height:38px;font-size:14px;flex-shrink:0;"></div>
-      <h3 style="margin:0;" id="ucModalTitle">মেসেজ</h3>
+      <div style="min-width:0;">
+        <h3 style="margin:0;" id="ucModalTitle">মেসেজ</h3>
+        <div class="hint" style="margin:0;font-size:11px;" id="ucModalSubtitle"></div>
+      </div>
     </div>
     <div id="ucMessagesList" style="flex:1;overflow-y:auto;min-height:180px;max-height:50vh;display:flex;flex-direction:column;gap:10px;padding:6px 2px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
@@ -456,9 +459,34 @@ let modelsLoaded = false;
 async function loadModels(){
   if(modelsLoaded) return;
   const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/weights";
-  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-  await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  const CACHE_NAME = "face-api-models-v1";
+  const originalFetch = window.fetch;
+  const canCache = ('caches' in window);
+  if(canCache){
+    window.fetch = async function(input, init){
+      const url = (typeof input === 'string') ? input : (input && input.url);
+      if(url && url.indexOf(MODEL_URL) === 0){
+        try{
+          const cache = await caches.open(CACHE_NAME);
+          const cached = await cache.match(url);
+          if(cached) return cached;
+          const response = await originalFetch(input, init);
+          if(response && response.ok) cache.put(url, response.clone());
+          return response;
+        }catch(e){
+          return originalFetch(input, init);
+        }
+      }
+      return originalFetch(input, init);
+    };
+  }
+  try{
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+  } finally {
+    if(canCache) window.fetch = originalFetch;
+  }
   modelsLoaded = true;
 }
 
@@ -686,14 +714,10 @@ function getUnreadChatCount(uid){
 function openUserChat(uid){
   ucCurrentUid = uid;
   const u = myUsers[uid] || {};
-  document.getElementById('ucModalTitle').textContent = u.full_name || '-';
+  document.getElementById('ucModalTitle').textContent = 'Talent Overseas Pvt. Ltd';
+  document.getElementById('ucModalSubtitle').textContent = 'ইউজার: ' + (u.full_name || '-');
   const ucAvatarEl = document.getElementById('ucModalAvatar');
-  const ucInitials = (u.full_name || '-').trim().charAt(0).toUpperCase() || '?';
-  if(u.photoBase64){
-    ucAvatarEl.innerHTML = `<img src="${u.photoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;
-  } else {
-    ucAvatarEl.textContent = ucInitials;
-  }
+  ucAvatarEl.innerHTML = '<i class="fas fa-building-flag" style="color:var(--gold);"></i>';
   renderUserChatMessages();
   document.getElementById('userChatModal').classList.add('active');
   markUserChatRead(uid);
