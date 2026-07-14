@@ -61,16 +61,16 @@
   .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);}
   .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a8710f,#f6d998 22%,#e0a530 50%,#f6d998 78%,#a8710f);}
   .nav-brand{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff;min-width:0;flex:1 1 auto;overflow:hidden;}
-  .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;}
   .nav-brand i{color:var(--gold);flex-shrink:0;}
   .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .nav-actions button{background:transparent;border:none;color:#cfd6e0;font-size:16px;cursor:pointer;}
-  .content{padding:14px;padding-bottom:20px;flex:1 1 auto;}
+  .content{padding:14px;padding-bottom:78px;flex:1 1 auto;}
 
   .page{display:none;}
   .page.active{display:block;}
 
-  .bottom-nav{position:sticky;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;width:100%;box-shadow:0 -4px 16px rgba(20,24,32,.08);z-index:200;}
+  .bottom-nav{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:480px;background:#fff;border-top:1px solid var(--border);display:flex;width:100%;box-shadow:0 -4px 16px rgba(20,24,32,.08);z-index:200;padding-bottom:env(safe-area-inset-bottom);}
   .bn-btn{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 8px;font-size:10px;color:#8a8478;cursor:pointer;font-family:inherit;}
   .bn-btn i{font-size:17px;}
   .bn-btn.active{color:var(--gold);}
@@ -205,7 +205,7 @@
 <div id="app">
   <div class="shell">
     <div class="top-nav">
-      <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span></div>
+      <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span><button id="adminCallBtn" onclick="callAdmin()" title="এডমিনকে কল করুন" style="background:rgba(212,175,55,.14);border:none;color:var(--gold);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:4px;"><i class="fas fa-phone"></i></button></div>
       <div class="nav-actions">
         <span id="agentNameTag" style="color:#cfd6e0;font-size:12px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button id="inboxBellBtn" onclick="openInboxModal()" title="বার্তা" style="position:relative;display:none;">
@@ -576,7 +576,7 @@ async function runFaceScan(){
       }
     } else {
       faceConsecutiveMatch = 0;
-      msg.textContent = "মুখ শনাক্ত করা হচ্ছে... (ভালো আলোতে ক্যামেরার সামনে থাকুন)";
+      msg.textContent = "ভালো আলোতে ক্যামেরার সামনে থাকুন";
     }
   }catch(e){
     // সাময়িক স্ক্যান-এরর উপেক্ষা করে লুপ চালিয়ে যাওয়া হচ্ছে
@@ -625,6 +625,16 @@ function showPage(name){
 
 function agentLogout(){
   location.reload();
+}
+
+/* ================= এডমিনকে সরাসরি কল করা ================= */
+function callAdmin(){
+  const num = currentAgentData && currentAgentData.contactPhone;
+  if(!num){
+    alert('এডমিনের যোগাযোগ নম্বর এখনো সেট করা হয়নি। এডমিন প্যানেল থেকে আপনার প্রোফাইলে নম্বরটি যোগ করতে বলুন।');
+    return;
+  }
+  window.location.href = 'tel:' + num;
 }
 
 /* ================= INBOX (এডমিন থেকে পাঠানো বার্তা, যেমন আবেদন ডিলিটের কারণ) =================
@@ -892,7 +902,7 @@ function renderCustomers(){
       const imgs = (d.files || []).filter(f => f.fileBase64 && f.fileBase64.startsWith('data:image'));
       const others = (d.files || []).filter(f => f.fileBase64 && !f.fileBase64.startsWith('data:image'));
       otherFilesAll.push(...others);
-      const expiryBadge = d.expiry ? `<div style="position:absolute;left:4px;top:4px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;">মেয়াদ: ${d.expiry}</div>` : '';
+      const expiryBadge = d.expiry ? `<div style="position:absolute;left:4px;top:4px;max-width:calc(100% - 8px);background:rgba(0,0,0,.55);color:#fff;font-size:7.5px;font-weight:600;padding:2px 6px;border-radius:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">মেয়াদ: ${d.expiry}</div>` : '';
       if(!imgs.length){
         return `
         <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px;min-width:0;"><i class="fas fa-file-lines"></i>
