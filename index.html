@@ -60,10 +60,10 @@
   .shell{display:flex;flex-direction:column;min-height:100vh;}
   .top-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 3px 20px rgba(20,24,32,.35);}
   .top-nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#a8710f,#f6d998 22%,#e0a530 50%,#f6d998 78%,#a8710f);}
-  .nav-brand{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff;min-width:0;flex:1 1 auto;overflow:hidden;}
+  .nav-brand{font-size:clamp(11px,3.6vw,14px);font-weight:700;display:flex;align-items:center;gap:6px;color:#fff;min-width:0;flex:1 1 auto;overflow:hidden;}
   .nav-brand span.brand-text{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto;}
   .nav-brand i{color:var(--gold);flex-shrink:0;}
-  .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .nav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
   .nav-actions button{background:transparent;border:none;color:#cfd6e0;font-size:16px;cursor:pointer;}
   .content{padding:14px;padding-bottom:78px;flex:1 1 auto;}
 
@@ -205,9 +205,9 @@
 <div id="app">
   <div class="shell">
     <div class="top-nav">
-      <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span><button id="adminCallBtn" onclick="callAdmin()" title="এডমিনকে কল করুন" style="background:rgba(212,175,55,.14);border:none;color:var(--gold);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;flex-shrink:0;margin-left:4px;"><i class="fas fa-phone"></i></button></div>
+      <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span><button id="adminCallBtn" onclick="callAdmin()" title="এডমিনকে কল করুন" style="background:rgba(212,175,55,.16);border:none;color:var(--gold);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;flex-shrink:0;"><i class="fas fa-phone"></i></button></div>
       <div class="nav-actions">
-        <span id="agentNameTag" style="color:#cfd6e0;font-size:12px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <span id="agentNameTag" style="color:#cfd6e0;font-size:12px;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button id="inboxBellBtn" onclick="openInboxModal()" title="বার্তা" style="position:relative;display:none;">
           <i class="fas fa-bell"></i>
           <span id="inboxBadge" style="display:none;position:absolute;top:-2px;right:-4px;background:var(--fail);color:#fff;font-size:9px;line-height:1;padding:2px 4px;border-radius:8px;min-width:14px;text-align:center;"></span>
@@ -297,12 +297,15 @@
 </div>
 
 <div class="callSheetOverlay" id="docImgOverlay" onclick="if(event.target===this)closeDocImage()" style="position:fixed;inset:0;background:rgba(10,12,16,.92);z-index:600;display:none;align-items:center;justify-content:center;padding:16px;">
-  <button type="button" onclick="closeDocImage()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;z-index:2;"><i class="fas fa-xmark"></i></button>
+  <button type="button" onclick="closeDocImage()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;z-index:2;display:flex;align-items:center;justify-content:center;"><i class="fas fa-xmark"></i></button>
   <div style="position:absolute;top:16px;left:16px;display:flex;gap:8px;z-index:2;">
     <a id="docImgDownload" href="" download="document" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;"><i class="fas fa-download"></i></a>
-    <button type="button" id="docImgShare" onclick="shareDocImage()" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:13px;"><i class="fas fa-share-nodes"></i></button>
+    <button type="button" id="docImgShare" onclick="shareDocImage()" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:13px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-share-nodes"></i></button>
   </div>
-  <img id="docImgOverlayImg" src="" alt="" style="max-width:100%;max-height:100%;border-radius:8px;object-fit:contain;">
+  <div id="docImgCounter" style="position:absolute;top:20px;left:50%;transform:translateX(-50%);z-index:2;background:rgba(255,255,255,.15);color:#fff;font-size:11.5px;font-weight:700;padding:4px 12px;border-radius:20px;display:none;"></div>
+  <button type="button" id="docImgPrev" onclick="event.stopPropagation();docImgNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:15px;z-index:2;display:none;align-items:center;justify-content:center;"><i class="fas fa-chevron-left"></i></button>
+  <button type="button" id="docImgNext" onclick="event.stopPropagation();docImgNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:15px;z-index:2;display:none;align-items:center;justify-content:center;"><i class="fas fa-chevron-right"></i></button>
+  <img id="docImgOverlayImg" src="" alt="" style="max-width:100%;max-height:100%;border-radius:8px;object-fit:contain;touch-action:pan-y;">
 </div>
 
 <div class="callSheetOverlay" id="callSheetOverlay" onclick="if(event.target===this)closeCallSheet()">
@@ -634,7 +637,9 @@ function callAdmin(){
     alert('এডমিনের যোগাযোগ নম্বর এখনো সেট করা হয়নি। এডমিন প্যানেল থেকে আপনার প্রোফাইলে নম্বরটি যোগ করতে বলুন।');
     return;
   }
-  window.location.href = 'tel:' + num;
+  const digits = num.replace(/[^0-9]/g,'');
+  const withCC = digits.startsWith('88') ? digits : '88' + digits.replace(/^0/,'');
+  callChoice(num, withCC);
 }
 
 /* ================= INBOX (এডমিন থেকে পাঠানো বার্তা, যেমন আবেদন ডিলিটের কারণ) =================
@@ -910,8 +915,9 @@ function renderCustomers(){
           <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
         </div>`;
       }
+      const groupJson = JSON.stringify(imgs.map((f, gi) => ({ base64: f.fileBase64, fileName: f.fileName || (gi === 0 ? label : `${label} - পৃষ্ঠা ${gi+1}`) }))).replace(/'/g, "&#39;");
       return imgs.map((f, pi) => `
-      <div onclick='openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;min-width:0;">
+      <div onclick='openDocImage(null,null,${groupJson},${pi})' style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;min-width:0;">
         <img src="${f.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">
         ${pi === 0 ? expiryBadge : ''}
         <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${pi === 0 ? label : `পৃষ্ঠা ${pi+1}`}</div>
@@ -1003,17 +1009,41 @@ function visaPromiseCompactHtml(j){
 }
 
 let docImgCurrent = { base64: '', fileName: '' };
-function openDocImage(base64, fileName){
-  docImgCurrent = { base64, fileName: fileName || 'document' };
-  document.getElementById('docImgOverlayImg').src = base64;
-  document.getElementById('docImgDownload').href = base64;
-  document.getElementById('docImgDownload').setAttribute('download', fileName || 'document');
+let docImgList = [];
+let docImgIndex = 0;
+function openDocImage(base64, fileName, list, index){
+  docImgList = Array.isArray(list) && list.length ? list : [{ base64, fileName: fileName || 'document' }];
+  docImgIndex = typeof index === 'number' ? index : 0;
   document.getElementById('docImgShare').style.display = navigator.share ? 'flex' : 'none';
   document.getElementById('docImgOverlay').style.display = 'flex';
+  renderDocImage();
+}
+function renderDocImage(){
+  const item = docImgList[docImgIndex];
+  if(!item) return;
+  docImgCurrent = { base64: item.base64, fileName: item.fileName || 'document' };
+  document.getElementById('docImgOverlayImg').src = item.base64;
+  document.getElementById('docImgDownload').href = item.base64;
+  document.getElementById('docImgDownload').setAttribute('download', item.fileName || 'document');
+  const multi = docImgList.length > 1;
+  const counterEl = document.getElementById('docImgCounter');
+  const prevEl = document.getElementById('docImgPrev');
+  const nextEl = document.getElementById('docImgNext');
+  counterEl.style.display = multi ? 'block' : 'none';
+  prevEl.style.display = multi ? 'flex' : 'none';
+  nextEl.style.display = multi ? 'flex' : 'none';
+  if(multi) counterEl.textContent = `${docImgIndex + 1} / ${docImgList.length}`;
+}
+function docImgNav(dir){
+  if(!docImgList.length) return;
+  docImgIndex = (docImgIndex + dir + docImgList.length) % docImgList.length;
+  renderDocImage();
 }
 function closeDocImage(){
   document.getElementById('docImgOverlay').style.display = 'none';
   document.getElementById('docImgOverlayImg').src = '';
+  docImgList = [];
+  docImgIndex = 0;
 }
 async function shareDocImage(){
   if(!navigator.share || !docImgCurrent.base64) return;
@@ -1028,6 +1058,25 @@ async function shareDocImage(){
     await navigator.share({ files: [file], title: docImgCurrent.fileName || 'ডকুমেন্ট' });
   }catch(e){ /* শেয়ার বাতিল/ব্যর্থ হলে চুপচাপ উপেক্ষা করা হবে */ }
 }
+(function(){
+  let touchStartX = null, touchStartY = null;
+  const imgEl = document.getElementById('docImgOverlayImg');
+  imgEl.addEventListener('touchstart', function(e){
+    if(e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  imgEl.addEventListener('touchend', function(e){
+    if(touchStartX === null) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    touchStartX = null; touchStartY = null;
+    if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)){
+      docImgNav(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+})();
 
 function toggleAccItem(id){
   const el = document.getElementById('acc-' + id);
