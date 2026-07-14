@@ -86,6 +86,52 @@
   .stagePill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(224,165,48,.15);color:#a8710f;margin-top:6px;}
   .stagePill.done{background:rgba(26,158,92,.12);color:var(--ok);}
   .stagePill.fail{background:rgba(220,53,69,.1);color:var(--fail);}
+  /* --- বিস্তারিত ভিউ (এডমিন প্যানেল থেকে পোর্ট করা, শুধু দেখার জন্য) --- */
+  .avatarCircle{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy2));color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+  .accItem{border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;background:#fff;}
+  .accItem:last-child{margin-bottom:0;}
+  .accHead{display:flex;justify-content:space-between;align-items:flex-start;padding:12px;cursor:pointer;gap:11px;}
+  .accHead .chev-ico{margin-top:8px;}
+  .accHead .accTextWrap{flex:1;min-width:0;}
+  .accHead .accName{font-weight:700;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .accHead .accSub{font-size:12px;color:#5b6b7a;margin-top:2px;}
+  .accBody{display:none;padding:0 12px 12px;border-top:1px solid var(--border);}
+  .accBody .accRow{padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+  .accBody .accRow:last-child{border-bottom:none;}
+  .accBody .accRow.noBorder{border-bottom:none;}
+  .accBody .accLabel{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:2px;}
+  .accBody .accActions{display:flex;flex-wrap:nowrap;gap:6px;margin-top:10px;}
+  .accBody .accActions .btn.small{flex:1;padding:8px 2px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;width:auto;}
+  .accBody .accActions .btn.small i{margin-right:3px;}
+  .accInfoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .accInfoItem{min-width:0;text-align:center;}
+  .accInfoItem .aii-lbl{display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8896ab;margin-bottom:3px;}
+  .accInfoItem .aii-val{font-size:12px;font-weight:600;color:#1c2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;}
+  .accSectionTitle{font-size:12px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:6px;margin:10px 0 8px;}
+  .accSectionTitle i{color:var(--gold);width:14px;text-align:center;}
+  .noteBox{width:100%;min-height:64px;resize:vertical;font-family:inherit;padding:8px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;box-sizing:border-box;background:#faf8f4;}
+  .chev-ico{font-size:11px;color:#8896ab;display:inline-block;transition:transform .25s cubic-bezier(.22,.68,0,1.2);}
+  .chev-ico.open{transform:rotate(180deg);}
+  .payProgWrap{margin:8px 0 12px;}
+  .payProgOuter{height:8px;border-radius:6px;background:#eee7da;overflow:hidden;}
+  .payProgInner{height:100%;border-radius:6px;background:linear-gradient(90deg,#1a9e5c,#25c17a);transition:width .3s ease;}
+  .payStatsRow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px;margin:6px 0 2px;}
+  .payStatsRow .ps-item{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .payStatsRow .ps-item b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .payStatsRow .ps-item:last-child{text-align:right;}
+  .fieldRow{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12.5px;}
+  .fieldRow .fr-meta{color:#8896ab;font-size:11px;}
+  .callSheetOverlay{display:none;position:fixed;inset:0;background:rgba(20,24,32,.55);z-index:600;align-items:flex-end;justify-content:center;}
+  .callSheetOverlay.active{display:flex;animation:csFade .15s ease;}
+  @keyframes csFade{from{opacity:0;}to{opacity:1;}}
+  .callSheetBox{background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:22px 20px calc(18px + env(safe-area-inset-bottom,0));text-align:center;animation:csUp .2s ease;}
+  @keyframes csUp{from{transform:translateY(30px);opacity:.5;}to{transform:translateY(0);opacity:1;}}
+  .callSheetBox h4{margin:0 0 20px;font-size:14.5px;color:var(--navy);font-weight:700;}
+  .callSheetOptions{display:flex;justify-content:center;gap:40px;margin-bottom:18px;}
+  .callSheetOpt{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border:none;background:none;padding:0;}
+  .callSheetOpt .csIcon{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;box-shadow:0 6px 16px rgba(20,24,32,.18);}
+  .callSheetOpt span{font-size:12px;color:#3a4451;font-weight:600;}
+  .callSheetCancel{display:block;width:100%;padding:12px;border:none;background:var(--bg);color:#5b6b7a;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;}
   .emptyMsg{text-align:center;color:#8a8478;font-size:13px;padding:24px 0;}
 
   /* ---------- VISA INFO CARDS (read-only for agents) ---------- */
@@ -217,6 +263,32 @@
   </div>
 </div>
 
+<div class="callSheetOverlay" id="docImgOverlay" onclick="if(event.target===this)closeDocImage()" style="position:fixed;inset:0;background:rgba(10,12,16,.92);z-index:600;display:none;align-items:center;justify-content:center;padding:16px;">
+  <button type="button" onclick="closeDocImage()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;z-index:2;"><i class="fas fa-xmark"></i></button>
+  <div style="position:absolute;top:16px;left:16px;display:flex;gap:8px;z-index:2;">
+    <a id="docImgDownload" href="" download="document" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;"><i class="fas fa-download"></i></a>
+    <button type="button" id="docImgShare" onclick="shareDocImage()" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:13px;"><i class="fas fa-share-nodes"></i></button>
+  </div>
+  <img id="docImgOverlayImg" src="" alt="" style="max-width:100%;max-height:100%;border-radius:8px;object-fit:contain;">
+</div>
+
+<div class="callSheetOverlay" id="callSheetOverlay" onclick="if(event.target===this)closeCallSheet()">
+  <div class="callSheetBox">
+    <h4>কীভাবে কল করতে চান?</h4>
+    <div class="callSheetOptions">
+      <button class="callSheetOpt" onclick="callSheetDial()">
+        <div class="csIcon" style="background:var(--navy);"><i class="fas fa-phone"></i></div>
+        <span>ডায়াল</span>
+      </button>
+      <button class="callSheetOpt" onclick="callSheetWhatsApp()">
+        <div class="csIcon" style="background:#25d366;"><i class="fab fa-whatsapp"></i></div>
+        <span>হোয়াটসঅ্যাপ</span>
+      </button>
+    </div>
+    <button class="callSheetCancel" onclick="closeCallSheet()">বাতিল</button>
+  </div>
+</div>
+
 <script>
 /* ================= FIREBASE ================= */
 const firebaseConfig = {
@@ -247,6 +319,27 @@ let myUsers = {};        // uid -> user (this agent's only)
 let myJourneys = {};     // journeyId -> journey (all, filtered per-user when needed)
 let allUsersCache = {};  // uid -> user (all users, used only for visa stat counts)
 let vmContext = null;    // { country, visaId, visaName } for the message modal in progress
+
+/* এডমিন প্যানেলের মতো একই কাস্টম ফিল্ড কনফিগারেশন — শুধু দেখানোর জন্য, এডিট করার সুযোগ নেই */
+const BASE_CUSTOM_FIELDS = {
+  cf_phone:      { label: 'ফোন নম্বর',       type: 'text' },
+  cf_nid:        { label: 'NID',              type: 'text' },
+  cf_passport:   { label: 'পাসপোর্ট নম্বর',   type: 'text' },
+  cf_village:    { label: 'গ্রাম',             type: 'text' },
+  cf_thana:      { label: 'থানা',              type: 'text' },
+  cf_district:   { label: 'জেলা',              type: 'text' },
+  cf_division:   { label: 'বিভাগ',             type: 'text' },
+  cf_postal:     { label: 'পোস্টাল কোড',      type: 'text' },
+  cf_dob:        { label: 'জন্ম তারিখ',       type: 'date' },
+  cf_occupation: { label: 'আপনার পেশা',       type: 'text' }
+};
+let customFields = { ...BASE_CUSTOM_FIELDS };
+function loadCustomFields(){
+  db.ref('custom_fields').on('value', snap => {
+    customFields = Object.assign({}, BASE_CUSTOM_FIELDS, snap.val() || {});
+    renderCustomers();
+  });
+}
 
 // Country flag emoji so the "ভিসার তথ্য" cards are recognizable instantly
 const COUNTRY_FLAGS = {
@@ -447,6 +540,7 @@ function enterAgentApp(){
   }
   showPage('home');
   loadVisaTypes();
+  loadCustomFields();
   loadMyCustomers();
   loadAgentMessages();
 }
@@ -468,7 +562,7 @@ function agentLogout(){
    অ্যাডমিন প্যানেল কোনো ভিসা-মেসেজ ডিলিট করলে agentMessages/{agentId} নোডে কারণ লিখে রাখে,
    এখানে সেটা রিয়েল-টাইমে দেখানো হয়। */
 let agentMessagesCache = {};
-const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে' };
+const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে', visa_application_sent: 'ভিসা আবেদন পাঠানো হয়েছে' };
 const MSG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // ২৪ ঘণ্টা পর বার্তা অটো-ডিলিট
 let msgPurgeTimer = null;
 
@@ -608,7 +702,7 @@ function renderCustomers(){
   const q = (document.getElementById('custSearch').value || '').trim().toLowerCase();
   let entries = Object.entries(myUsers);
   if(q){
-    entries = entries.filter(([uid, u]) => ((u.full_name||'') + ' ' + (u.phone||'')).toLowerCase().includes(q));
+    entries = entries.filter(([uid, u]) => ((u.full_name||'') + ' ' + (u.phone||'') + ' ' + getUserPhone(u)).toLowerCase().includes(q));
   }
   entries.sort((a,b) => (b[1].created_at||0) - (a[1].created_at||0));
   const el = document.getElementById('custList');
@@ -618,19 +712,207 @@ function renderCustomers(){
   }
   el.innerHTML = entries.map(([uid, u]) => {
     const j = getJourneyForUser(uid);
+    const jid = j ? Object.entries(myJourneys).find(([id, jj]) => jj === j)[0] : null;
     const stage = j ? j.current_stage : null;
-    const stageLabel = stage ? (STAGE_LABEL[stage] || stage) : 'তথ্য নেই';
     let pillCls = '';
     if(stage === 'DEPARTED') pillCls = 'done';
     else if(stage === 'MEDICAL_FAILED') pillCls = 'fail';
+
+    // পিলের লেবেল সর্বশেষ ডকুমেন্ট/পেমেন্ট এন্ট্রি থেকে স্বয়ংক্রিয়ভাবে ঠিক করা হয়,
+    // ম্যানুয়ালি সেট করা current_stage আর ভরসা করা হয় না (সেটা প্রায়ই আপডেট করতে ভুলে যাওয়া হয়)
+    const docEntriesForStage = u.documents ? Object.values(u.documents) : [];
+    const latestDocName = docEntriesForStage.length ? (docEntriesForStage[docEntriesForStage.length - 1].name || '') : '';
+    const paymentListForStage = j && j.payments ? Object.values(j.payments).sort((a,b) => (a.date||0) - (b.date||0)) : [];
+    const latestPaymentNote = paymentListForStage.length ? (paymentListForStage[paymentListForStage.length - 1].note || '') : '';
+    const stageLabel = latestDocName || latestPaymentNote || (stage ? (STAGE_LABEL[stage] || stage) : 'তথ্য নেই');
     const visaName = u.visa_type_id && visaTypes[u.visa_type_id] ? visaTypes[u.visa_type_id].name : '';
+    const flag = COUNTRY_FLAGS[u.country] || '🌍';
+    const initials = (u.full_name || '-').trim().charAt(0).toUpperCase() || '?';
+    const avatarHtml = u.photoBase64
+      ? `<img src="${u.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
+      : `<div class="avatarCircle">${initials}</div>`;
+
+    // কাস্টম ফিল্ড (NID, পাসপোর্ট, ঠিকানা, জন্ম তারিখ, পেশা ইত্যাদি) + মা-বাবার ফোন — এডমিন যা দেখেন, এখানেও একই তথ্য
+    const customEntries = Object.keys(customFields)
+      .filter(fid => u.custom_data && u.custom_data[fid] && customFields[fid])
+      .map(fid => ({ label: customFields[fid].label || fid, val: u.custom_data[fid] }));
+    if(u.phone) customEntries.push({ label: 'মাতার মোবাইল নম্বর', val: u.phone });
+    if(u.father_phone) customEntries.push({ label: 'পিতার মোবাইল নম্বর', val: u.father_phone });
+    const customHtml = customEntries.length ? `
+        <div class="accInfoGrid">
+          ${customEntries.map(({label, val}) => `<div class="accInfoItem"><div class="aii-lbl">${label}</div><div class="aii-val" title="${val}">${val}</div></div>`).join('')}
+        </div>` : '';
+
+    const docEntries = u.documents ? Object.values(u.documents) : [];
+    const docHtml = docEntries.length ? `<div style="display:flex;gap:10px;flex-wrap:wrap;">${docEntries.map(d => {
+      const label = d.name || 'নামহীন ডকুমেন্ট';
+      const imgs = (d.files || []).filter(f => f.fileBase64 && f.fileBase64.startsWith('data:image'));
+      const others = (d.files || []).filter(f => f.fileBase64 && !f.fileBase64.startsWith('data:image'));
+      const thumb = imgs[0];
+      const thumbInner = thumb
+        ? `<img src="${thumb.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f7f2ea;color:var(--gold);font-size:22px;"><i class="fas fa-file-lines"></i></div>`;
+      const clickAttr = thumb ? `onclick='openDocImage(${JSON.stringify(thumb.fileBase64)}, ${JSON.stringify(thumb.fileName || label)})'` : '';
+      const cursorStyle = thumb ? 'cursor:zoom-in;' : '';
+      const extraFilesHtml = (imgs.length > 1 || others.length) ? `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+          ${imgs.slice(1).map(f => `<a href="#" onclick='event.preventDefault();openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' class="hint" style="font-size:10.5px;"><i class="fas fa-image"></i> +১</a>`).join('')}
+          ${others.map(f => `<a href="${f.fileBase64}" download="${f.fileName || 'file'}" class="hint" style="font-size:10.5px;"><i class="fas fa-file-arrow-down"></i> ${f.fileName || 'ফাইল'}</a>`).join('')}
+        </div>` : '';
+      return `
+      <div style="width:104px;">
+        <div ${clickAttr} style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;${cursorStyle}">
+          ${thumbInner}
+          <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
+        </div>
+        ${d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
+        ${extraFilesHtml}
+      </div>`;
+    }).join('')}</div>` : '<div class="accRow noBorder">-</div>';
+
+    const ownPhone = getUserPhone(u);
+    const phoneDigits = (ownPhone || '').replace(/[^0-9]/g, '');
+    const phoneWithCC = phoneDigits ? (phoneDigits.startsWith('88') ? phoneDigits : ('88' + phoneDigits.replace(/^0/, ''))) : '';
+
     return `
-    <div class="custItem">
-      <div class="cname">${u.full_name || '-'}</div>
-      <div class="csub"><i class="fas fa-phone" style="margin-right:4px;"></i>${u.phone || '-'} &nbsp;·&nbsp; ${u.country || '-'}${visaName ? ' · ' + visaName : ''}</div>
-      <span class="stagePill ${pillCls}">${stageLabel}</span>
+    <div class="accItem">
+      <div class="accHead" onclick="toggleAccItem('cu-${uid}')">
+        ${avatarHtml}
+        <div class="accTextWrap">
+          <div class="accName">${u.full_name || '-'}${ownPhone ? ` <span style="font-weight:400;color:#5b6b7a;font-size:12.5px;">· ${ownPhone}</span> <button type="button" onclick="event.stopPropagation();callChoice('${ownPhone}','${phoneWithCC}')" style="width:auto;height:auto;background:none;color:var(--ok);border:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;cursor:pointer;vertical-align:middle;padding:0;"><i class="fas fa-phone"></i></button>` : ''}</div>
+          <div class="accSub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span>${flag} ${u.country || '-'}${visaName ? ' · ' + visaName : ''}</span>
+            <span class="stagePill ${pillCls}" style="font-size:9.5px;padding:2px 7px;margin-top:0;">${stageLabel}</span>
+            <span>${j ? visaPromiseCompactHtml(j) : ''}</span>
+          </div>
+        </div>
+        <span id="chev-cu-${uid}" class="chev-ico"><i class="fas fa-chevron-down"></i></span>
+      </div>
+      <div class="accBody" id="acc-cu-${uid}">
+        ${customHtml}
+        ${j && jid ? renderPaymentSectionReadOnly(j) : ''}
+        <div class="accSectionTitle"><i class="fas fa-folder-open"></i>ডকুমেন্ট স্ট্যাটাস</div>
+        ${docHtml}
+      </div>
     </div>`;
   }).join('');
+}
+
+/* এডমিন প্যানেলের renderPaymentSection-এর ভিউ-অনলি সংস্করণ —
+   পেমেন্টের হিসাব দেখা যাবে, কিন্তু কিস্তি যোগ/ডিলিট করার কোনো নিয়ন্ত্রণ নেই */
+function renderPaymentSectionReadOnly(j){
+  const payments = j.payments || {};
+  const totalFee = j.agency_fee || 0;
+  const entries = Object.entries(payments).sort((a,b) => (a[1].date||0) - (b[1].date||0));
+  const paid = entries.reduce((sum, [pid, p]) => sum + (p.amount || 0), 0);
+  const due = totalFee - paid;
+  const rowsHtml = entries.length
+    ? entries.map(([pid, p]) => `
+      <div class="fieldRow">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;">
+          <span><i class="fas fa-circle-check" style="color:var(--ok);margin-right:4px;font-size:11px;"></i>৳${p.amount}</span>
+          ${p.date ? `<span class="fr-meta">${new Date(p.date).toLocaleDateString('bn-BD')}</span>` : ''}
+          ${p.note ? `<span class="fr-meta">· ${p.note}</span>` : ''}
+        </div>
+      </div>`).join('')
+    : '<p class="hint">এখনো কোনো কিস্তি যোগ করা হয়নি।</p>';
+  const pct = totalFee > 0 ? Math.min(100, Math.max(0, Math.round((paid/totalFee)*100))) : 0;
+  return `
+    <div class="accRow">
+      <div class="accLabel"><i class="fas fa-receipt" style="margin-right:4px;"></i>পেমেন্ট / কিস্তি</div>
+      <div class="payProgWrap">
+        <div class="payProgOuter"><div class="payProgInner" style="width:${pct}%;"></div></div>
+        <div class="payStatsRow">
+          <div class="ps-item"><span class="hint" style="margin:0;">মোট ফি</span><b>৳${totalFee}</b></div>
+          <div class="ps-item"><span class="hint" style="margin:0;">পরিশোধিত</span><b style="color:var(--ok);">৳${paid}</b></div>
+          <div class="ps-item"><span class="hint" style="margin:0;">বাকি</span><b style="color:${due > 0 ? 'var(--fail)' : 'var(--ok)'};">৳${due}</b></div>
+          <div class="ps-item"><span class="hint" style="margin:0;">অগ্রগতি</span><b>${pct}%</b></div>
+        </div>
+      </div>
+      ${rowsHtml}
+    </div>`;
+}
+
+function visaPromiseCompactHtml(j){
+  if(!j || !j.visa_promised_days || !j.visa_promise_start) return '';
+  const start = new Date(j.visa_promise_start);
+  const deadline = new Date(start.getTime() + j.visa_promised_days * 86400000);
+  const today = new Date();
+  const msLeft = deadline.setHours(23,59,59,999) - today.getTime();
+  const daysLeft = Math.ceil(msLeft / 86400000);
+  const elapsed = Math.max(0, j.visa_promised_days - Math.max(daysLeft, 0));
+  let color = 'var(--ok)', text = `প্রসেসিং সময় ${daysLeft} দিন`;
+  if(daysLeft < 0){ color = 'var(--fail)'; text = `প্রসেসিং সময় শেষ, ${Math.abs(daysLeft)} দিন পার`; }
+  else if(daysLeft <= 3){ color = 'var(--gold)'; text = `প্রসেসিং সময় মাত্র ${daysLeft} দিন`; }
+  const elapsedHtml = daysLeft >= 0 ? `<span style="font-size:11px;font-weight:400;color:#8a93a3;display:inline-flex;align-items:center;gap:4px;"><i class="fas fa-calendar-day"></i>${elapsed} দিন পার হয়েছে</span>` : '';
+  return `<span style="font-size:11px;font-weight:400;color:${color};display:inline-flex;align-items:center;gap:4px;margin-right:10px;"><i class="fas fa-hourglass-half"></i>${text}</span>${elapsedHtml}`;
+}
+
+let docImgCurrent = { base64: '', fileName: '' };
+function openDocImage(base64, fileName){
+  docImgCurrent = { base64, fileName: fileName || 'document' };
+  document.getElementById('docImgOverlayImg').src = base64;
+  document.getElementById('docImgDownload').href = base64;
+  document.getElementById('docImgDownload').setAttribute('download', fileName || 'document');
+  document.getElementById('docImgShare').style.display = navigator.share ? 'flex' : 'none';
+  document.getElementById('docImgOverlay').style.display = 'flex';
+}
+function closeDocImage(){
+  document.getElementById('docImgOverlay').style.display = 'none';
+  document.getElementById('docImgOverlayImg').src = '';
+}
+async function shareDocImage(){
+  if(!navigator.share || !docImgCurrent.base64) return;
+  try{
+    const res = await fetch(docImgCurrent.base64);
+    const blob = await res.blob();
+    const file = new File([blob], docImgCurrent.fileName || 'document.jpg', { type: blob.type || 'image/jpeg' });
+    if(navigator.canShare && !navigator.canShare({ files: [file] })){
+      await navigator.share({ url: docImgCurrent.base64 });
+      return;
+    }
+    await navigator.share({ files: [file], title: docImgCurrent.fileName || 'ডকুমেন্ট' });
+  }catch(e){ /* শেয়ার বাতিল/ব্যর্থ হলে চুপচাপ উপেক্ষা করা হবে */ }
+}
+
+function toggleAccItem(id){
+  const el = document.getElementById('acc-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if(!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(chev) chev.classList.toggle('open', !isOpen);
+}
+
+/* কাস্টমারের নিজের ফোন নম্বর বের করা — কাস্টম ফিল্ড (cf_phone ইত্যাদি) থেকে,
+   কারণ u.phone আসলে মাতার মোবাইল নম্বর হিসেবে ব্যবহৃত হয় */
+function getUserField(u, directKey, keywords){
+  if(u && u[directKey]) return u[directKey];
+  const cd = (u && u.custom_data) || {};
+  for(const [fid, val] of Object.entries(cd)){
+    const f = customFields[fid];
+    if(f && f.label && keywords.some(k => f.label.toLowerCase().includes(k)) && val) return val;
+  }
+  return '';
+}
+function getUserPhone(u){ return getUserField(u, '', ['ফোন','phone','মোবাইল','mobile']) || ''; }
+
+let callSheetPhone = null, callSheetWA = null;
+function callChoice(phone, withCC){
+  callSheetPhone = phone;
+  callSheetWA = withCC;
+  document.getElementById('callSheetOverlay').classList.add('active');
+}
+function closeCallSheet(){
+  document.getElementById('callSheetOverlay').classList.remove('active');
+}
+function callSheetDial(){
+  closeCallSheet();
+  window.location.href = 'tel:' + callSheetPhone;
+}
+function callSheetWhatsApp(){
+  closeCallSheet();
+  window.open(`https://wa.me/${callSheetWA}`, '_blank');
 }
 
 /* ================= VISA তথ্য (এজেন্টের জন্য শুধু দেখার জন্য) =================
@@ -770,6 +1052,15 @@ async function sendVisaMessage(){
       status: 'pending',
       createdAt: Date.now()
     });
+    db.ref('agentMessages/' + currentAgentUid).push({
+      type: 'visa_application_sent',
+      text: 'আপনি ' + vmContext.country + (vmContext.visaName ? ' — ' + vmContext.visaName : '') + ' এর জন্য একটি আবেদন/বার্তা পাঠিয়েছেন।',
+      relatedCountry: vmContext.country,
+      relatedVisaName: vmContext.visaName || '',
+      read: false,
+      createdAt: Date.now()
+    }).catch(() => {});
+
     msgEl.style.color = 'var(--ok)';
     msgEl.textContent = 'বার্তা পাঠানো হয়েছে।';
     setTimeout(closeVisaMessageModal, 700);
