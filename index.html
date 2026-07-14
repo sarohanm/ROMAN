@@ -146,7 +146,7 @@
       <div class="nav-brand"><i class="fas fa-building-flag" id="navBrandIcon"></i><img id="navAvatar" style="display:none;width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);flex-shrink:0;" alt=""><span class="brand-text">Talent Overseas Pvt. Ltd</span></div>
       <div class="nav-actions">
         <span id="agentNameTag" style="color:#cfd6e0;font-size:12px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <button onclick="openInboxModal()" title="বার্তা" style="position:relative;">
+        <button id="inboxBellBtn" onclick="openInboxModal()" title="বার্তা" style="position:relative;display:none;">
           <i class="fas fa-bell"></i>
           <span id="inboxBadge" style="display:none;position:absolute;top:-2px;right:-4px;background:var(--fail);color:#fff;font-size:9px;line-height:1;padding:2px 4px;border-radius:8px;min-width:14px;text-align:center;"></span>
         </button>
@@ -469,16 +469,36 @@ function agentLogout(){
    এখানে সেটা রিয়েল-টাইমে দেখানো হয়। */
 let agentMessagesCache = {};
 const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে' };
+const MSG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // ২৪ ঘণ্টা পর বার্তা অটো-ডিলিট
+let msgPurgeTimer = null;
 
 function loadAgentMessages(){
   db.ref('agentMessages/' + currentAgentUid).on('value', snap => {
     agentMessagesCache = snap.val() || {};
+    purgeOldMessages();
     renderInboxBadge();
     renderInboxList();
+  });
+  // অ্যাপ খোলা অবস্থায় থাকতে থাকতেই যেসব বার্তার বয়স ২৪ ঘণ্টা পেরিয়ে যায়, সেগুলোও যেন মুছে যায়
+  if(msgPurgeTimer) clearInterval(msgPurgeTimer);
+  msgPurgeTimer = setInterval(purgeOldMessages, 5 * 60 * 1000);
+}
+
+function purgeOldMessages(){
+  const now = Date.now();
+  Object.entries(agentMessagesCache).forEach(([id, m]) => {
+    // শুধু দেখা (read) বার্তাই অটো-ডিলিট হবে, দেখার (readAt) সময় থেকে ২৪ ঘণ্টা পর
+    if(m && m.read && m.readAt && (now - m.readAt) > MSG_MAX_AGE_MS){
+      db.ref('agentMessages/' + currentAgentUid + '/' + id).remove().catch(() => {});
+    }
   });
 }
 
 function renderInboxBadge(){
+  const bellBtn = document.getElementById('inboxBellBtn');
+  const hasAnyMessages = Object.keys(agentMessagesCache).length > 0;
+  bellBtn.style.display = hasAnyMessages ? 'inline-block' : 'none';
+
   const badge = document.getElementById('inboxBadge');
   const unread = Object.values(agentMessagesCache).filter(m => !m.read).length;
   if(unread > 0){
@@ -492,9 +512,18 @@ function renderInboxBadge(){
 function openInboxModal(){
   renderInboxList();
   document.getElementById('inboxModal').classList.add('active');
+  markAllMessagesRead();
 }
 function closeInboxModal(){
   document.getElementById('inboxModal').classList.remove('active');
+}
+
+function markAllMessagesRead(){
+  Object.entries(agentMessagesCache).forEach(([id, m]) => {
+    if(m && !m.read){
+      db.ref('agentMessages/' + currentAgentUid + '/' + id).update({ read: true, readAt: Date.now() }).catch(() => {});
+    }
+  });
 }
 
 function renderInboxList(){
@@ -525,7 +554,7 @@ function renderInboxList(){
 function markMessageRead(id){
   const m = agentMessagesCache[id];
   if(!m || m.read) return;
-  db.ref('agentMessages/' + currentAgentUid + '/' + id).update({ read: true }).catch(() => {});
+  db.ref('agentMessages/' + currentAgentUid + '/' + id).update({ read: true, readAt: Date.now() }).catch(() => {});
 }
 
 /* ================= VISA TYPES ================= */
