@@ -244,7 +244,7 @@
       <label class="hint" style="display:block;margin-bottom:6px;"><i class="fas fa-paperclip" style="margin-right:4px;"></i>ডকুমেন্ট সংযুক্ত করুন <span style="color:var(--fail);">*</span></label>
       <input type="file" id="vmFile" accept="image/*,.pdf" multiple onchange="handleVmFileSelect(event)" style="width:100%;box-sizing:border-box;">
       <div id="vmFilePreviewWrap" style="display:none;margin-top:10px;">
-        <div id="vmFilePreviewGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        <div id="vmFilePreviewGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
       </div>
     </div>
     <div id="vmMsg" style="font-size:12px;margin-top:6px;"></div>
@@ -258,6 +258,22 @@
     <button class="close-x" onclick="closeInboxModal()"><i class="fas fa-xmark"></i></button>
     <h3 style="margin-top:0;"><i class="fas fa-bell" style="margin-right:6px;color:var(--gold);"></i>বার্তা</h3>
     <div id="inboxList"></div>
+  </div>
+</div>
+
+<!-- ================= USER CHAT MODAL (এই নির্দিষ্ট কাস্টমার নিয়ে অ্যাডমিনের সাথে কথা) ================= -->
+<div class="modalOverlay" id="userChatModal">
+  <div class="modalBox" style="display:flex;flex-direction:column;max-height:88vh;">
+    <button class="close-x" onclick="closeUserChatModal()"><i class="fas fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <div id="ucModalAvatar" class="avatarCircle" style="width:38px;height:38px;font-size:14px;flex-shrink:0;"></div>
+      <h3 style="margin:0;" id="ucModalTitle">মেসেজ</h3>
+    </div>
+    <div id="ucMessagesList" style="flex:1;overflow-y:auto;min-height:180px;max-height:50vh;display:flex;flex-direction:column;gap:10px;padding:6px 2px;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <textarea id="ucInputText" rows="1" placeholder="লিখুন..." oninput="this.style.height='34px';this.style.height=Math.min(this.scrollHeight,110)+'px';" style="flex:1;resize:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:13px;box-sizing:border-box;font-family:inherit;line-height:1.3;min-height:34px;height:34px;max-height:110px;overflow-y:auto;"></textarea>
+      <button type="button" class="btn gold" style="width:auto;padding:0 14px;flex-shrink:0;height:34px;" onclick="sendUserChatMessage()"><i class="fas fa-paper-plane"></i></button>
+    </div>
   </div>
 </div>
 
@@ -541,6 +557,7 @@ function enterAgentApp(){
   loadCustomFields();
   loadMyCustomers();
   loadAgentMessages();
+  loadUserChats();
 }
 
 function showPage(name){
@@ -649,6 +666,83 @@ function markMessageRead(id){
   db.ref('agentMessages/' + currentAgentUid + '/' + id).update({ read: true, readAt: Date.now() }).catch(() => {});
 }
 
+/* ================= USER CHAT (এজেন্ট-অ্যাডমিন মেসেজ, প্রতি কাস্টমার আলাদা থ্রেড) ================= */
+let userChatsCache = {};
+let ucCurrentUid = null;
+
+function loadUserChats(){
+  db.ref('userChats').on('value', snap => {
+    userChatsCache = snap.val() || {};
+    renderCustomers();
+    if(ucCurrentUid) renderUserChatMessages();
+  });
+}
+
+function getUnreadChatCount(uid){
+  const chats = userChatsCache[uid] || {};
+  return Object.values(chats).filter(m => m && !m.readByAgent).length;
+}
+
+function openUserChat(uid){
+  ucCurrentUid = uid;
+  const u = myUsers[uid] || {};
+  document.getElementById('ucModalTitle').textContent = u.full_name || '-';
+  const ucAvatarEl = document.getElementById('ucModalAvatar');
+  const ucInitials = (u.full_name || '-').trim().charAt(0).toUpperCase() || '?';
+  if(u.photoBase64){
+    ucAvatarEl.innerHTML = `<img src="${u.photoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;
+  } else {
+    ucAvatarEl.textContent = ucInitials;
+  }
+  renderUserChatMessages();
+  document.getElementById('userChatModal').classList.add('active');
+  markUserChatRead(uid);
+  setTimeout(() => document.getElementById('ucInputText').focus(), 200);
+}
+function closeUserChatModal(){
+  document.getElementById('userChatModal').classList.remove('active');
+  ucCurrentUid = null;
+}
+function renderUserChatMessages(){
+  if(!ucCurrentUid) return;
+  const chats = userChatsCache[ucCurrentUid] || {};
+  const entries = Object.entries(chats).sort((a,b) => (a[1].createdAt||0) - (b[1].createdAt||0));
+  const el = document.getElementById('ucMessagesList');
+  if(!entries.length){
+    el.innerHTML = '<div class="hint" style="text-align:center;margin-top:20px;">কোনো মেসেজ নেই, কথা শুরু করুন।</div>';
+    return;
+  }
+  el.innerHTML = entries.map(([id, m]) => {
+    const mine = m.from === 'agent';
+    const time = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
+    return `<div style="align-self:${mine ? 'flex-end' : 'flex-start'};max-width:78%;">
+      <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlForHl(m.text || '')}</div>
+      <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : ((m.fromName || 'অ্যাডমিন') + ' · ')}${time}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+function sendUserChatMessage(){
+  if(!ucCurrentUid) return;
+  const input = document.getElementById('ucInputText');
+  const text = (input.value || '').trim();
+  if(!text) return;
+  db.ref('userChats/' + ucCurrentUid).push({
+    text, from: 'agent', fromName: (currentAgentData && currentAgentData.name) || 'এজেন্ট', createdAt: Date.now(),
+    readByAgent: true, readByAdmin: false
+  });
+  input.value = '';
+  input.style.height = '34px';
+}
+function markUserChatRead(uid){
+  const chats = userChatsCache[uid] || {};
+  Object.entries(chats).forEach(([id, m]) => {
+    if(m && !m.readByAgent){
+      db.ref('userChats/' + uid + '/' + id + '/readByAgent').set(true);
+    }
+  });
+}
+
 /* ================= VISA TYPES ================= */
 function loadVisaTypes(){
   db.ref('visa_types').on('value', snap => {
@@ -742,34 +836,27 @@ function renderCustomers(){
         </div>` : '';
 
     const docEntries = u.documents ? Object.values(u.documents) : [];
-    const docHtml = docEntries.length ? `<div style="display:flex;gap:10px;flex-wrap:wrap;">${docEntries.map(d => {
+    const otherFilesAll = [];
+    const docHtml = docEntries.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${docEntries.map(d => {
       const label = d.name || 'নামহীন ডকুমেন্ট';
       const imgs = (d.files || []).filter(f => f.fileBase64 && f.fileBase64.startsWith('data:image'));
       const others = (d.files || []).filter(f => f.fileBase64 && !f.fileBase64.startsWith('data:image'));
-      const otherFilesHtml = others.length ? `
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;width:104px;">
-          ${others.map(f => `<a href="${f.fileBase64}" download="${f.fileName || 'file'}" class="hint" style="font-size:10.5px;"><i class="fas fa-file-arrow-down"></i> ${f.fileName || 'ফাইল'}</a>`).join('')}
-        </div>` : '';
+      otherFilesAll.push(...others);
+      const expiryBadge = d.expiry ? `<div style="position:absolute;left:4px;top:4px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;">মেয়াদ: ${d.expiry}</div>` : '';
       if(!imgs.length){
         return `
-        <div style="width:104px;">
-          <div style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px;"><i class="fas fa-file-lines"></i>
-            <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
-          </div>
-          ${d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
-          ${otherFilesHtml}
+        <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px;min-width:0;"><i class="fas fa-file-lines"></i>
+          ${expiryBadge}
+          <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${label}</div>
         </div>`;
       }
       return imgs.map((f, pi) => `
-      <div style="width:104px;">
-        <div onclick='openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' style="position:relative;width:104px;height:104px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;">
-          <img src="${f.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">
-          <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${pi === 0 ? label : `পৃষ্ঠা ${pi+1}`}</div>
-        </div>
-        ${pi === 0 && d.expiry ? `<div class="hint" style="font-size:10px;margin-top:3px;">মেয়াদ: ${d.expiry}</div>` : ''}
-        ${pi === 0 ? otherFilesHtml : ''}
+      <div onclick='openDocImage(${JSON.stringify(f.fileBase64)}, ${JSON.stringify(f.fileName || label)})' style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#f7f2ea;cursor:zoom-in;min-width:0;">
+        <img src="${f.fileBase64}" style="width:100%;height:100%;object-fit:cover;" alt="">
+        ${pi === 0 ? expiryBadge : ''}
+        <div style="position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0));color:#fff;font-size:10.5px;font-weight:600;padding:12px 6px 5px;">${pi === 0 ? label : `পৃষ্ঠা ${pi+1}`}</div>
       </div>`).join('');
-    }).join('')}</div>` : '<div class="accRow noBorder">-</div>';
+    }).join('')}</div>${otherFilesAll.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${otherFilesAll.map(f => `<a href="${f.fileBase64}" download="${f.fileName || 'file'}" class="hint" style="font-size:10.5px;"><i class="fas fa-file-arrow-down"></i> ${f.fileName || 'ফাইল'}</a>`).join('')}</div>` : ''}` : '<div class="accRow noBorder">-</div>';
 
     const ownPhone = getUserPhone(u);
     const phoneDigits = (ownPhone || '').replace(/[^0-9]/g, '');
@@ -778,7 +865,13 @@ function renderCustomers(){
     return `
     <div class="accItem">
       <div class="accHead" onclick="toggleAccItem('cu-${uid}')">
-        ${avatarHtml}
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
+          ${avatarHtml}
+          <button type="button" onclick="event.stopPropagation();openUserChat('${uid}')" style="position:relative;width:26px;height:26px;border-radius:50%;background:none;color:var(--navy);border:none;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;padding:0;">
+            <i class="fas fa-comment-dots"></i>
+            <span id="chatBadge-${uid}" style="display:${getUnreadChatCount(uid) > 0 ? 'block' : 'none'};position:absolute;top:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:var(--fail);border:1.5px solid #fff;"></span>
+          </button>
+        </div>
         <div class="accTextWrap">
           <div class="accName">${u.full_name || '-'}${ownPhone ? ` <span style="font-weight:400;color:#5b6b7a;font-size:12.5px;">· ${ownPhone}</span> <button type="button" onclick="event.stopPropagation();callChoice('${ownPhone}','${phoneWithCC}')" style="width:auto;height:auto;background:none;color:var(--ok);border:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;cursor:pointer;vertical-align:middle;padding:0;"><i class="fas fa-phone"></i></button>` : ''}</div>
           <div class="accSub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -1013,7 +1106,7 @@ function renderVmFilePreview(){
       ? `<img src="${f.base64}" style="width:100%;height:100%;object-fit:cover;" alt="">`
       : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f7f2ea;color:var(--gold);font-size:20px;"><i class="fas fa-file-lines"></i></div>`;
     return `
-    <div style="position:relative;width:78px;height:78px;">
+    <div style="position:relative;width:100%;aspect-ratio:1/1;">
       <div style="width:100%;height:100%;border-radius:8px;overflow:hidden;border:1px solid var(--border);">${thumbInner}</div>
       <button type="button" onclick="removeVmFile(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--fail);color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;">✕</button>
     </div>`;
