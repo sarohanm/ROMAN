@@ -89,9 +89,19 @@
   textarea{padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:56px;}
   .hint{font-size:12px;color:#8a8478;margin:0 0 10px;}
 
-  .custItem{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff;}
+  .custItem{border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;background:#fff;box-shadow:0 1px 2px rgba(20,24,32,.04);transition:box-shadow .15s ease,border-color .15s ease;}
+  .custItem:hover{box-shadow:0 4px 14px rgba(20,24,32,.08);}
   .custItem .cname{font-weight:700;font-size:14px;color:var(--navy);}
   .custItem .csub{font-size:12px;color:#5b6b7a;margin-top:2px;}
+  .msgSectionIcon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#fbe7bb,var(--gold));color:var(--navy);font-size:12px;flex-shrink:0;}
+  .chatAvatar{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:10.5px;font-weight:700;flex-shrink:0;}
+  .chatAvatar.mine{background:var(--navy);color:#fff;}
+  .chatAvatar.theirs{background:linear-gradient(135deg,#fbe7bb,var(--gold));color:var(--navy);}
+  .msgModalHeader{display:flex;align-items:center;gap:10px;margin:0 0 16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .msgModalHeader .icon-badge{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#fbe7bb,var(--gold));color:var(--navy);font-size:15px;flex-shrink:0;}
+  .msgModalHeader h3{margin:0;font-size:16px;color:var(--navy);font-weight:700;}
+  .modalBox .close-x{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s ease;}
+  .modalBox .close-x:hover{background:rgba(20,24,32,.06);}
   .stagePill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:rgba(224,165,48,.15);color:#a8710f;margin-top:6px;}
   .stagePill.done{background:rgba(26,158,92,.12);color:var(--ok);}
   .stagePill.fail{background:rgba(220,53,69,.1);color:var(--fail);}
@@ -167,6 +177,7 @@
   .modalOverlay.active{display:flex;}
   .modalBox{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;margin-top:24px;position:relative;}
   .replyRowFloating{position:fixed !important;left:16px;right:16px;bottom:10px;max-width:408px;margin:0 auto;background:#fff;padding:8px;border-radius:10px;box-shadow:0 -6px 20px rgba(20,24,32,.22);z-index:2000;}
+  .replyRow textarea:focus{border-color:var(--gold) !important;box-shadow:0 0 0 3px rgba(224,165,48,.18);}
   .modalBox h3{margin:0 0 4px;font-size:15px;color:var(--navy);}
   .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:#8896ab;cursor:pointer;}
 </style>
@@ -273,7 +284,7 @@
 <div class="modalOverlay" id="inboxModal">
   <div class="modalBox">
     <button class="close-x" onclick="closeInboxModal()"><i class="fas fa-xmark"></i></button>
-    <h3 style="margin-top:0;"><i class="fas fa-bell" style="margin-right:6px;color:var(--gold);"></i>বার্তা</h3>
+    <div class="msgModalHeader"><span class="icon-badge"><i class="fas fa-bell"></i></span><h3>বার্তা</h3></div>
     <div id="inboxList"></div>
   </div>
 </div>
@@ -686,6 +697,7 @@ function callAdmin(){
    এখানে সেটা রিয়েল-টাইমে দেখানো হয়। */
 let agentMessagesCache = {};
 const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে', visa_application_sent: 'ভিসা আবেদন পাঠানো হয়েছে', admin_reply: 'এডমিনের উত্তর' };
+const MSG_TYPE_ICON = { application_deleted: 'fa-trash', visa_application_sent: 'fa-paper-plane', admin_reply: 'fa-reply' };
 const MSG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // ২৪ ঘণ্টা পর বার্তা অটো-ডিলিট
 let msgPurgeTimer = null;
 let myVisaMessagesCache = {};
@@ -764,27 +776,30 @@ function renderInboxList(){
         ${dcEntries.length ? dcEntries.map(([id, m]) => {
           const mine = m.from === 'agent';
           const t = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
-          return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:80%;">
-              <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(m.text)}</div>
-              <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${t}</div>
+          return `<div style="display:flex;gap:6px;align-items:flex-end;${mine ? 'flex-direction:row-reverse;' : ''}max-width:88%;align-self:${mine?'flex-end':'flex-start'};">
+              <span class="chatAvatar ${mine ? 'mine' : 'theirs'}">${mine ? 'আ' : 'এ'}</span>
+              <div>
+                <div style="background:${mine ? 'var(--navy)' : 'rgba(224,165,48,.1)'};color:${mine ? '#fff' : '#1c2733'};border:${mine ? 'none' : '1px solid rgba(224,165,48,.25)'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(m.text)}</div>
+                <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${t}</div>
+              </div>
             </div>`;
         }).join('') : `<div style="font-size:12.5px;color:#8a93a3;text-align:center;">কোনো মেসেজ নেই, কথা শুরু করুন।</div>`}
       </div>
-      <div class="replyRow" style="display:flex;gap:6px;align-items:flex-end;">
-        <textarea id="dcReplyInput" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:36px;height:36px;max-height:110px;overflow-y:auto;"></textarea>
-        <button type="button" onclick="sendDirectChatReply()" style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:14px;"><i class="fas fa-paper-plane"></i></button>
+      <div class="replyRow" style="display:flex;gap:8px;align-items:flex-end;">
+        <textarea id="dcReplyInput" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:9px 14px;border-radius:20px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:38px;height:38px;max-height:110px;overflow-y:auto;outline:none;transition:border-color .15s ease,box-shadow .15s ease;"></textarea>
+        <button type="button" onclick="sendDirectChatReply()" style="width:38px;height:38px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,#f6d998,var(--gold) 60%,#a8710f);color:var(--navy);border:none;font-size:14px;box-shadow:0 2px 6px rgba(224,165,48,.4);"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>` : '';
   const dcLastText = dcEntries.length ? dcEntries[dcEntries.length-1][1].text : 'এডমিনের সাথে সরাসরি কথা বলুন';
   const dcHtml = `
-    <div class="custItem" style="cursor:pointer;${dcUnread ? 'border-color:var(--gold);background:rgba(224,165,48,.06);' : ''}" onclick="toggleDirectChat()">
-      <div class="cname" style="display:flex;align-items:center;gap:6px;">
-        ${dcUnread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
-        <i class="fas fa-comment-dots" style="color:var(--gold);"></i>
-        এডমিনের সরাসরি মেসেজ
-        <i class="fas fa-chevron-${directChatOpen ? 'up' : 'down'}" style="margin-left:auto;font-size:11px;color:#8a93a3;"></i>
+    <div class="custItem" style="cursor:pointer;${dcUnread ? 'border-color:var(--gold);background:rgba(224,165,48,.05);' : ''}" onclick="toggleDirectChat()">
+      <div class="cname" style="display:flex;align-items:center;gap:8px;">
+        <span class="msgSectionIcon"><i class="fas fa-comment-dots"></i></span>
+        <span style="flex:1;">এডমিনের সরাসরি মেসেজ</span>
+        ${dcUnread ? `<span style="background:var(--fail);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;">${dcUnread}</span>` : ''}
+        <i class="fas fa-chevron-${directChatOpen ? 'up' : 'down'}" style="font-size:11px;color:#8a93a3;"></i>
       </div>
-      ${!directChatOpen ? `<div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${formatChatBubbleText(dcLastText)}</div>` : ''}
+      ${!directChatOpen ? `<div style="font-size:13px;color:#3b4552;margin-top:8px;white-space:pre-wrap;">${formatChatBubbleText(dcLastText)}</div>` : ''}
       ${dcThreadHtml}
     </div>`;
   const entries = Object.entries(agentMessagesCache).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
@@ -805,36 +820,40 @@ function renderInboxList(){
     const vm = canReply ? myVisaMessagesCache[m.visaMessageId] : null;
     const threadEntries = vm && vm.thread ? Object.values(vm.thread).sort((a,b) => (a.at||0)-(b.at||0)) : [];
     const threadHtml = isOpen ? `
-      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);" onclick="event.stopPropagation();">
-        <div id="inboxThreadScroll-${id}" style="display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto;margin-bottom:8px;padding:2px;">
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);" onclick="event.stopPropagation();">
+        <div id="inboxThreadScroll-${id}" style="display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto;margin-bottom:10px;padding:2px;">
           ${threadEntries.length ? threadEntries.map(t => {
             const mine = t.sender === 'agent';
             const tt = t.at ? new Date(t.at).toLocaleString('bn-BD') : '';
-            return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:80%;">
-              <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(t.text)}</div>
-              <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${tt}</div>
+            return `<div style="display:flex;gap:6px;align-items:flex-end;${mine ? 'flex-direction:row-reverse;' : ''}max-width:88%;align-self:${mine?'flex-end':'flex-start'};">
+              <span class="chatAvatar ${mine ? 'mine' : 'theirs'}">${mine ? 'আ' : 'এ'}</span>
+              <div>
+                <div style="background:${mine ? 'var(--navy)' : 'rgba(224,165,48,.1)'};color:${mine ? '#fff' : '#1c2733'};border:${mine ? 'none' : '1px solid rgba(224,165,48,.25)'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(t.text)}</div>
+                <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${tt}</div>
+              </div>
             </div>`;
           }).join('') : `<div style="font-size:12.5px;color:#3b4552;white-space:pre-wrap;">${formatChatBubbleText(m.text)}</div>`}
         </div>
-        <div class="replyRow" style="display:flex;gap:6px;align-items:flex-end;">
-          <textarea id="inboxReplyInput-${id}" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:36px;height:36px;max-height:110px;overflow-y:auto;"></textarea>
-          <button type="button" onclick='sendInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})' style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:14px;"><i class="fas fa-paper-plane"></i></button>
+        <div class="replyRow" style="display:flex;gap:8px;align-items:flex-end;">
+          <textarea id="inboxReplyInput-${id}" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='38px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:9px 14px;border-radius:20px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:38px;height:38px;max-height:110px;overflow-y:auto;outline:none;transition:border-color .15s ease,box-shadow .15s ease;"></textarea>
+          <button type="button" onclick='sendInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})' style="width:38px;height:38px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,#f6d998,var(--gold) 60%,#a8710f);color:var(--navy);border:none;font-size:14px;box-shadow:0 2px 6px rgba(224,165,48,.4);"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>` : '';
     return `
-    <div class="custItem" style="cursor:pointer;${m.read ? '' : 'border-color:var(--gold);background:rgba(224,165,48,.06);'}" onclick='${canReply ? `toggleInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})` : `markMessageRead(${JSON.stringify(id)})`}'>
-      <div class="cname" style="display:flex;align-items:center;gap:6px;">
-        ${!m.read ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
-        ${label}
-        ${canReply ? `<i class="fas fa-chevron-${isOpen ? 'up' : 'down'}" style="margin-left:auto;font-size:11px;color:#8a93a3;"></i>` : ''}
+    <div class="custItem" style="cursor:pointer;${m.read ? '' : 'border-color:var(--gold);background:rgba(224,165,48,.05);'}" onclick='${canReply ? `toggleInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})` : `markMessageRead(${JSON.stringify(id)})`}'>
+      <div class="cname" style="display:flex;align-items:center;gap:8px;">
+        <span class="msgSectionIcon"><i class="fas ${MSG_TYPE_ICON[m.type] || 'fa-bell'}"></i></span>
+        <span style="flex:1;">${label}</span>
+        ${!m.read ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
+        ${canReply ? `<i class="fas fa-chevron-${isOpen ? 'up' : 'down'}" style="font-size:11px;color:#8a93a3;"></i>` : ''}
       </div>
-      ${related ? `<div class="csub">${related}</div>` : ''}
+      ${related ? `<div class="csub" style="margin-left:34px;">${related}</div>` : ''}
       ${!isOpen ? (() => {
         const latest = threadEntries.length ? threadEntries[threadEntries.length - 1] : null;
         const previewText = latest ? latest.text : m.text;
         const previewWho = latest ? (latest.sender === 'agent' ? 'আপনি · ' : 'এডমিন · ') : '';
         const previewTime = latest && latest.at ? new Date(latest.at).toLocaleString('bn-BD') : time;
-        return `<div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${formatChatBubbleText(previewText)}</div>
+        return `<div style="font-size:13px;color:#3b4552;margin-top:8px;white-space:pre-wrap;">${formatChatBubbleText(previewText)}</div>
         <div class="csub" style="margin-top:6px;">${previewWho}${previewTime}</div>`;
       })() : `<div class="csub" style="margin-top:6px;">${time}</div>`}
       ${threadHtml}
