@@ -2,7 +2,7 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Talent Overseas — এজেন্ট লগইন</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -166,6 +166,7 @@
   .modalOverlay{display:none;position:fixed;inset:0;background:rgba(20,24,32,.55);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;}
   .modalOverlay.active{display:flex;}
   .modalBox{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;margin-top:24px;position:relative;}
+  .replyRowFloating{position:fixed !important;left:16px;right:16px;bottom:10px;max-width:408px;margin:0 auto;background:#fff;padding:8px;border-radius:10px;box-shadow:0 -6px 20px rgba(20,24,32,.22);z-index:2000;}
   .modalBox h3{margin:0 0 4px;font-size:15px;color:var(--navy);}
   .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:#8896ab;cursor:pointer;}
 </style>
@@ -296,6 +297,7 @@
   </div>
 </div>
 
+
 <div class="callSheetOverlay" id="docImgOverlay" onclick="if(event.target===this)closeDocImage()" style="position:fixed;inset:0;background:rgba(10,12,16,.92);z-index:600;display:none;align-items:center;justify-content:center;padding:16px;">
   <button type="button" onclick="closeDocImage()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:14px;z-index:2;display:flex;align-items:center;justify-content:center;"><i class="fas fa-xmark"></i></button>
   <div style="position:absolute;top:16px;left:16px;display:flex;gap:8px;z-index:2;">
@@ -384,6 +386,41 @@ const COUNTRY_FLAGS = {
 const COLON_RE = /[:：﹕︓∶]/;
 function escapeHtmlForHl(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+/* মোবাইল কীবোর্ড থেকে মাঝে মাঝে অদৃশ্য ক্যারেক্টার (zero-width space/joiner ইত্যাদি) ঢুকে যায়,
+   যেগুলো .trim() ধরতে পারে না — ফলে "খালি" মেসেজ পাঠানো/সেভ হয়ে যায় যা চ্যাটে ফাঁকা বাবল হিসেবে দেখায়।
+   পাঠানোর আগে সবসময় এই ফাংশন দিয়ে যাচাই করা হবে। */
+function cleanChatText(s){
+  return String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '').trim();
+}
+/* আগের পদ্ধতি (স্ক্রল + প্যাডিং অনুমান করে) কিছু ফোনে কিবোর্ডের সাথে ঠিকমতো মিলছিল না।
+   এখন সরাসরি রিপ্লাই বক্সটাকেই (টেক্সটএরিয়া + পাঠানোর বাটন) ফোকাস করার সাথে সাথে স্ক্রিনের
+   একদম নিচে "ভাসিয়ে" (position:fixed) বসিয়ে দেওয়া হয় — এটা মোডাল/থ্রেড কতটা স্ক্রল করা আছে
+   তার উপর নির্ভর করে না, তাই সবসময় কিবোর্ডের ঠিক উপরে দৃশ্যমান থাকবে। */
+function floatReplyRow(el){
+  const row = el.closest('.replyRow');
+  if(!row) return;
+  row.classList.add('replyRowFloating');
+}
+function unfloatReplyRow(el){
+  const row = el.closest('.replyRow');
+  if(!row) return;
+  setTimeout(() => {
+    // অন্য কোনো ইনপুটে ফোকাস চলে গেলে (যেমন সেন্ড বাটনে ট্যাপ করার সময়) যেন হুট করে সরে না যায়
+    if(document.activeElement && row.contains(document.activeElement)) return;
+    row.classList.remove('replyRowFloating');
+  }, 120);
+}
+
+/* চ্যাট বাবলে টেক্সট দেখানোর সময় ব্যবহার হবে — কোনো মেসেজে অনেকগুলো লাইনব্রেক/স্পেস
+   (যেমন পেস্ট করা টেক্সট থেকে) থাকলে সেগুলো একটাই স্পেসে মিলিয়ে দেয়, যাতে বাবল অস্বাভাবিক
+   বড় ফাঁকা জায়গাসহ না দেখায়। */
+function formatChatBubbleText(s){
+  let t = String(s || '').replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '');
+  t = t.replace(/[ \t]+/g, ' ');           // একাধিক স্পেস/ট্যাব একটাতে
+  t = t.replace(/\n{2,}/g, '\n');          // একাধিক পরপর ফাঁকা লাইন একটা লাইনব্রেকে
+  t = t.split('\n').map(line => line.trim()).join('\n').trim();
+  return escapeHtmlForHl(t);
 }
 function formatDetailChip(d){
   const idx = d.search(COLON_RE);
@@ -615,6 +652,8 @@ function enterAgentApp(){
   loadMyCustomers();
   loadAgentMessages();
   loadUserChats();
+  loadAgentDirectChat();
+  loadMyVisaMessages();
 }
 
 function showPage(name){
@@ -646,9 +685,18 @@ function callAdmin(){
    অ্যাডমিন প্যানেল কোনো ভিসা-মেসেজ ডিলিট করলে agentMessages/{agentId} নোডে কারণ লিখে রাখে,
    এখানে সেটা রিয়েল-টাইমে দেখানো হয়। */
 let agentMessagesCache = {};
-const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে', visa_application_sent: 'ভিসা আবেদন পাঠানো হয়েছে' };
+const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট করা হয়েছে', visa_application_sent: 'ভিসা আবেদন পাঠানো হয়েছে', admin_reply: 'এডমিনের উত্তর' };
 const MSG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // ২৪ ঘণ্টা পর বার্তা অটো-ডিলিট
 let msgPurgeTimer = null;
+let myVisaMessagesCache = {};
+let inboxOpenId = null;
+
+function loadMyVisaMessages(){
+  db.ref('visaMessages').orderByChild('agentId').equalTo(currentAgentUid).on('value', snap => {
+    myVisaMessagesCache = snap.val() || {};
+    if(document.getElementById('inboxModal').classList.contains('active')) renderInboxList();
+  });
+}
 
 function loadAgentMessages(){
   db.ref('agentMessages/' + currentAgentUid).on('value', snap => {
@@ -674,11 +722,10 @@ function purgeOldMessages(){
 
 function renderInboxBadge(){
   const bellBtn = document.getElementById('inboxBellBtn');
-  const hasAnyMessages = Object.keys(agentMessagesCache).length > 0;
-  bellBtn.style.display = hasAnyMessages ? 'inline-block' : 'none';
+  bellBtn.style.display = 'inline-block';
 
   const badge = document.getElementById('inboxBadge');
-  const unread = Object.values(agentMessagesCache).filter(m => !m.read).length;
+  const unread = Object.values(agentMessagesCache).filter(m => !m.read).length + getDirectChatUnreadCount();
   if(unread > 0){
     badge.style.display = 'block';
     badge.textContent = unread > 9 ? '9+' : String(unread);
@@ -693,7 +740,9 @@ function openInboxModal(){
   markAllMessagesRead();
 }
 function closeInboxModal(){
-  document.getElementById('inboxModal').classList.remove('active');
+  const modal = document.getElementById('inboxModal');
+  modal.classList.remove('active');
+  modal.style.paddingBottom = '';
 }
 
 function markAllMessagesRead(){
@@ -707,26 +756,118 @@ function markAllMessagesRead(){
 function renderInboxList(){
   const el = document.getElementById('inboxList');
   if(!el) return;
+  const dcEntries = Object.entries(agentDirectChatCache).sort((a,b) => (a[1].createdAt||0) - (b[1].createdAt||0));
+  const dcUnread = getDirectChatUnreadCount();
+  const dcThreadHtml = directChatOpen ? `
+    <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);" onclick="event.stopPropagation();">
+      <div id="dcThreadScroll" style="display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto;margin-bottom:8px;padding:2px;">
+        ${dcEntries.length ? dcEntries.map(([id, m]) => {
+          const mine = m.from === 'agent';
+          const t = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
+          return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:80%;">
+              <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(m.text)}</div>
+              <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${t}</div>
+            </div>`;
+        }).join('') : `<div style="font-size:12.5px;color:#8a93a3;text-align:center;">কোনো মেসেজ নেই, কথা শুরু করুন।</div>`}
+      </div>
+      <div class="replyRow" style="display:flex;gap:6px;align-items:flex-end;">
+        <textarea id="dcReplyInput" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:36px;height:36px;max-height:110px;overflow-y:auto;"></textarea>
+        <button type="button" onclick="sendDirectChatReply()" style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:14px;"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>` : '';
+  const dcLastText = dcEntries.length ? dcEntries[dcEntries.length-1][1].text : 'এডমিনের সাথে সরাসরি কথা বলুন';
+  const dcHtml = `
+    <div class="custItem" style="cursor:pointer;${dcUnread ? 'border-color:var(--gold);background:rgba(224,165,48,.06);' : ''}" onclick="toggleDirectChat()">
+      <div class="cname" style="display:flex;align-items:center;gap:6px;">
+        ${dcUnread ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
+        <i class="fas fa-comment-dots" style="color:var(--gold);"></i>
+        এডমিনের সরাসরি মেসেজ
+        <i class="fas fa-chevron-${directChatOpen ? 'up' : 'down'}" style="margin-left:auto;font-size:11px;color:#8a93a3;"></i>
+      </div>
+      ${!directChatOpen ? `<div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${formatChatBubbleText(dcLastText)}</div>` : ''}
+      ${dcThreadHtml}
+    </div>`;
   const entries = Object.entries(agentMessagesCache).sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
   if(!entries.length){
-    el.innerHTML = '<div class="emptyMsg">কোনো বার্তা নেই।</div>';
+    el.innerHTML = dcHtml;
+    if(directChatOpen){
+      const dcScroll = document.getElementById('dcThreadScroll');
+      if(dcScroll) dcScroll.scrollTop = dcScroll.scrollHeight;
+    }
     return;
   }
-  el.innerHTML = entries.map(([id, m]) => {
+  el.innerHTML = dcHtml + entries.map(([id, m]) => {
     const time = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
     const label = MSG_TYPE_LABEL[m.type] || 'বার্তা';
     const related = [m.relatedCountry, m.relatedVisaName].filter(Boolean).join(' — ');
+    const canReply = !!m.visaMessageId;
+    const isOpen = canReply && inboxOpenId === m.visaMessageId;
+    const vm = canReply ? myVisaMessagesCache[m.visaMessageId] : null;
+    const threadEntries = vm && vm.thread ? Object.values(vm.thread).sort((a,b) => (a.at||0)-(b.at||0)) : [];
+    const threadHtml = isOpen ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);" onclick="event.stopPropagation();">
+        <div id="inboxThreadScroll-${id}" style="display:flex;flex-direction:column;gap:10px;max-height:260px;overflow-y:auto;margin-bottom:8px;padding:2px;">
+          ${threadEntries.length ? threadEntries.map(t => {
+            const mine = t.sender === 'agent';
+            const tt = t.at ? new Date(t.at).toLocaleString('bn-BD') : '';
+            return `<div style="align-self:${mine?'flex-end':'flex-start'};max-width:80%;">
+              <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;">${formatChatBubbleText(t.text)}</div>
+              <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : 'এডমিন · '}${tt}</div>
+            </div>`;
+          }).join('') : `<div style="font-size:12.5px;color:#3b4552;white-space:pre-wrap;">${formatChatBubbleText(m.text)}</div>`}
+        </div>
+        <div class="replyRow" style="display:flex;gap:6px;align-items:flex-end;">
+          <textarea id="inboxReplyInput-${id}" rows="1" placeholder="উত্তর লিখুন..." oninput="this.style.height='36px';this.style.height=Math.min(this.scrollHeight,110)+'px';" onfocus="floatReplyRow(this);" onblur="unfloatReplyRow(this);" style="flex:1;min-width:0;resize:none;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);box-sizing:border-box;font-family:inherit;line-height:1.35;min-height:36px;height:36px;max-height:110px;overflow-y:auto;"></textarea>
+          <button type="button" onclick='sendInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})' style="width:38px;height:38px;flex-shrink:0;border-radius:8px;background:var(--navy);color:#fff;border:none;font-size:14px;"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>` : '';
     return `
-    <div class="custItem" style="cursor:pointer;${m.read ? '' : 'border-color:var(--gold);background:rgba(224,165,48,.06);'}" onclick='markMessageRead(${JSON.stringify(id)})'>
+    <div class="custItem" style="cursor:pointer;${m.read ? '' : 'border-color:var(--gold);background:rgba(224,165,48,.06);'}" onclick='${canReply ? `toggleInboxReply(${JSON.stringify(id)}, ${JSON.stringify(m.visaMessageId)})` : `markMessageRead(${JSON.stringify(id)})`}'>
       <div class="cname" style="display:flex;align-items:center;gap:6px;">
         ${!m.read ? '<span style="width:7px;height:7px;border-radius:50%;background:var(--fail);display:inline-block;flex-shrink:0;"></span>' : ''}
         ${label}
+        ${canReply ? `<i class="fas fa-chevron-${isOpen ? 'up' : 'down'}" style="margin-left:auto;font-size:11px;color:#8a93a3;"></i>` : ''}
       </div>
       ${related ? `<div class="csub">${related}</div>` : ''}
-      <div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${escapeHtmlForHl(m.text || '')}</div>
-      <div class="csub" style="margin-top:6px;">${time}</div>
+      ${!isOpen ? (() => {
+        const latest = threadEntries.length ? threadEntries[threadEntries.length - 1] : null;
+        const previewText = latest ? latest.text : m.text;
+        const previewWho = latest ? (latest.sender === 'agent' ? 'আপনি · ' : 'এডমিন · ') : '';
+        const previewTime = latest && latest.at ? new Date(latest.at).toLocaleString('bn-BD') : time;
+        return `<div style="font-size:13px;color:#3b4552;margin-top:6px;white-space:pre-wrap;">${formatChatBubbleText(previewText)}</div>
+        <div class="csub" style="margin-top:6px;">${previewWho}${previewTime}</div>`;
+      })() : `<div class="csub" style="margin-top:6px;">${time}</div>`}
+      ${threadHtml}
     </div>`;
   }).join('');
+
+  // নতুন মেসেজ এলে/পাঠালে থ্রেডের মিনি-স্ক্রলবক্স যেন সবসময় সর্বশেষ মেসেজ দেখায়, উপরে আটকে না থাকে
+  if(directChatOpen){
+    const dcScroll = document.getElementById('dcThreadScroll');
+    if(dcScroll) dcScroll.scrollTop = dcScroll.scrollHeight;
+  }
+  if(inboxOpenId){
+    const openEntry = entries.find(([, m]) => m.visaMessageId === inboxOpenId);
+    if(openEntry){
+      const openScroll = document.getElementById('inboxThreadScroll-' + openEntry[0]);
+      if(openScroll) openScroll.scrollTop = openScroll.scrollHeight;
+    }
+  }
+}
+
+function toggleInboxReply(id, visaMessageId){
+  markMessageRead(id);
+  inboxOpenId = (inboxOpenId === visaMessageId) ? null : visaMessageId;
+  renderInboxList();
+}
+
+function sendInboxReply(id, visaMessageId){
+  const input = document.getElementById('inboxReplyInput-' + id);
+  const text = input ? cleanChatText(input.value) : '';
+  if(!text || !visaMessageId) return;
+  db.ref('visaMessages/' + visaMessageId + '/thread').push({ sender: 'agent', text, at: Date.now() })
+    .then(() => { if(input) input.value = ''; })
+    .catch(() => alert('পাঠাতে ব্যর্থ হয়েছে, আবার চেষ্টা করুন।'));
 }
 
 function markMessageRead(id){
@@ -781,7 +922,7 @@ function renderUserChatMessages(){
     const mine = m.from === 'agent';
     const time = m.createdAt ? new Date(m.createdAt).toLocaleString('bn-BD') : '';
     return `<div style="align-self:${mine ? 'flex-end' : 'flex-start'};max-width:78%;">
-      <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;word-break:break-word;">${escapeHtmlForHl(m.text || '')}</div>
+      <div style="background:${mine ? 'var(--navy)' : '#f0ede6'};color:${mine ? '#fff' : '#1c2733'};padding:8px 12px;border-radius:14px;${mine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'}font-size:13px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow-y:auto;">${formatChatBubbleText(m.text)}</div>
       <div style="font-size:9.5px;color:#8896ab;margin-top:2px;text-align:${mine ? 'right' : 'left'};">${mine ? '' : ((m.fromName || 'অ্যাডমিন') + ' · ')}${time}</div>
     </div>`;
   }).join('');
@@ -790,7 +931,7 @@ function renderUserChatMessages(){
 function sendUserChatMessage(){
   if(!ucCurrentUid) return;
   const input = document.getElementById('ucInputText');
-  const text = (input.value || '').trim();
+  const text = cleanChatText(input.value);
   if(!text) return;
   db.ref('userChats/' + ucCurrentUid).push({
     text, from: 'agent', fromName: (currentAgentData && currentAgentData.name) || 'এজেন্ট', createdAt: Date.now(),
@@ -806,6 +947,47 @@ function markUserChatRead(uid){
       db.ref('userChats/' + uid + '/' + id + '/readByAgent').set(true);
     }
   });
+}
+
+/* ================= AGENT-ADMIN DIRECT CHAT (কোনো নির্দিষ্ট কাস্টমার ছাড়াই সরাসরি মেসেজ, ইনবক্সেই দেখা ও রিপ্লাই হয়) ================= */
+let agentDirectChatCache = {};
+let directChatOpen = false;
+
+function loadAgentDirectChat(){
+  db.ref('agentChats/' + currentAgentUid).on('value', snap => {
+    agentDirectChatCache = snap.val() || {};
+    renderInboxBadge();
+    if(document.getElementById('inboxModal').classList.contains('active')) renderInboxList();
+  });
+}
+
+function getDirectChatUnreadCount(){
+  return Object.values(agentDirectChatCache).filter(m => m && !m.readByAgent).length;
+}
+
+function toggleDirectChat(){
+  directChatOpen = !directChatOpen;
+  if(directChatOpen) markAgentDirectChatRead();
+  renderInboxList();
+}
+
+function sendDirectChatReply(){
+  const input = document.getElementById('dcReplyInput');
+  const text = input ? cleanChatText(input.value) : '';
+  if(!text || !currentAgentUid) return;
+  db.ref('agentChats/' + currentAgentUid).push({
+    text, from: 'agent', fromName: (currentAgentData && currentAgentData.name) || 'এজেন্ট', createdAt: Date.now(),
+    readByAgent: true, readByAdmin: false
+  }).then(() => { if(input) input.value = ''; });
+}
+
+function markAgentDirectChatRead(){
+  Object.entries(agentDirectChatCache).forEach(([id, m]) => {
+    if(m && !m.readByAgent){
+      db.ref('agentChats/' + currentAgentUid + '/' + id + '/readByAgent').set(true);
+    }
+  });
+  renderInboxBadge();
 }
 
 /* ================= VISA TYPES ================= */
