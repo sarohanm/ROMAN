@@ -683,7 +683,7 @@ const MSG_TYPE_LABEL = { application_deleted: 'আবেদন ডিলিট �
 const MSG_MAX_AGE_MS = 24 * 60 * 60 * 1000; // ২৪ ঘণ্টা পর বার্তা অটো-ডিলিট
 let msgPurgeTimer = null;
 let myVisaMessagesCache = {};
-let inboxOpenId = null;
+let inboxOpenId = null; // id of the specific notification entry currently expanded (not the shared visaMessageId)
 
 function loadMyVisaMessages(){
   db.ref('visaMessages').orderByChild('agentId').equalTo(currentAgentUid).on('value', snap => {
@@ -793,7 +793,7 @@ function renderInboxList(){
     const label = MSG_TYPE_LABEL[m.type] || 'বার্তা';
     const related = [m.relatedCountry, m.relatedVisaName].filter(Boolean).join(' — ');
     const canReply = !!m.visaMessageId;
-    const isOpen = canReply && inboxOpenId === m.visaMessageId;
+    const isOpen = canReply && inboxOpenId === id;
     const vm = canReply ? myVisaMessagesCache[m.visaMessageId] : null;
     const threadEntries = vm && vm.thread ? Object.values(vm.thread).sort((a,b) => (a.at||0)-(b.at||0)) : [];
     const threadHtml = isOpen ? `
@@ -839,17 +839,14 @@ function renderInboxList(){
     if(dcScroll) dcScroll.scrollTop = dcScroll.scrollHeight;
   }
   if(inboxOpenId){
-    const openEntry = entries.find(([, m]) => m.visaMessageId === inboxOpenId);
-    if(openEntry){
-      const openScroll = document.getElementById('inboxThreadScroll-' + openEntry[0]);
-      if(openScroll) openScroll.scrollTop = openScroll.scrollHeight;
-    }
+    const openScroll = document.getElementById('inboxThreadScroll-' + inboxOpenId);
+    if(openScroll) openScroll.scrollTop = openScroll.scrollHeight;
   }
 }
 
 function toggleInboxReply(id, visaMessageId){
   markMessageRead(id);
-  inboxOpenId = (inboxOpenId === visaMessageId) ? null : visaMessageId;
+  inboxOpenId = (inboxOpenId === id) ? null : id;
   renderInboxList();
 }
 
