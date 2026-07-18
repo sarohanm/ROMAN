@@ -150,8 +150,10 @@
   .visaCard .vc-title{font-weight:800;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:7px;}
   .vc-price{background:none;color:var(--navy);font-size:12px;font-weight:800;padding:0;margin-left:auto;display:inline-flex;align-items:center;gap:5px;}
   .vc-price i{color:#b8860b;}
-  .visaDetailLines{display:flex;flex-direction:column;gap:5px;margin-top:2px;}
-  .visaDetailLine{font-size:13px;font-weight:600;color:#3b4552;line-height:1.4;}
+  .visaDetailTitle{text-align:center;font-weight:800;font-size:15px;color:var(--navy);padding-bottom:6px;margin-bottom:2px;border-bottom:2px solid var(--navy);}
+  .visaDetailLines{display:flex;flex-direction:column;gap:0;margin-top:4px;}
+  .visaDetailLine{font-size:13px;font-weight:600;color:#3b4552;line-height:1.3;padding:4px 0;border-bottom:1px dashed var(--border);}
+  .visaDetailLines .visaDetailLine:last-child{border-bottom:none;padding-bottom:0;}
   .visaDetailLine .chipKey{color:#a8710f;font-weight:800;}
   .visaStatRow{display:flex;flex-wrap:nowrap;justify-content:flex-start;align-items:center;gap:14px;font-size:11px;color:#5b6b7a;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
   .visaStatRow .vsr-stats{display:flex;gap:14px;flex-shrink:1;min-width:0;}
@@ -354,6 +356,33 @@ let visaTypes = {};
 let myUsers = {};        // uid -> user (this agent's only)
 let myJourneys = {};     // journeyId -> journey (all, filtered per-user when needed)
 let allUsersCache = {};  // uid -> user (all users, used only for visa stat counts)
+
+/* ================= CUSTOMER AVATARS (lazy-loaded, separate from users/ node) =================
+   Admin.html এখন ছবি users/{uid}/photoBase64 এর বদলে userPhotos/{uid} তে আলাদা রাখে, তাই
+   এখানেও একই fallback pattern দরকার — নাহলে নতুন/এডিট করা কাস্টমারের ছবি এজেন্ট প্যানেলে
+   দেখা যাবে না। পুরনো ডেটাতে u.photoBase64 থাকলে সেটাই আগে দেখানো হয়। */
+let userPhotosCache = {};
+let _avatarRerenderTimer = null;
+function scheduleAvatarRerender(){
+  clearTimeout(_avatarRerenderTimer);
+  _avatarRerenderTimer = setTimeout(() => { renderCustomers(); }, 150);
+}
+function getUserAvatarHtml(uid, inlinePhoto, initials){
+  if(inlinePhoto){
+    return `<img src="${inlinePhoto}" class="avatarCircle" style="object-fit:cover;" alt="">`;
+  }
+  if(userPhotosCache[uid] === undefined){
+    userPhotosCache[uid] = null;
+    db.ref('userPhotos/' + uid).once('value').then(s => {
+      userPhotosCache[uid] = s.exists() ? s.val() : false;
+      if(userPhotosCache[uid]) scheduleAvatarRerender();
+    }).catch(() => { userPhotosCache[uid] = false; });
+  }
+  if(userPhotosCache[uid]){
+    return `<img src="${userPhotosCache[uid]}" class="avatarCircle" style="object-fit:cover;" alt="">`;
+  }
+  return `<div class="avatarCircle">${initials}</div>`;
+}
 let vmContext = null;    // { country, visaId, visaName } for the message modal in progress
 
 /* এডমিন প্যানেলের মতো একই কাস্টম ফিল্ড কনফিগারেশন — শুধু দেখানোর জন্য, এডিট করার সুযোগ নেই */
@@ -415,6 +444,16 @@ function formatChatBubbleText(s){
   t = t.replace(/\n{2,}/g, '\n');          // একাধিক পরপর ফাঁকা লাইন একটা লাইনব্রেকে
   t = t.split('\n').map(line => line.trim()).join('\n').trim();
   return escapeHtmlForHl(t);
+}
+function buildDetailsLinesHtml(details, name){
+  const list = (details || []).slice();
+  let titleHtml = '';
+  if(list.length && list[0].search(COLON_RE) === -1){
+    titleHtml = `<div class="visaDetailTitle">${escapeHtmlForHl(list.shift())}</div>`;
+  }
+  const nameHtml = name ? `<div class="visaDetailLine">${formatDetailChip(`ভিসা : ${name}`)}</div>` : '';
+  const linesHtml = list.length ? `<div class="visaDetailLines">${list.map(d => `<div class="visaDetailLine">${formatDetailChip(d)}</div>`).join('')}</div>` : '';
+  return titleHtml + nameHtml + linesHtml;
 }
 function formatDetailChip(d){
   const idx = d.search(COLON_RE);
@@ -989,15 +1028,21 @@ function loadVisaTypes(){
 
 /* ================= LOAD & RENDER MY CUSTOMERS ================= */
 function loadMyCustomers(){
-  db.ref('users').on('value', snap => {
-    const all = snap.val() || {};
-    allUsersCache = all;
-    myUsers = {};
-    Object.entries(all).forEach(([uid, u]) => {
-      if(u && u.agent_id === currentAgentUid) myUsers[uid] = u;
-    });
+  // এই এজেন্টের নিজের কাস্টমাররা এখন সার্ভার-সাইড filter দিয়ে আসে (orderByChild+equalTo),
+  // পুরো users node ক্লায়েন্টে টেনে filter করার বদলে — bandwidth অনেক কমে, বিশেষ করে
+  // সিস্টেমে অনেক এজেন্ট/কাস্টমার থাকলে। এর জন্য rules এ users.agent_id ইনডেক্স লাগবে।
+  db.ref('users').orderByChild('agent_id').equalTo(currentAgentUid).on('value', snap => {
+    myUsers = snap.val() || {};
     renderCustomers();
     renderStats();
+    renderVisaInfoList();
+  });
+  // দেশ-ভিত্তিক ভিসা কোটা (active/departed) হিসাবের জন্য সব এজেন্টের সব ইউজার লাগে —
+  // এটা সব সময়ই একটা বড় read, কারণ Firebase এ partial-field query করা যায় না।
+  // তবে Admin.html এ ছবি আলাদা userPhotos/ path এ সরানো হয়েছে বলে এই payload এখন
+  // অনেক হালকা (আর বেস৬৪ ছবি বহন করে না)।
+  db.ref('users').on('value', snap => {
+    allUsersCache = snap.val() || {};
     renderVisaInfoList();
   });
   db.ref('journeys').on('value', snap => {
@@ -1056,9 +1101,7 @@ function renderCustomers(){
     const visaName = u.visa_type_id && visaTypes[u.visa_type_id] ? visaTypes[u.visa_type_id].name : '';
     const flag = COUNTRY_FLAGS[u.country] || '🌍';
     const initials = (u.full_name || '-').trim().charAt(0).toUpperCase() || '?';
-    const avatarHtml = u.photoBase64
-      ? `<img src="${u.photoBase64}" class="avatarCircle" style="object-fit:cover;" alt="">`
-      : `<div class="avatarCircle">${initials}</div>`;
+    const avatarHtml = getUserAvatarHtml(uid, u.photoBase64, initials);
 
     // কাস্টম ফিল্ড (NID, পাসপোর্ট, ঠিকানা, জন্ম তারিখ, পেশা ইত্যাদি) + মা-বাবার ফোন — এডমিন যা দেখেন, এখানেও একই তথ্য
     const customEntries = Object.keys(customFields)
@@ -1330,8 +1373,7 @@ function renderVisaInfoList(){
           <div class="vc-title">${flag} ${country}</div>
           <span class="vc-price"><i class="fas fa-tag"></i> ভিসার মূল্য${v.fee ? `: ৳${v.fee.toLocaleString('bn-BD')}` : ''}</span>
         </div>
-        ${v.name ? `<div class="visaDetailLine">${formatDetailChip(`ভিসার : ${v.name}`)}</div>` : ''}
-        ${v.details.length ? `<div class="visaDetailLines">${v.details.map(d => `<div class="visaDetailLine">${formatDetailChip(d)}</div>`).join('')}</div>` : ''}
+        ${buildDetailsLinesHtml(v.details, v.name)}
         <div class="visaStatRow">
           <div class="vsr-stats">
             <span>ভিসা <b>${v.quota || 0}</b></span>
