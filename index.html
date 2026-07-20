@@ -183,9 +183,42 @@
   .modalBox{background:rgba(10,20,38,.75);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:440px;width:100%;margin-top:24px;position:relative;box-shadow:0 0 0 1px rgba(63,240,255,.05) inset,0 20px 50px rgba(0,0,0,.5);}
   .modalBox h3{margin:0 0 4px;font-size:15px;color:var(--cyan-soft);}
   .modalBox .close-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:18px;color:var(--text-dim);cursor:pointer;}
+
+  /* ===== Toast notifications ===== */
+  #toastHost{position:fixed;left:0;right:0;bottom:70px;z-index:900;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 14px;max-width:480px;margin:0 auto;}
+  .toast{pointer-events:auto;max-width:100%;background:rgba(10,20,38,.85);backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);border:1px solid var(--border);border-radius:11px;padding:10px 16px;font-size:13px;color:var(--text);box-shadow:0 8px 26px rgba(0,0,0,.4);display:flex;align-items:center;gap:9px;animation:toastIn .25s cubic-bezier(.2,.9,.3,1.3);}
+  .toast i{font-size:13px;flex-shrink:0;}
+  .toast.t-success{border-color:rgba(74,222,128,.4);}
+  .toast.t-success i{color:var(--ok);}
+  .toast.t-error{border-color:rgba(255,93,115,.4);}
+  .toast.t-error i{color:var(--fail);}
+  .toast.t-info{border-color:rgba(63,240,255,.35);}
+  .toast.t-info i{color:var(--cyan);}
+  .toast.leaving{animation:toastOut .2s ease forwards;}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes toastOut{from{opacity:1;transform:translateY(0);}to{opacity:0;transform:translateY(8px);}}
+
+  /* ===== Offline banner ===== */
+  #offlineBanner{display:none;position:sticky;top:52px;z-index:190;background:rgba(255,180,84,.14);border-bottom:1px solid rgba(255,180,84,.35);color:var(--gold);font-size:12px;font-weight:600;text-align:center;padding:7px 10px;align-items:center;justify-content:center;gap:7px;}
+  #offlineBanner.show{display:flex;}
+
+  /* ===== Skeleton loaders ===== */
+  .skel-shimmer{position:relative;color:transparent !important;background:linear-gradient(90deg, rgba(63,240,255,.07) 25%, rgba(63,240,255,.18) 37%, rgba(63,240,255,.07) 63%);background-size:400% 100%;animation:skelShimmer 1.4s ease infinite;border-radius:6px;}
+  body.data-loading .statCard .num{position:relative;color:transparent !important;background:linear-gradient(90deg, rgba(63,240,255,.07) 25%, rgba(63,240,255,.18) 37%, rgba(63,240,255,.07) 63%);background-size:400% 100%;animation:skelShimmer 1.4s ease infinite;border-radius:6px;}
+  @keyframes skelShimmer{0%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+  .skelItem{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(63,240,255,.02);display:flex;gap:11px;align-items:center;}
+  .skelAvatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(90deg, rgba(63,240,255,.07) 25%, rgba(63,240,255,.18) 37%, rgba(63,240,255,.07) 63%);background-size:400% 100%;animation:skelShimmer 1.4s ease infinite;}
+  .skelLines{flex:1;display:flex;flex-direction:column;gap:7px;}
+  .skelLine{height:10px;border-radius:5px;background:linear-gradient(90deg, rgba(63,240,255,.07) 25%, rgba(63,240,255,.18) 37%, rgba(63,240,255,.07) 63%);background-size:400% 100%;animation:skelShimmer 1.4s ease infinite;}
+  .skelLine.w60{width:60%;} .skelLine.w40{width:40%;} .skelLine.w80{width:80%;}
+
+  /* ===== Load more ===== */
+  .loadMoreBtn{display:block;width:100%;margin-top:4px;padding:11px;text-align:center;border:1px dashed var(--border);border-radius:10px;background:rgba(63,240,255,.04);color:var(--cyan-soft);font-size:12.5px;font-weight:700;cursor:pointer;}
+  .loadMoreBtn:active{background:rgba(63,240,255,.09);}
 </style>
 </head>
-<body>
+<body class="data-loading">
+<div id="toastHost"></div>
 
 <!-- ================= LOGIN SCREEN ================= -->
 <div id="loginScreen">
@@ -210,6 +243,7 @@
       <input id="loginEmail" type="email" placeholder="ইমেইল" autocomplete="username">
       <input id="loginPass" type="password" placeholder="পাসওয়ার্ড" autocomplete="current-password">
       <button class="btn gold" onclick="handleAgentLogin()"><i class="fas fa-right-to-bracket" style="margin-right:6px;"></i>লগইন করুন</button>
+      <button class="btn small" style="width:100%;background:rgba(63,240,255,.1);border:1px solid var(--border);color:#8ff6ff;margin-top:8px;" onclick="showFaceStep()">ফেস দিয়ে আবার চেষ্টা করুন</button>
     </div>
 
     <div id="loginMsg"></div>
@@ -230,6 +264,8 @@
         <button onclick="agentLogout()" title="লগআউট"><i class="fas fa-right-from-bracket"></i></button>
       </div>
     </div>
+
+    <div id="offlineBanner"><i class="fas fa-cloud-slash"></i><span>অফলাইন — সর্বশেষ সিঙ্ক হওয়া তথ্য দেখানো হচ্ছে</span></div>
 
     <div class="content">
       <div id="pageHome" class="page active">
@@ -252,7 +288,10 @@
         <div class="card">
           <h3><i class="fas fa-users"></i>আপনার কাস্টমাররা</h3>
           <input id="custSearch" placeholder="নাম বা ফোন দিয়ে খুঁজুন..." oninput="renderCustomers()" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:10px;">
-          <div id="custList"></div>
+          <div id="custList">
+            <div class="skelItem"><div class="skelAvatar"></div><div class="skelLines"><div class="skelLine w60"></div><div class="skelLine w40"></div></div></div>
+            <div class="skelItem"><div class="skelAvatar"></div><div class="skelLines"><div class="skelLine w80"></div><div class="skelLine w40"></div></div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -354,6 +393,49 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+/* ================= TOAST NOTIFICATIONS ================= */
+function toast(msg, type){
+  if(!type){
+    if(/ব্যর্থ|সমস্যা|অবৈধ|পাওয়া যায়নি/.test(msg)) type = 'error';
+    else if(/সফল|হয়েছে|যোগ হয়েছে/.test(msg)) type = 'success';
+    else type = 'info';
+  }
+  const host = document.getElementById('toastHost');
+  if(!host){ console.log(msg); return; }
+  const icon = type === 'error' ? 'fa-circle-exclamation' : type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
+  const el = document.createElement('div');
+  el.className = 'toast t-' + type;
+  el.innerHTML = `<i class="fas ${icon}"></i><span></span>`;
+  el.querySelector('span').textContent = msg;
+  host.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('leaving');
+    setTimeout(() => el.remove(), 220);
+  }, 3200);
+}
+
+/* ================= OFFLINE / CONNECTION STATUS ================= */
+let _wasOffline = false;
+db.ref('.info/connected').on('value', snap => {
+  const connected = snap.val() === true;
+  const banner = document.getElementById('offlineBanner');
+  if(banner) banner.classList.toggle('show', !connected);
+  if(!connected){
+    _wasOffline = true;
+  } else if(_wasOffline){
+    _wasOffline = false;
+    toast('পুনরায় সংযুক্ত হয়েছে — তথ্য সিঙ্ক হচ্ছে', 'success');
+  }
+});
+
+function cacheWrite(key, data){
+  try{ localStorage.setItem(key, JSON.stringify(data)); }catch(e){}
+}
+function cacheRead(key){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+}
+
 
 const STAGE_LABEL = {
   DOC_COLLECTED:"ডকুমেন্ট সংগ্রহ", PASSPORT_APPLIED:"পাসপোর্ট আবেদন", PASSPORT_ISSUED:"পাসপোর্ট ইস্যু",
@@ -520,6 +602,12 @@ function showPassStep(){
   const msg = document.getElementById('loginMsg');
   msg.style.color = "var(--fail)";
   msg.textContent = "";
+}
+function showFaceStep(){
+  document.getElementById('passStep').style.display = 'none';
+  document.getElementById('faceStep').style.display = 'block';
+  document.getElementById('loginMsg').textContent = '';
+  startCamera();
 }
 
 /* ---- ফেস লগইন: ক্যামেরা চালু হওয়া মাত্র স্বয়ংক্রিয়ভাবে বারবার স্ক্যান করে,
@@ -719,7 +807,7 @@ function agentLogout(){
 function callAdmin(){
   const num = currentAgentData && currentAgentData.contactPhone;
   if(!num){
-    alert('এডমিনের যোগাযোগ নম্বর এখনো সেট করা হয়নি। এডমিন প্যানেল থেকে আপনার প্রোফাইলে নম্বরটি যোগ করতে বলুন।');
+    toast('এডমিনের যোগাযোগ নম্বর এখনো সেট করা হয়নি। এডমিন প্যানেল থেকে আপনার প্রোফাইলে নম্বরটি যোগ করতে বলুন।');
     return;
   }
   const digits = num.replace(/[^0-9]/g,'');
@@ -908,7 +996,7 @@ function sendInboxReply(id, visaMessageId){
   if(!text || !visaMessageId) return;
   db.ref('visaMessages/' + visaMessageId + '/thread').push({ sender: 'agent', text, at: Date.now() })
     .then(() => { if(input) input.value = ''; })
-    .catch(() => alert('পাঠাতে ব্যর্থ হয়েছে, আবার চেষ্টা করুন।'));
+    .catch(() => toast('পাঠাতে ব্যর্থ হয়েছে, আবার চেষ্টা করুন।'));
 }
 
 function markMessageRead(id){
@@ -1046,6 +1134,7 @@ function loadMyCustomers(){
   // সিস্টেমে অনেক এজেন্ট/কাস্টমার থাকলে। এর জন্য rules এ users.agent_id ইনডেক্স লাগবে।
   db.ref('users').orderByChild('agent_id').equalTo(currentAgentUid).on('value', snap => {
     myUsers = snap.val() || {};
+    cacheWrite('to_agent_myUsers_v1', myUsers);
     renderCustomers();
     renderStats();
     renderVisaInfoList();
@@ -1060,10 +1149,29 @@ function loadMyCustomers(){
   });
   db.ref('journeys').on('value', snap => {
     myJourneys = snap.val() || {};
+    cacheWrite('to_agent_myJourneys_v1', myJourneys);
     renderCustomers();
     renderStats();
     renderVisaInfoList();
   });
+
+  // অফলাইনে অ্যাপ প্রথমবার খোলা হলে (লাইভ ডেটা ৪ সেকেন্ডেও না এলে) সর্বশেষ ক্যাশ করা তথ্য দেখানো হয়
+  setTimeout(() => {
+    if(Object.keys(myUsers).length === 0){
+      const cu = cacheRead('to_agent_myUsers_v1');
+      if(cu) myUsers = cu;
+    }
+    if(Object.keys(myJourneys).length === 0){
+      const cj = cacheRead('to_agent_myJourneys_v1');
+      if(cj) myJourneys = cj;
+    }
+    if((Object.keys(myUsers).length || Object.keys(myJourneys).length) && document.body.classList.contains('data-loading')){
+      toast('অফলাইন — সর্বশেষ সিঙ্ক করা তথ্য দেখানো হচ্ছে', 'info');
+      renderCustomers();
+      renderStats();
+      renderVisaInfoList();
+    }
+  }, 4000);
 }
 
 function getJourneyForUser(uid){
@@ -1082,6 +1190,7 @@ function renderStats(){
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statActive').textContent = active;
   document.getElementById('statDeparted').textContent = departed;
+  document.body.classList.remove('data-loading');
 }
 
 function renderCustomers(){
@@ -1407,7 +1516,7 @@ function shareVisaInfo(text){
   if(navigator.share){
     navigator.share({ title: 'ভিসার তথ্য', text }).catch(() => {});
   } else if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(() => alert('তথ্য কপি হয়েছে, এখন যেকোনো জায়গায় পেস্ট করে পাঠাতে পারবেন।'));
+    navigator.clipboard.writeText(text).then(() => toast('তথ্য কপি হয়েছে, এখন যেকোনো জায়গায় পেস্ট করে পাঠাতে পারবেন।'));
   } else {
     prompt('নিচের তথ্যটি কপি করুন:', text);
   }
